@@ -216,8 +216,12 @@ def base_payment(rng, customer, amount, payee_name, payee_type, new_payee, accou
 def make_scam(rng, customers, number, typology):
     customer = rng.choice(customers)
     usual = customer["typical_amount"]
-    # Some scams are small and easy to miss, others are big.
-    small = rng.random() < 0.25
+    # About a third of scams are "quiet": the payment looks completely ordinary
+    # (normal amount, usual hour, the customer's own phone, no call detected).
+    # Only the customer's message gives them away, which is how many real scams look.
+    quiet = typology != "remote_access" and rng.random() < 0.35
+    # Some other scams are small and easy to miss, the rest are big.
+    small = quiet or rng.random() < 0.25
     multiple = rng.uniform(0.8, 2.0) if small else rng.uniform(4, 25)
     amount = max(50, round(usual * multiple, -1))
     is_high = typology in ALWAYS_HIGH or amount > usual * 6
@@ -225,23 +229,26 @@ def make_scam(rng, customers, number, typology):
     payment = base_payment(
         rng, customer, amount,
         full_name(rng) if PAYEE_BY_TYPE[typology] == "individual" else rng.choice(["Zentora Solutions", "Voxelia Tech Services", "Primaro Trade Ltd"]),
-        "crypto_exchange" if typology == "investment" and rng.random() < 0.5 else PAYEE_BY_TYPE[typology],
+        "crypto_exchange" if typology == "investment" and not quiet and rng.random() < 0.5 else PAYEE_BY_TYPE[typology],
         True,
-        rng.randint(0, 20),
-        choose_time(rng, customer, odd=rng.random() < 0.3),
+        rng.randint(60, 500) if quiet else rng.randint(0, 20),
+        choose_time(rng, customer, odd=(not quiet and rng.random() < 0.3)),
     )
-    if typology == "bank_impersonation":
-        payment["on_live_call"] = True
-    if typology == "remote_access":
-        payment["remote_access_tool_running"] = True
-        payment["on_live_call"] = rng.random() < 0.6
-    if rng.random() < 0.3:
-        payment["payments_last_24h"] = rng.randint(1, 4)
-    if rng.random() < 0.2:
-        payment["device_known"] = False
+    if not quiet:
+        if typology == "bank_impersonation":
+            payment["on_live_call"] = True
+        if typology == "remote_access":
+            payment["remote_access_tool_running"] = True
+            payment["on_live_call"] = rng.random() < 0.6
+        if rng.random() < 0.3:
+            payment["payments_last_24h"] = rng.randint(1, 4)
+        if rng.random() < 0.2:
+            payment["device_known"] = False
 
     evidence = None
-    if rng.random() < 0.8:
+    # Quiet scams always have a message, because nothing else would give them away.
+    # Every tenth scam also needs a message, as that is where the trick text goes.
+    if quiet or number % 10 == 0 or rng.random() < 0.8:
         template = rng.choice(SCAM_MESSAGES[typology])
         evidence = template.format(
             amount=money(amount),
@@ -255,7 +262,7 @@ def make_scam(rng, customers, number, typology):
         evidence += " " + rng.choice(INJECTIONS)
         injected = True
 
-    hard = small and evidence is None
+    hard = quiet or (small and evidence is None)
     return {
         "id": f"S{number:03d}",
         "customer_id": customer["id"],
@@ -267,6 +274,7 @@ def make_scam(rng, customers, number, typology):
         "expected_action": "hold" if is_high else "warn",
         "acceptable_actions": ["hold"] if is_high else ["warn", "hold"],
         "difficulty": "hard" if hard else ("medium" if small or evidence is None else "easy"),
+        "quiet": quiet,
         "has_injection": injected,
     }
 
@@ -297,6 +305,15 @@ def make_legit(rng, customers, number, kind, suspicious_looking):
         rng.randint(300, 4000) if kind in ("regulated_investment", "verified_supplier") else rng.randint(0, 60) if not known else rng.randint(500, 4000),
         choose_time(rng, customer, odd=(kind == "late_night_regular")),
     )
+
+    # Genuine payments can look scary too: a call with the landlord or supplier,
+    # a brand new phone, or a few payments in one day.
+    if suspicious_looking and rng.random() < 0.4:
+        payment["on_live_call"] = rng.random() < 0.5
+        payment["device_known"] = rng.random() < 0.5
+        payment["payments_last_24h"] = rng.randint(0, 3)
+    elif rng.random() < 0.08:
+        payment["device_known"] = False
 
     evidence = None
     if kind in LEGIT_MESSAGES and rng.random() < 0.85:

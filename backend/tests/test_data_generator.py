@@ -40,6 +40,17 @@ def test_some_scams_come_with_no_message():
     assert 10 <= len(silent) <= 40
 
 
+def test_quiet_scams_look_ordinary_and_only_the_message_gives_them_away():
+    _, scenarios = generate_data.build_all()
+    quiet = [item for item in scenarios if item.get("quiet")]
+    assert len(quiet) >= 20
+    for item in quiet:
+        assert item["customer_evidence"]
+        assert not item["payment"]["on_live_call"]
+        assert not item["payment"]["remote_access_tool_running"]
+        assert item["payment"]["device_known"]
+
+
 def test_normal_payments_that_look_odd_are_included():
     _, scenarios = generate_data.build_all()
     lookalikes = [item for item in scenarios if item["label"] == "legit" and item["difficulty"] == "hard"]

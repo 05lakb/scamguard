@@ -1,0 +1,7 @@
+google-genai
+python-dotenv
+truststore
+pydantic
+fastapi
+uvicorn
+pytest

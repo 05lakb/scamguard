@@ -1,0 +1,114 @@
+[
+  {
+    "id": "investment",
+    "name": "Fake investment",
+    "how_it_works": "A stranger or a slick online ad promises high, steady returns, often in crypto or forex. A fake website shows 'profits' growing so the victim keeps adding money. Withdrawals are blocked unless more fees or taxes are paid.",
+    "red_flags": [
+      "guaranteed or unusually high returns",
+      "pressure to invest quickly before an offer ends",
+      "found through social media, a messaging group or a 'mentor'",
+      "payment goes to a crypto exchange or a brand new account",
+      "asked to pay a fee or tax before withdrawing profits"
+    ],
+    "pressure_tactics": ["scarcity", "fake testimonials", "small early payout to build trust"],
+    "safe_advice": "Check the firm on the official regulator register. Real investments never guarantee returns. Never pay a fee to withdraw your own money."
+  },
+  {
+    "id": "bank_impersonation",
+    "name": "Fake bank or police call (safe account)",
+    "how_it_works": "A caller pretends to be from the bank's fraud team or the police and says the account is under attack. The victim is told to move money to a 'safe account' that the scammer controls.",
+    "red_flags": [
+      "caller says your account is compromised and you must move money now",
+      "told not to tell anyone, including bank staff",
+      "payment is made while on a live phone call",
+      "caller asks you to ignore the bank's warning screens",
+      "new payee set up minutes before the payment"
+    ],
+    "pressure_tactics": ["urgency", "authority", "fear"],
+    "safe_advice": "A real bank never asks you to move money to keep it safe. Hang up and call the number on the back of your card."
+  },
+  {
+    "id": "romance",
+    "name": "Romance scam",
+    "how_it_works": "A person met online builds a close relationship over weeks, then invents an emergency such as a hospital bill, a customs fee or a travel problem and asks for money.",
+    "red_flags": [
+      "relationship is only online and they never meet or video call",
+      "sudden emergency that needs money",
+      "asks for gift cards, crypto or transfers to a third party",
+      "tells the victim to keep the relationship private",
+      "repeated requests that grow over time"
+    ],
+    "pressure_tactics": ["emotional pressure", "secrecy", "guilt"],
+    "safe_advice": "Never send money to someone you have not met in person. Talk to a friend or family member before paying."
+  },
+  {
+    "id": "remote_access",
+    "name": "Tech support and remote access",
+    "how_it_works": "A pop-up or caller claims the computer is infected or a refund is due. The victim installs a remote-control tool, and the scammer then moves money from the victim's own banking session or tricks them into paying.",
+    "red_flags": [
+      "a remote-control app is running during the banking session",
+      "caller asks the victim to install software",
+      "payment to an unrelated company for 'refund' or 'fix'",
+      "victim describes being guided step by step",
+      "screen is being shared"
+    ],
+    "pressure_tactics": ["fear of a virus", "fake refund", "authority"],
+    "safe_advice": "Never let anyone control your device. Real support does not call you out of the blue."
+  },
+  {
+    "id": "invoice_redirect",
+    "name": "Invoice redirect (changed bank details)",
+    "how_it_works": "A scammer who has access to or copies a supplier's email sends a real-looking invoice with new bank details. A business or home buyer pays the wrong account.",
+    "red_flags": [
+      "bank details changed by email shortly before payment",
+      "payee name does not match the supplier name",
+      "request marked urgent, with a deadline today",
+      "email address slightly different from the usual one",
+      "large one-off payment to a new account"
+    ],
+    "pressure_tactics": ["urgency", "authority", "impersonating a trusted supplier"],
+    "safe_advice": "Phone the supplier on a number you already know to confirm new bank details before paying."
+  },
+  {
+    "id": "purchase",
+    "name": "Online purchase scam",
+    "how_it_works": "A seller on a marketplace advertises an item at a great price, asks for payment by bank transfer outside the platform, and then disappears.",
+    "red_flags": [
+      "price far below the market",
+      "seller asks to pay outside the platform's protection",
+      "no way to see the item in person",
+      "new seller account with few reviews",
+      "pressure because 'others are interested'"
+    ],
+    "pressure_tactics": ["scarcity", "bargain", "fake proof of postage"],
+    "safe_advice": "Use payment methods that protect buyers. If it looks too cheap, it probably is."
+  },
+  {
+    "id": "advance_fee",
+    "name": "Prize, inheritance or loan advance fee",
+    "how_it_works": "The victim is told they have won a prize, inherited money or qualified for a loan, but must first pay a fee, tax or insurance. The promised money never arrives.",
+    "red_flags": [
+      "unexpected prize or windfall",
+      "a fee must be paid first",
+      "asked to pay quickly to an individual's account",
+      "official-looking but unverifiable documents",
+      "contact came by message, email or text"
+    ],
+    "pressure_tactics": ["greed", "deadlines", "fake official paperwork"],
+    "safe_advice": "Real prizes and loans do not ask for money upfront. Do not pay to receive money."
+  },
+  {
+    "id": "family_emergency",
+    "name": "Family emergency impersonation",
+    "how_it_works": "A message from an unknown number says 'Hi Mum, I lost my phone', then asks for an urgent transfer for a bill or an emergency.",
+    "red_flags": [
+      "message from a new number claiming to be a relative",
+      "urgent request for money to a third party's account",
+      "relative cannot talk on the phone",
+      "asked to keep it secret from the rest of the family",
+      "payee name is not the relative"
+    ],
+    "pressure_tactics": ["urgency", "emotional pressure", "secrecy"],
+    "safe_advice": "Call the relative on the number you already have before sending anything."
+  }
+]

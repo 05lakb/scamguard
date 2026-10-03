@@ -1,0 +1,1202 @@
+[
+  {
+    "id": "C001",
+    "name": "Kofi Reyes",
+    "segment": "retiree",
+    "age": 81,
+    "tenure_months": 171,
+    "typical_amount": 100,
+    "usual_hours": [
+      9,
+      17
+    ],
+    "payments_per_month": 7,
+    "known_payees": [
+      "Metro Transit",
+      "Northside Gym",
+      "Home Broadband Ltd",
+      "Yara Tanaka",
+      "Omar Hughes"
+    ]
+  },
+  {
+    "id": "C002",
+    "name": "Tara Chen",
+    "segment": "young_professional",
+    "age": 25,
+    "tenure_months": 79,
+    "typical_amount": 32,
+    "usual_hours": [
+      8,
+      23
+    ],
+    "payments_per_month": 18,
+    "known_payees": [
+      "Home Broadband Ltd",
+      "Corner Grocers",
+      "Home Broadband Ltd",
+      "Vera Khan",
+      "Grace Mendes"
+    ]
+  },
+  {
+    "id": "C003",
+    "name": "Lena Lopez",
+    "segment": "small_business_owner",
+    "age": 55,
+    "tenure_months": 102,
+    "typical_amount": 1230,
+    "usual_hours": [
+      8,
+      19
+    ],
+    "payments_per_month": 52,
+    "known_payees": [
+      "City Power Co",
+      "Green Leaf Cafe",
+      "City Power Co",
+      "Rosa Silva",
+      "Jamal Jensen"
+    ]
+  },
+  {
+    "id": "C004",
+    "name": "Elena Tanaka",
+    "segment": "student",
+    "age": 22,
+    "tenure_months": 12,
+    "typical_amount": 68,
+    "usual_hours": [
+      10,
+      24
+    ],
+    "payments_per_month": 19,
+    "known_payees": [
+      "Green Leaf Cafe",
+      "Home Broadband Ltd",
+      "Northside Gym",
+      "Carla Mendes",
+      "Sven Silva"
+    ]
+  },
+  {
+    "id": "C005",
+    "name": "Dev Novak",
+    "segment": "family",
+    "age": 48,
+    "tenure_months": 159,
+    "typical_amount": 560,
+    "usual_hours": [
+      7,
+      22
+    ],
+    "payments_per_month": 30,
+    "known_payees": [
+      "Northside Gym",
+      "Sunrise Pharmacy",
+      "Northside Gym",
+      "Sven Patel",
+      "Quinn Reyes"
+    ]
+  },
+  {
+    "id": "C006",
+    "name": "Sven Hughes",
+    "segment": "retiree",
+    "age": 69,
+    "tenure_months": 18,
+    "typical_amount": 52,
+    "usual_hours": [
+      9,
+      17
+    ],
+    "payments_per_month": 14,
+    "known_payees": [
+      "City Power Co",
+      "Northside Gym",
+      "Home Broadband Ltd",
+      "Elena Patel",
+      "Hiro Diaz"
+    ]
+  },
+  {
+    "id": "C007",
+    "name": "Vera Patel",
+    "segment": "young_professional",
+    "age": 35,
+    "tenure_months": 145,
+    "typical_amount": 497,
+    "usual_hours": [
+      8,
+      23
+    ],
+    "payments_per_month": 23,
+    "known_payees": [
+      "Northside Gym",
+      "Sunrise Pharmacy",
+      "Home Broadband Ltd",
+      "Zane Mendes",
+      "Nia Garcia"
+    ]
+  },
+  {
+    "id": "C008",
+    "name": "Ines Adler",
+    "segment": "small_business_owner",
+    "age": 31,
+    "tenure_months": 44,
+    "typical_amount": 1405,
+    "usual_hours": [
+      8,
+      19
+    ],
+    "payments_per_month": 58,
+    "known_payees": [
+      "Home Broadband Ltd",
+      "Home Broadband Ltd",
+      "Green Leaf Cafe",
+      "Grace Ito",
+      "Wen Patel"
+    ]
+  },
+  {
+    "id": "C009",
+    "name": "Quinn Patel",
+    "segment": "student",
+    "age": 24,
+    "tenure_months": 148,
+    "typical_amount": 69,
+    "usual_hours": [
+      10,
+      24
+    ],
+    "payments_per_month": 9,
+    "known_payees": [
+      "Sunrise Pharmacy",
+      "Green Leaf Cafe",
+      "Home Broadband Ltd",
+      "Zane Diaz",
+      "Omar Reyes"
+    ]
+  },
+  {
+    "id": "C010",
+    "name": "Omar Fischer",
+    "segment": "family",
+    "age": 45,
+    "tenure_months": 128,
+    "typical_amount": 315,
+    "usual_hours": [
+      7,
+      22
+    ],
+    "payments_per_month": 17,
+    "known_payees": [
+      "Sunrise Pharmacy",
+      "Home Broadband Ltd",
+      "Green Leaf Cafe",
+      "Dev Garcia",
+      "Xavier Novak"
+    ]
+  },
+  {
+    "id": "C011",
+    "name": "Omar Adler",
+    "segment": "retiree",
+    "age": 67,
+    "tenure_months": 6,
+    "typical_amount": 114,
+    "usual_hours": [
+      9,
+      17
+    ],
+    "payments_per_month": 13,
+    "known_payees": [
+      "City Power Co",
+      "Metro Transit",
+      "Metro Transit",
+      "Dev Walker",
+      "Ben Silva"
+    ]
+  },
+  {
+    "id": "C012",
+    "name": "Vera Lopez",
+    "segment": "young_professional",
+    "age": 26,
+    "tenure_months": 7,
+    "typical_amount": 304,
+    "usual_hours": [
+      8,
+      23
+    ],
+    "payments_per_month": 25,
+    "known_payees": [
+      "Home Broadband Ltd",
+      "Bright Water Utility",
+      "Metro Transit",
+      "Priya Tanaka",
+      "Elena Walker"
+    ]
+  },
+  {
+    "id": "C013",
+    "name": "Wen Reyes",
+    "segment": "small_business_owner",
+    "age": 39,
+    "tenure_months": 27,
+    "typical_amount": 3788,
+    "usual_hours": [
+      8,
+      19
+    ],
+    "payments_per_month": 46,
+    "known_payees": [
+      "Bright Water Utility",
+      "Bright Water Utility",
+      "Sunrise Pharmacy",
+      "Quinn Novak",
+      "Mateo Eze"
+    ]
+  },
+  {
+    "id": "C014",
+    "name": "Zane Garcia",
+    "segment": "student",
+    "age": 24,
+    "tenure_months": 9,
+    "typical_amount": 76,
+    "usual_hours": [
+      10,
+      24
+    ],
+    "payments_per_month": 11,
+    "known_payees": [
+      "Northside Gym",
+      "City Power Co",
+      "Corner Grocers",
+      "Lena Lopez",
+      "Yara Adler"
+    ]
+  },
+  {
+    "id": "C015",
+    "name": "Quinn Patel",
+    "segment": "family",
+    "age": 42,
+    "tenure_months": 180,
+    "typical_amount": 76,
+    "usual_hours": [
+      7,
+      22
+    ],
+    "payments_per_month": 24,
+    "known_payees": [
+      "Home Broadband Ltd",
+      "Green Leaf Cafe",
+      "City Power Co",
+      "Priya Okafor",
+      "Sven Walker"
+    ]
+  },
+  {
+    "id": "C016",
+    "name": "Elena Tanaka",
+    "segment": "retiree",
+    "age": 81,
+    "tenure_months": 58,
+    "typical_amount": 127,
+    "usual_hours": [
+      9,
+      17
+    ],
+    "payments_per_month": 12,
+    "known_payees": [
+      "Green Leaf Cafe",
+      "Home Broadband Ltd",
+      "Metro Transit",
+      "Vera Chen",
+      "Rosa Mendes"
+    ]
+  },
+  {
+    "id": "C017",
+    "name": "Grace Fischer",
+    "segment": "young_professional",
+    "age": 24,
+    "tenure_months": 171,
+    "typical_amount": 64,
+    "usual_hours": [
+      8,
+      23
+    ],
+    "payments_per_month": 32,
+    "known_payees": [
+      "Corner Grocers",
+      "Home Broadband Ltd",
+      "Metro Transit",
+      "Priya Adler",
+      "Elena Reyes"
+    ]
+  },
+  {
+    "id": "C018",
+    "name": "Zane Reyes",
+    "segment": "small_business_owner",
+    "age": 58,
+    "tenure_months": 41,
+    "typical_amount": 1095,
+    "usual_hours": [
+      8,
+      19
+    ],
+    "payments_per_month": 30,
+    "known_payees": [
+      "Bright Water Utility",
+      "Northside Gym",
+      "Sunrise Pharmacy",
+      "Nia Silva",
+      "Nia Chen"
+    ]
+  },
+  {
+    "id": "C019",
+    "name": "Jamal Fischer",
+    "segment": "student",
+    "age": 23,
+    "tenure_months": 50,
+    "typical_amount": 59,
+    "usual_hours": [
+      10,
+      24
+    ],
+    "payments_per_month": 16,
+    "known_payees": [
+      "Home Broadband Ltd",
+      "Home Broadband Ltd",
+      "Northside Gym",
+      "Jamal Okafor",
+      "Farid Khan"
+    ]
+  },
+  {
+    "id": "C020",
+    "name": "Priya Okafor",
+    "segment": "family",
+    "age": 35,
+    "tenure_months": 140,
+    "typical_amount": 581,
+    "usual_hours": [
+      7,
+      22
+    ],
+    "payments_per_month": 31,
+    "known_payees": [
+      "Sunrise Pharmacy",
+      "City Power Co",
+      "Metro Transit",
+      "Hiro Adler",
+      "Carla Okafor"
+    ]
+  },
+  {
+    "id": "C021",
+    "name": "Nia Silva",
+    "segment": "retiree",
+    "age": 70,
+    "tenure_months": 12,
+    "typical_amount": 209,
+    "usual_hours": [
+      9,
+      17
+    ],
+    "payments_per_month": 11,
+    "known_payees": [
+      "Bright Water Utility",
+      "Green Leaf Cafe",
+      "Metro Transit",
+      "Dev Walker",
+      "Wen Ito"
+    ]
+  },
+  {
+    "id": "C022",
+    "name": "Yara Tanaka",
+    "segment": "young_professional",
+    "age": 35,
+    "tenure_months": 60,
+    "typical_amount": 599,
+    "usual_hours": [
+      8,
+      23
+    ],
+    "payments_per_month": 33,
+    "known_payees": [
+      "Sunrise Pharmacy",
+      "Sunrise Pharmacy",
+      "Bright Water Utility",
+      "Dev Ito",
+      "Dev Novak"
+    ]
+  },
+  {
+    "id": "C023",
+    "name": "Dev Bianchi",
+    "segment": "small_business_owner",
+    "age": 54,
+    "tenure_months": 97,
+    "typical_amount": 901,
+    "usual_hours": [
+      8,
+      19
+    ],
+    "payments_per_month": 31,
+    "known_payees": [
+      "City Power Co",
+      "Green Leaf Cafe",
+      "Sunrise Pharmacy",
+      "Sven Chen",
+      "Jamal Khan"
+    ]
+  },
+  {
+    "id": "C024",
+    "name": "Ines Ito",
+    "segment": "student",
+    "age": 19,
+    "tenure_months": 9,
+    "typical_amount": 30,
+    "usual_hours": [
+      10,
+      24
+    ],
+    "payments_per_month": 21,
+    "known_payees": [
+      "Sunrise Pharmacy",
+      "Northside Gym",
+      "Corner Grocers",
+      "Ben Diaz",
+      "Hiro Adler"
+    ]
+  },
+  {
+    "id": "C025",
+    "name": "Dev Diaz",
+    "segment": "family",
+    "age": 53,
+    "tenure_months": 149,
+    "typical_amount": 367,
+    "usual_hours": [
+      7,
+      22
+    ],
+    "payments_per_month": 33,
+    "known_payees": [
+      "Green Leaf Cafe",
+      "Green Leaf Cafe",
+      "Home Broadband Ltd",
+      "Tara Walker",
+      "Ben Mendes"
+    ]
+  },
+  {
+    "id": "C026",
+    "name": "Tara Garcia",
+    "segment": "retiree",
+    "age": 79,
+    "tenure_months": 115,
+    "typical_amount": 201,
+    "usual_hours": [
+      9,
+      17
+    ],
+    "payments_per_month": 7,
+    "known_payees": [
+      "Green Leaf Cafe",
+      "Sunrise Pharmacy",
+      "Northside Gym",
+      "Jamal Lopez",
+      "Ben Novak"
+    ]
+  },
+  {
+    "id": "C027",
+    "name": "Jamal Khan",
+    "segment": "young_professional",
+    "age": 28,
+    "tenure_months": 37,
+    "typical_amount": 54,
+    "usual_hours": [
+      8,
+      23
+    ],
+    "payments_per_month": 24,
+    "known_payees": [
+      "Northside Gym",
+      "Green Leaf Cafe",
+      "Corner Grocers",
+      "Rosa Khan",
+      "Grace Silva"
+    ]
+  },
+  {
+    "id": "C028",
+    "name": "Xavier Diaz",
+    "segment": "small_business_owner",
+    "age": 35,
+    "tenure_months": 164,
+    "typical_amount": 429,
+    "usual_hours": [
+      8,
+      19
+    ],
+    "payments_per_month": 27,
+    "known_payees": [
+      "City Power Co",
+      "Corner Grocers",
+      "Bright Water Utility",
+      "Quinn Lopez",
+      "Tara Jensen"
+    ]
+  },
+  {
+    "id": "C029",
+    "name": "Nia Tanaka",
+    "segment": "student",
+    "age": 20,
+    "tenure_months": 97,
+    "typical_amount": 13,
+    "usual_hours": [
+      10,
+      24
+    ],
+    "payments_per_month": 21,
+    "known_payees": [
+      "Northside Gym",
+      "Northside Gym",
+      "Metro Transit",
+      "Yara Novak",
+      "Vera Hughes"
+    ]
+  },
+  {
+    "id": "C030",
+    "name": "Elena Fischer",
+    "segment": "family",
+    "age": 49,
+    "tenure_months": 13,
+    "typical_amount": 843,
+    "usual_hours": [
+      7,
+      22
+    ],
+    "payments_per_month": 32,
+    "known_payees": [
+      "Northside Gym",
+      "Sunrise Pharmacy",
+      "Bright Water Utility",
+      "Hiro Adler",
+      "Amara Ito"
+    ]
+  },
+  {
+    "id": "C031",
+    "name": "Nia Ito",
+    "segment": "retiree",
+    "age": 75,
+    "tenure_months": 41,
+    "typical_amount": 285,
+    "usual_hours": [
+      9,
+      17
+    ],
+    "payments_per_month": 7,
+    "known_payees": [
+      "Bright Water Utility",
+      "Corner Grocers",
+      "Sunrise Pharmacy",
+      "Kofi Reyes",
+      "Yara Khan"
+    ]
+  },
+  {
+    "id": "C032",
+    "name": "Vera Adler",
+    "segment": "young_professional",
+    "age": 34,
+    "tenure_months": 68,
+    "typical_amount": 87,
+    "usual_hours": [
+      8,
+      23
+    ],
+    "payments_per_month": 30,
+    "known_payees": [
+      "Corner Grocers",
+      "Metro Transit",
+      "Bright Water Utility",
+      "Xavier Mendes",
+      "Wen Lopez"
+    ]
+  },
+  {
+    "id": "C033",
+    "name": "Hiro Silva",
+    "segment": "small_business_owner",
+    "age": 56,
+    "tenure_months": 76,
+    "typical_amount": 3436,
+    "usual_hours": [
+      8,
+      19
+    ],
+    "payments_per_month": 41,
+    "known_payees": [
+      "Metro Transit",
+      "Green Leaf Cafe",
+      "Green Leaf Cafe",
+      "Omar Okafor",
+      "Rosa Patel"
+    ]
+  },
+  {
+    "id": "C034",
+    "name": "Vera Tanaka",
+    "segment": "student",
+    "age": 22,
+    "tenure_months": 54,
+    "typical_amount": 110,
+    "usual_hours": [
+      10,
+      24
+    ],
+    "payments_per_month": 13,
+    "known_payees": [
+      "Northside Gym",
+      "Bright Water Utility",
+      "Home Broadband Ltd",
+      "Amara Lopez",
+      "Quinn Novak"
+    ]
+  },
+  {
+    "id": "C035",
+    "name": "Ben Fischer",
+    "segment": "family",
+    "age": 34,
+    "tenure_months": 82,
+    "typical_amount": 864,
+    "usual_hours": [
+      7,
+      22
+    ],
+    "payments_per_month": 26,
+    "known_payees": [
+      "Sunrise Pharmacy",
+      "Bright Water Utility",
+      "City Power Co",
+      "Amara Silva",
+      "Grace Tanaka"
+    ]
+  },
+  {
+    "id": "C036",
+    "name": "Sven Bianchi",
+    "segment": "retiree",
+    "age": 77,
+    "tenure_months": 103,
+    "typical_amount": 197,
+    "usual_hours": [
+      9,
+      17
+    ],
+    "payments_per_month": 14,
+    "known_payees": [
+      "Bright Water Utility",
+      "City Power Co",
+      "City Power Co",
+      "Elena Mendes",
+      "Kofi Silva"
+    ]
+  },
+  {
+    "id": "C037",
+    "name": "Jamal Bianchi",
+    "segment": "young_professional",
+    "age": 35,
+    "tenure_months": 157,
+    "typical_amount": 297,
+    "usual_hours": [
+      8,
+      23
+    ],
+    "payments_per_month": 36,
+    "known_payees": [
+      "Metro Transit",
+      "Bright Water Utility",
+      "Sunrise Pharmacy",
+      "Jamal Silva",
+      "Jamal Lopez"
+    ]
+  },
+  {
+    "id": "C038",
+    "name": "Mateo Garcia",
+    "segment": "small_business_owner",
+    "age": 53,
+    "tenure_months": 167,
+    "typical_amount": 748,
+    "usual_hours": [
+      8,
+      19
+    ],
+    "payments_per_month": 20,
+    "known_payees": [
+      "Home Broadband Ltd",
+      "Northside Gym",
+      "Green Leaf Cafe",
+      "Zane Silva",
+      "Farid Reyes"
+    ]
+  },
+  {
+    "id": "C039",
+    "name": "Farid Khan",
+    "segment": "student",
+    "age": 20,
+    "tenure_months": 47,
+    "typical_amount": 13,
+    "usual_hours": [
+      10,
+      24
+    ],
+    "payments_per_month": 8,
+    "known_payees": [
+      "City Power Co",
+      "Corner Grocers",
+      "Green Leaf Cafe",
+      "Carla Lopez",
+      "Jamal Garcia"
+    ]
+  },
+  {
+    "id": "C040",
+    "name": "Elena Walker",
+    "segment": "family",
+    "age": 51,
+    "tenure_months": 69,
+    "typical_amount": 594,
+    "usual_hours": [
+      7,
+      22
+    ],
+    "payments_per_month": 19,
+    "known_payees": [
+      "City Power Co",
+      "Green Leaf Cafe",
+      "Home Broadband Ltd",
+      "Dev Chen",
+      "Mateo Ito"
+    ]
+  },
+  {
+    "id": "C041",
+    "name": "Umar Diaz",
+    "segment": "retiree",
+    "age": 76,
+    "tenure_months": 127,
+    "typical_amount": 194,
+    "usual_hours": [
+      9,
+      17
+    ],
+    "payments_per_month": 13,
+    "known_payees": [
+      "City Power Co",
+      "Metro Transit",
+      "Green Leaf Cafe",
+      "Vera Okafor",
+      "Sven Lopez"
+    ]
+  },
+  {
+    "id": "C042",
+    "name": "Carla Chen",
+    "segment": "young_professional",
+    "age": 36,
+    "tenure_months": 132,
+    "typical_amount": 114,
+    "usual_hours": [
+      8,
+      23
+    ],
+    "payments_per_month": 39,
+    "known_payees": [
+      "Sunrise Pharmacy",
+      "Sunrise Pharmacy",
+      "Metro Transit",
+      "Farid Khan",
+      "Nia Reyes"
+    ]
+  },
+  {
+    "id": "C043",
+    "name": "Kofi Khan",
+    "segment": "small_business_owner",
+    "age": 59,
+    "tenure_months": 174,
+    "typical_amount": 2500,
+    "usual_hours": [
+      8,
+      19
+    ],
+    "payments_per_month": 51,
+    "known_payees": [
+      "Northside Gym",
+      "Green Leaf Cafe",
+      "Bright Water Utility",
+      "Grace Okafor",
+      "Hiro Lopez"
+    ]
+  },
+  {
+    "id": "C044",
+    "name": "Zane Lopez",
+    "segment": "student",
+    "age": 24,
+    "tenure_months": 157,
+    "typical_amount": 107,
+    "usual_hours": [
+      10,
+      24
+    ],
+    "payments_per_month": 20,
+    "known_payees": [
+      "Metro Transit",
+      "Bright Water Utility",
+      "Home Broadband Ltd",
+      "Xavier Tanaka",
+      "Vera Eze"
+    ]
+  },
+  {
+    "id": "C045",
+    "name": "Ines Khan",
+    "segment": "family",
+    "age": 35,
+    "tenure_months": 87,
+    "typical_amount": 491,
+    "usual_hours": [
+      7,
+      22
+    ],
+    "payments_per_month": 23,
+    "known_payees": [
+      "Home Broadband Ltd",
+      "Sunrise Pharmacy",
+      "Bright Water Utility",
+      "Rosa Ito",
+      "Hiro Khan"
+    ]
+  },
+  {
+    "id": "C046",
+    "name": "Rosa Diaz",
+    "segment": "retiree",
+    "age": 73,
+    "tenure_months": 81,
+    "typical_amount": 113,
+    "usual_hours": [
+      9,
+      17
+    ],
+    "payments_per_month": 13,
+    "known_payees": [
+      "Northside Gym",
+      "Northside Gym",
+      "Corner Grocers",
+      "Rosa Khan",
+      "Vera Novak"
+    ]
+  },
+  {
+    "id": "C047",
+    "name": "Dev Patel",
+    "segment": "young_professional",
+    "age": 38,
+    "tenure_months": 179,
+    "typical_amount": 374,
+    "usual_hours": [
+      8,
+      23
+    ],
+    "payments_per_month": 35,
+    "known_payees": [
+      "Metro Transit",
+      "Northside Gym",
+      "Green Leaf Cafe",
+      "Umar Khan",
+      "Ben Mendes"
+    ]
+  },
+  {
+    "id": "C048",
+    "name": "Farid Adler",
+    "segment": "small_business_owner",
+    "age": 38,
+    "tenure_months": 149,
+    "typical_amount": 3167,
+    "usual_hours": [
+      8,
+      19
+    ],
+    "payments_per_month": 36,
+    "known_payees": [
+      "Bright Water Utility",
+      "Green Leaf Cafe",
+      "Northside Gym",
+      "Yara Patel",
+      "Priya Khan"
+    ]
+  },
+  {
+    "id": "C049",
+    "name": "Ben Hughes",
+    "segment": "student",
+    "age": 19,
+    "tenure_months": 175,
+    "typical_amount": 11,
+    "usual_hours": [
+      10,
+      24
+    ],
+    "payments_per_month": 16,
+    "known_payees": [
+      "Green Leaf Cafe",
+      "Corner Grocers",
+      "Metro Transit",
+      "Zane Okafor",
+      "Quinn Ito"
+    ]
+  },
+  {
+    "id": "C050",
+    "name": "Umar Lopez",
+    "segment": "family",
+    "age": 34,
+    "tenure_months": 148,
+    "typical_amount": 687,
+    "usual_hours": [
+      7,
+      22
+    ],
+    "payments_per_month": 21,
+    "known_payees": [
+      "Corner Grocers",
+      "City Power Co",
+      "Bright Water Utility",
+      "Kofi Hughes",
+      "Omar Garcia"
+    ]
+  },
+  {
+    "id": "C051",
+    "name": "Wen Jensen",
+    "segment": "retiree",
+    "age": 67,
+    "tenure_months": 151,
+    "typical_amount": 127,
+    "usual_hours": [
+      9,
+      17
+    ],
+    "payments_per_month": 12,
+    "known_payees": [
+      "Bright Water Utility",
+      "City Power Co",
+      "Corner Grocers",
+      "Ines Novak",
+      "Ben Fischer"
+    ]
+  },
+  {
+    "id": "C052",
+    "name": "Xavier Reyes",
+    "segment": "young_professional",
+    "age": 27,
+    "tenure_months": 126,
+    "typical_amount": 593,
+    "usual_hours": [
+      8,
+      23
+    ],
+    "payments_per_month": 36,
+    "known_payees": [
+      "Green Leaf Cafe",
+      "Green Leaf Cafe",
+      "Green Leaf Cafe",
+      "Kofi Walker",
+      "Priya Ito"
+    ]
+  },
+  {
+    "id": "C053",
+    "name": "Kofi Ito",
+    "segment": "small_business_owner",
+    "age": 31,
+    "tenure_months": 170,
+    "typical_amount": 2200,
+    "usual_hours": [
+      8,
+      19
+    ],
+    "payments_per_month": 51,
+    "known_payees": [
+      "Bright Water Utility",
+      "Corner Grocers",
+      "Home Broadband Ltd",
+      "Zane Lopez",
+      "Ines Okafor"
+    ]
+  },
+  {
+    "id": "C054",
+    "name": "Lena Ito",
+    "segment": "student",
+    "age": 24,
+    "tenure_months": 83,
+    "typical_amount": 35,
+    "usual_hours": [
+      10,
+      24
+    ],
+    "payments_per_month": 14,
+    "known_payees": [
+      "Corner Grocers",
+      "Northside Gym",
+      "City Power Co",
+      "Xavier Reyes",
+      "Vera Silva"
+    ]
+  },
+  {
+    "id": "C055",
+    "name": "Jamal Patel",
+    "segment": "family",
+    "age": 51,
+    "tenure_months": 29,
+    "typical_amount": 834,
+    "usual_hours": [
+      7,
+      22
+    ],
+    "payments_per_month": 31,
+    "known_payees": [
+      "Green Leaf Cafe",
+      "Home Broadband Ltd",
+      "Green Leaf Cafe",
+      "Vera Khan",
+      "Lena Fischer"
+    ]
+  },
+  {
+    "id": "C056",
+    "name": "Rosa Fischer",
+    "segment": "retiree",
+    "age": 73,
+    "tenure_months": 141,
+    "typical_amount": 79,
+    "usual_hours": [
+      9,
+      17
+    ],
+    "payments_per_month": 14,
+    "known_payees": [
+      "Northside Gym",
+      "City Power Co",
+      "Metro Transit",
+      "Amara Okafor",
+      "Hiro Garcia"
+    ]
+  },
+  {
+    "id": "C057",
+    "name": "Quinn Reyes",
+    "segment": "young_professional",
+    "age": 26,
+    "tenure_months": 137,
+    "typical_amount": 469,
+    "usual_hours": [
+      8,
+      23
+    ],
+    "payments_per_month": 21,
+    "known_payees": [
+      "Sunrise Pharmacy",
+      "Home Broadband Ltd",
+      "Bright Water Utility",
+      "Rosa Khan",
+      "Lena Mendes"
+    ]
+  },
+  {
+    "id": "C058",
+    "name": "Tara Silva",
+    "segment": "small_business_owner",
+    "age": 36,
+    "tenure_months": 44,
+    "typical_amount": 2381,
+    "usual_hours": [
+      8,
+      19
+    ],
+    "payments_per_month": 58,
+    "known_payees": [
+      "Bright Water Utility",
+      "Bright Water Utility",
+      "Bright Water Utility",
+      "Zane Tanaka",
+      "Ben Bianchi"
+    ]
+  },
+  {
+    "id": "C059",
+    "name": "Zane Jensen",
+    "segment": "student",
+    "age": 20,
+    "tenure_months": 41,
+    "typical_amount": 45,
+    "usual_hours": [
+      10,
+      24
+    ],
+    "payments_per_month": 16,
+    "known_payees": [
+      "Green Leaf Cafe",
+      "Bright Water Utility",
+      "Home Broadband Ltd",
+      "Farid Fischer",
+      "Wen Bianchi"
+    ]
+  },
+  {
+    "id": "C060",
+    "name": "Farid Eze",
+    "segment": "family",
+    "age": 45,
+    "tenure_months": 170,
+    "typical_amount": 819,
+    "usual_hours": [
+      7,
+      22
+    ],
+    "payments_per_month": 34,
+    "known_payees": [
+      "Home Broadband Ltd",
+      "Corner Grocers",
+      "Sunrise Pharmacy",
+      "Hiro Reyes",
+      "Lena Silva"
+    ]
+  }
+]

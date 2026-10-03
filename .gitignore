@@ -32,3 +32,6 @@ Thumbs.db
 *.sqlite
 *.db
 eval/output/
+
+# Original download of the blind test (copied to data/blind_test_v1.json)
+data/randomdummy*

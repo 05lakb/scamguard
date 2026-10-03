@@ -83,6 +83,7 @@ def ask(prompt, model=None, retries=3):
 
     If we hit the free-tier speed limit, wait a little and try again.
     """
+    safe_to_send(prompt)
     model = model or FAST_MODEL
     for attempt in range(retries):
         try:

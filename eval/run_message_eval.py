@@ -20,8 +20,8 @@ PAUSE_SECONDS = 5  # a short rest between calls keeps us under the free-tier spe
 FLAG_AT = 50  # a likelihood at or above this counts as "looks like a scam"
 
 
-def balanced_cases():
-    scenarios = json.loads((ROOT / "data" / "scenarios.json").read_text(encoding="utf-8"))
+def balanced_cases(data_file="scenarios.json"):
+    scenarios = json.loads((ROOT / "data" / data_file).read_text(encoding="utf-8"))
     with_message = [case for case in scenarios if case["customer_evidence"]]
     scams = [case for case in with_message if case["label"] == "scam"]
     legit = [case for case in with_message if case["label"] == "legit"]
@@ -38,9 +38,10 @@ def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("--batch", type=int, default=0)
     parser.add_argument("--size", type=int, default=20)
+    parser.add_argument("--data", default="scenarios.json", help="which data file to use")
     args = parser.parse_args()
 
-    cases = balanced_cases()[args.batch * args.size:(args.batch + 1) * args.size]
+    cases = balanced_cases(args.data)[args.batch * args.size:(args.batch + 1) * args.size]
     scam_types = load_scam_types()
 
     rows = []

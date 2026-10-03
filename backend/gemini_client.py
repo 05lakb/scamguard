@@ -5,6 +5,7 @@ key and model names are only handled here.
 """
 
 import os
+import re
 import time
 
 # On some company networks, web traffic is re-signed with a company certificate.
@@ -19,6 +20,7 @@ except ImportError:
 
 from dotenv import load_dotenv
 from google import genai
+from google.genai import types
 
 # Read the secret key from the local ".env" file (never stored in git).
 load_dotenv(".env")
@@ -39,6 +41,41 @@ def get_client():
             raise RuntimeError("GEMINI_API_KEY is missing. Add it to your .env file.")
         _client = genai.Client(api_key=key)
     return _client
+
+
+EMAIL_LIKE = re.compile(r"[\w.+-]+@[\w-]+\.[\w.]+")
+CARD_LIKE = re.compile(r"\b(?:\d[ -]?){13,19}\b")
+
+
+def safe_to_send(text):
+    """Refuse to send anything that looks like an email address or a card number.
+
+    Our test data is all made up, so this should never trigger. It is a safety
+    net in case something real is ever pasted in by mistake.
+    """
+    if EMAIL_LIKE.search(text) or CARD_LIKE.search(text):
+        raise ValueError("Blocked: the text looks like it holds an email address or card number.")
+
+
+def ask_structured(prompt, answer_shape, model=None, retries=3):
+    """Send a prompt and get back an answer in a fixed shape (a pydantic class)."""
+    safe_to_send(prompt)
+    model = model or FAST_MODEL
+    settings = types.GenerateContentConfig(
+        response_mime_type="application/json",
+        response_schema=answer_shape,
+        temperature=0,
+    )
+    for attempt in range(retries):
+        try:
+            reply = get_client().models.generate_content(model=model, contents=prompt, config=settings)
+            return answer_shape.model_validate_json(reply.text)
+        except Exception as error:
+            too_busy = "429" in str(error) or "RESOURCE_EXHAUSTED" in str(error)
+            if too_busy and attempt < retries - 1:
+                time.sleep(15 * (attempt + 1))
+                continue
+            raise
 
 
 def ask(prompt, model=None, retries=3):

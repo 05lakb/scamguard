@@ -57,7 +57,15 @@ def safe_to_send(text):
         raise ValueError("Blocked: the text looks like it holds an email address or card number.")
 
 
-def ask_structured(prompt, answer_shape, model=None, retries=3):
+def is_temporary(error):
+    """True for hiccups that usually go away: speed limits, busy servers, dropped connections."""
+    text = f"{type(error).__name__} {error}"
+    signs = ("429", "RESOURCE_EXHAUSTED", "503", "500", "UNAVAILABLE", "DEADLINE", "ReadError",
+             "ConnectError", "ConnectionReset", "RemoteProtocolError", "Timeout", "10054")
+    return any(sign in text for sign in signs)
+
+
+def ask_structured(prompt, answer_shape, model=None, retries=4):
     """Send a prompt and get back an answer in a fixed shape (a pydantic class)."""
     safe_to_send(prompt)
     model = model or FAST_MODEL
@@ -71,14 +79,13 @@ def ask_structured(prompt, answer_shape, model=None, retries=3):
             reply = get_client().models.generate_content(model=model, contents=prompt, config=settings)
             return answer_shape.model_validate_json(reply.text)
         except Exception as error:
-            too_busy = "429" in str(error) or "RESOURCE_EXHAUSTED" in str(error)
-            if too_busy and attempt < retries - 1:
+            if is_temporary(error) and attempt < retries - 1:
                 time.sleep(15 * (attempt + 1))
                 continue
             raise
 
 
-def ask(prompt, model=None, retries=3):
+def ask(prompt, model=None, retries=4):
     """Send a prompt and return the reply text.
 
     If we hit the free-tier speed limit, wait a little and try again.
@@ -90,8 +97,7 @@ def ask(prompt, model=None, retries=3):
             reply = get_client().models.generate_content(model=model, contents=prompt)
             return reply.text
         except Exception as error:
-            too_busy = "429" in str(error) or "RESOURCE_EXHAUSTED" in str(error)
-            if too_busy and attempt < retries - 1:
+            if is_temporary(error) and attempt < retries - 1:
                 time.sleep(10 * (attempt + 1))
                 continue
             raise

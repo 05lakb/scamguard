@@ -53,3 +53,10 @@ def test_night_payment_adds_a_warning_point():
     day = check_behaviour(payment(), CUSTOMER)["score"]
     night = check_behaviour(payment(timestamp="2026-09-10T03:15:00"), CUSTOMER)["score"]
     assert night > day
+
+
+def test_business_owners_get_more_room_on_big_payments():
+    big = payment(amount=700)
+    ordinary = check_behaviour(big, {"typical_amount": 100, "segment": "family"})["score"]
+    business = check_behaviour(big, {"typical_amount": 100, "segment": "small_business_owner"})["score"]
+    assert business < ordinary

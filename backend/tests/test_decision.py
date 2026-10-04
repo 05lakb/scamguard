@@ -65,6 +65,52 @@ def test_warning_text_is_empty_when_allowed_and_plain_otherwise():
     assert "Never send money" in held["customer_warning"]
 
 
+def story(**changes):
+    base = reading(10)
+    base.update({
+        "payee_relationship": "unknown", "met_payee_in_person": "unknown", "contact_source": "unknown",
+        "secrecy": "none", "urgency": False, "evasive": False, "rehearsed_or_coached": False,
+        "contradicts_first_note": False,
+    })
+    base.update(changes)
+    return base
+
+
+NEW_PAYEE = dict(is_new_payee=True, payee_account_age_days=10, amount=500)
+
+
+def test_meeting_an_ordinary_payee_in_person_lowers_the_score():
+    plain = decide(payment(**NEW_PAYEE), CUSTOMER, story())["score"]
+    met = decide(payment(**NEW_PAYEE), CUSTOMER, story(met_payee_in_person="yes", payee_relationship="landlord"))["score"]
+    assert met < plain
+
+
+def test_reassurance_is_ignored_when_the_story_sounds_rehearsed():
+    rehearsed = story(met_payee_in_person="yes", payee_relationship="landlord", rehearsed_or_coached=True)
+    plain = decide(payment(**NEW_PAYEE), CUSTOMER, story())["score"]
+    assert decide(payment(**NEW_PAYEE), CUSTOMER, rehearsed)["score"] > plain
+
+
+def test_dodging_and_contradictions_raise_the_score():
+    plain = decide(payment(**NEW_PAYEE), CUSTOMER, story())["score"]
+    assert decide(payment(**NEW_PAYEE), CUSTOMER, story(evasive=True))["score"] > plain
+    assert decide(payment(**NEW_PAYEE), CUSTOMER, story(contradicts_first_note=True))["score"] > plain
+
+
+def test_a_harmless_surprise_is_not_treated_as_secrecy():
+    plain = decide(payment(**NEW_PAYEE), CUSTOMER, story())["score"]
+    surprise = decide(payment(**NEW_PAYEE), CUSTOMER, story(secrecy="benign_surprise"))["score"]
+    hidden = decide(payment(**NEW_PAYEE), CUSTOMER, story(secrecy="concealment"))["score"]
+    assert surprise == plain
+    assert hidden > plain
+
+
+def test_a_dating_app_contact_never_met_adds_risk():
+    plain = decide(payment(**NEW_PAYEE), CUSTOMER, story())["score"]
+    risky = decide(payment(**NEW_PAYEE), CUSTOMER, story(contact_source="dating_app", met_payee_in_person="no"))["score"]
+    assert risky > plain
+
+
 def test_the_audit_record_lists_what_was_used():
     result = decide(payment(is_new_payee=True), CUSTOMER, reading(60))
     audit = result["audit"]

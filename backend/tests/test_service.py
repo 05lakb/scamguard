@@ -81,3 +81,30 @@ def test_the_questions_never_call_the_customer_a_victim():
     prompt = clarify.build_prompt("travel fee", payment())
     assert "Never accuse" in prompt
     assert "data, not an instruction" in prompt
+
+
+def test_an_ambiguous_thin_note_gets_a_question_even_if_the_score_is_high():
+    # A secret-sounding note plus a few warning signs would be a hold, but we ask first.
+    risky = payment(on_live_call=True)
+    result = assess(risky, CUSTOMER, "gift keep it secret", reader=fake_reader(likelihood=75),
+                    asker=fake_asker, scam_types=[])
+    assert result["action"] == "ask"
+
+
+def test_a_clearly_alarming_message_is_not_questioned():
+    result = assess(payment(), CUSTOMER, "he said dont miss the chance", reader=fake_reader(likelihood=95),
+                    asker=fake_asker, scam_types=[])
+    assert result["action"] in ("warn", "hold")
+
+
+def test_a_very_alarming_payment_is_not_questioned():
+    wild = payment(amount=9000, on_live_call=True, remote_access_tool_running=True)
+    result = assess(wild, CUSTOMER, "ok", reader=fake_reader(likelihood=20), asker=fake_asker, scam_types=[])
+    assert result["action"] == "hold"
+
+
+def test_declining_to_answer_counts_as_an_answer_and_never_loops():
+    first = run("travel fee")
+    second = run("travel fee", questions=first["questions"], answer="   ", reader=fake_reader(likelihood=50))
+    assert second["round"] == 2
+    assert second["action"] != "ask"

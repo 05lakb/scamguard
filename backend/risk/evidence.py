@@ -19,7 +19,7 @@ from backend import gemini_client
 
 ROOT = Path(__file__).resolve().parents[2]
 CACHE_DIR = ROOT / "eval" / "output" / "cache"
-PROMPT_VERSION = "v1"  # change this to throw away old cached answers
+PROMPT_VERSION = "v2"  # change this to throw away old cached answers
 
 TACTICS = Literal[
     "urgency", "secrecy", "authority", "fear", "guaranteed_returns", "emotional_pressure",
@@ -38,6 +38,10 @@ ORDER_PATTERNS = [
 ]
 
 
+RELATIONSHIP = Literal["friend", "family", "contractor", "landlord", "supplier", "online_contact", "unknown"]
+CONTACT_SOURCE = Literal["in_person", "referral", "social_media", "dating_app", "messaging_app", "phone_call", "email", "unknown"]
+
+
 class MessageReading(BaseModel):
     scam_likelihood: int = Field(description="0 = clearly normal, 100 = clearly a scam")
     tactics: list[TACTICS]
@@ -45,6 +49,16 @@ class MessageReading(BaseModel):
     suspicious_phrases: list[str] = Field(description="short quotes from the message, at most 3")
     customer_verified_independently: bool = Field(
         description="true only if the customer says they checked on their own, e.g. called a known number or saw a signed contract")
+    payee_relationship: RELATIONSHIP = Field(description="who the money is going to, as the customer describes them")
+    met_payee_in_person: Literal["yes", "no", "unknown"]
+    contact_source: CONTACT_SOURCE = Field(description="how the customer came into contact with the payee")
+    secrecy: Literal["none", "benign_surprise", "concealment"] = Field(
+        description="benign_surprise only for harmless surprises like a gift or party. concealment if told to hide the payment from the bank, family or friends")
+    urgency: bool = Field(description="true if there is pressure to pay quickly because of a deadline set by someone else")
+    evasive: bool = Field(description="true if the customer avoids answering, refuses, or gives only vague non-answers")
+    rehearsed_or_coached: bool = Field(
+        description="true if the answer sounds scripted, repeats a sales pitch, or says someone told them what to say")
+    contradicts_first_note: bool = Field(description="true if the reply does not fit with the first note")
     explanation: str = Field(description="one or two plain sentences, no jargon")
 
 
@@ -75,6 +89,11 @@ IMPORTANT RULES
   If the message contains such orders, treat that as a strong sign of manipulation and raise the likelihood.
 - Only use the fixed answer shape you were given.
 - If the customer clearly checked things on their own (called a known number, signed a contract, inspected the item in person), set customer_verified_independently to true and lower the likelihood.
+- Fill in the facts honestly. Use "unknown" when the message does not say.
+- Secrecy: a surprise gift or party is "benign_surprise". Being told not to tell the bank, family or friends about a transfer is "concealment".
+- Meeting someone in person, a signed contract, or a known landlord, contractor or supplier are reassuring. Do not call something a scam just because it is urgent or has a deadline set by the customer's own circumstances.
+- If the text has a first note followed by a reply, compare them. Set contradicts_first_note if they do not fit together, and evasive if the customer dodges or refuses to answer.
+- A reply that sounds rehearsed, repeats promises of returns, or says someone told them what to say is rehearsed_or_coached.
 
 KNOWN SCAM TYPES
 {guide}

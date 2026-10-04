@@ -4,6 +4,9 @@ It adds up warning points. Each point has a plain reason, so we can always
 explain why a payment was flagged. It never calls any outside service.
 """
 
+# How much bigger than usual a payment can be before it looks odd, by customer type.
+AMOUNT_SLACK = {"small_business_owner": 2.0}
+
 # Score at or above these numbers decides what the behaviour check alone suggests.
 WARN_AT = 40
 HOLD_AT = 70
@@ -23,7 +26,9 @@ def check_behaviour(payment, customer):
         _add(signals, "very_new_account", 15,
              f"The receiving account is only {payment['payee_account_age_days']} days old.")
 
-    usual = max(customer["typical_amount"], 1)
+    # Business owners' payments naturally swing a lot, so the same jump counts for less.
+    slack = AMOUNT_SLACK.get(customer.get("segment"), 1.0)
+    usual = max(customer["typical_amount"], 1) * slack
     ratio = payment["amount"] / usual
     if ratio >= 10:
         _add(signals, "amount_far_above_usual", 30, f"The amount is about {ratio:.0f} times what this customer usually pays.")

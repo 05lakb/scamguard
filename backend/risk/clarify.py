@@ -20,6 +20,9 @@ CACHE_DIR = Path(__file__).resolve().parents[2] / "eval" / "output" / "cache_que
 ASK_FROM_BEHAVIOUR_SCORE = 25
 # A note shorter than this many words is treated as too thin to judge.
 THIN_NOTE_WORDS = 8
+# Past these levels the evidence is already strong, so we skip the question.
+STRONG_BEHAVIOUR_SCORE = 70
+STRONG_MESSAGE_LIKELIHOOD = 90
 
 
 class FollowUp(BaseModel):
@@ -33,8 +36,12 @@ def note_is_thin(message):
 def should_ask(message, reading, decision):
     """Decide whether a question is worth asking for this payment."""
     audit = decision["audit"]
-    if audit["forced_hold"] or decision["action"] == "hold":
-        return False  # already serious enough, a person will look at it
+    if audit["forced_hold"]:
+        return False  # the message tried to give orders to the checker, a person must look
+    if audit["behaviour_score"] >= STRONG_BEHAVIOUR_SCORE:
+        return False  # the payment alone is alarming enough, no need to ask
+    if reading and reading["scam_likelihood"] >= STRONG_MESSAGE_LIKELIHOOD:
+        return False  # the message alone is clearly a scam
     if audit["behaviour_score"] < ASK_FROM_BEHAVIOUR_SCORE:
         return False  # nothing unusual about the payment itself
     if reading and reading["customer_verified_independently"] and reading["scam_likelihood"] < 30:

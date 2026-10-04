@@ -40,3 +40,9 @@ def test_emails_and_card_numbers_are_never_sent():
 
 def test_normal_text_with_amounts_is_allowed_through():
     gemini_client.safe_to_send("Send $3,110 to the company account today.")
+
+
+def test_dropped_connections_and_speed_limits_are_retried_but_real_errors_are_not():
+    assert gemini_client.is_temporary(RuntimeError("429 RESOURCE_EXHAUSTED"))
+    assert gemini_client.is_temporary(RuntimeError("[WinError 10054] connection forcibly closed"))
+    assert not gemini_client.is_temporary(ValueError("Blocked: the text looks like it holds an email address"))

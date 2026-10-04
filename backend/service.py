@@ -19,8 +19,9 @@ def assess(payment, customer, message=None, questions=None, answer=None,
     """
     scam_types = scam_types if scam_types is not None else load_scam_types()
 
-    # Second round: the customer has answered our questions.
-    if answer:
+    # Second round: the customer has answered our questions (or declined to).
+    if answer is not None:
+        answer = answer.strip() or "(the customer declined to answer)"
         text = clarify.combine(message, questions or [], answer)
         reading = reader(text, scam_types)
         outcome = decide(payment, customer, reading, scam_types)

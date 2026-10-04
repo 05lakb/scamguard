@@ -18,6 +18,51 @@ VERIFIED_DISCOUNT = 25
 CALM_BELOW = 30
 
 
+# Relationships that are normal for a genuine payment.
+ORDINARY_RELATIONSHIPS = {"landlord", "contractor", "supplier", "family", "friend"}
+RISKY_CONTACT_SOURCES = {"dating_app", "social_media", "messaging_app"}
+
+
+def story_adjustments(reading):
+    """Points added or removed based on what the customer's story reveals.
+
+    Reassuring facts only count when the story is not rehearsed, evasive or contradictory.
+    Returns (points, reasons). Points can be negative.
+    """
+    points = 0
+    reasons = []
+    meets = lambda key, default=None: reading.get(key, default)  # older readings may lack these fields
+
+    suspicious_story = meets("evasive") or meets("rehearsed_or_coached") or meets("contradicts_first_note")
+
+    if meets("evasive"):
+        points += 10
+        reasons.append("The customer avoided answering our questions.")
+    if meets("rehearsed_or_coached"):
+        points += 10
+        reasons.append("The answer sounds rehearsed, as if someone told the customer what to say.")
+    if meets("contradicts_first_note"):
+        points += 15
+        reasons.append("The answer does not match the first note.")
+    if meets("secrecy") == "concealment":
+        points += 10
+        reasons.append("The customer was told to keep this payment secret.")
+    if meets("contact_source") in RISKY_CONTACT_SOURCES and meets("met_payee_in_person") == "no":
+        points += 10
+        reasons.append("The payee was met online and never in person.")
+
+    if not suspicious_story and reading["scam_likelihood"] < 40:
+        reduction = 0
+        if meets("met_payee_in_person") == "yes" and meets("payee_relationship") in ORDINARY_RELATIONSHIPS:
+            reduction += 20
+        if meets("contact_source") in ("in_person", "referral") and meets("payee_relationship") in ORDINARY_RELATIONSHIPS:
+            reduction += 10
+        if reduction:
+            points -= min(reduction, 30)
+            reasons.append("The customer knows or has met the payee in an ordinary way, which lowers the risk.")
+    return points, reasons
+
+
 def action_for(score):
     if score >= HOLD_AT:
         return "hold"
@@ -45,6 +90,10 @@ def decide(payment, customer, reading=None, scam_types=None):
         if reading["customer_verified_independently"] and reading["scam_likelihood"] < CALM_BELOW:
             discount = VERIFIED_DISCOUNT
             reasons.append("The customer says they checked this on their own, which lowers the risk.")
+
+        extra_points, extra_reasons = story_adjustments(reading)
+        message_points += extra_points
+        reasons.extend(extra_reasons)
         if reading["orders_found_in_message"]:
             # A real customer does not write orders to a safety checker, so a person must look.
             forced_hold = True

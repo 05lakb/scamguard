@@ -6,9 +6,15 @@ through would miss scams. So we ask one or two friendly questions, read the
 answer, and decide again. We only ask once.
 """
 
+import hashlib
+import json
+from pathlib import Path
+
 from pydantic import BaseModel, Field
 
 from backend import gemini_client
+
+CACHE_DIR = Path(__file__).resolve().parents[2] / "eval" / "output" / "cache_questions"
 
 # Only ask when the payment has at least this many warning points from behaviour.
 ASK_FROM_BEHAVIOUR_SCORE = 25
@@ -55,9 +61,17 @@ Payment: {payment['amount']} {payment['currency']} to a {payment['payee_type']}
 
 
 def ask_questions(message, payment):
-    """Ask Gemini for the follow-up questions."""
-    answer = gemini_client.ask_structured(build_prompt(message, payment), FollowUp)
-    return [question.strip() for question in answer.questions[:2] if question.strip()]
+    """Ask Gemini for the follow-up questions. Answers are saved so repeat test runs are free."""
+    prompt = build_prompt(message, payment)
+    key = hashlib.sha256(f"q1|{gemini_client.FAST_MODEL}|{prompt}".encode()).hexdigest()[:24]
+    path = CACHE_DIR / f"{key}.json"
+    if path.exists():
+        return json.loads(path.read_text(encoding="utf-8"))
+    answer = gemini_client.ask_structured(prompt, FollowUp)
+    questions = [question.strip() for question in answer.questions[:2] if question.strip()]
+    CACHE_DIR.mkdir(parents=True, exist_ok=True)
+    path.write_text(json.dumps(questions), encoding="utf-8")
+    return questions
 
 
 def combine(message, questions, answer):

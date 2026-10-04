@@ -11,6 +11,11 @@ def _rate(part, whole):
 
 
 def summarise(results, customers_by_id):
+    # Cases where even a human might disagree on the right answer are set aside,
+    # so they do not drag the headline numbers up or down.
+    set_aside = [pair for pair in results if pair[0].get("ground_truth_confidence") == "low"]
+    results = [pair for pair in results if pair[0].get("ground_truth_confidence") != "low"]
+
     scams = [(case, action) for case, action in results if case["label"] == "scam"]
     legit = [(case, action) for case, action in results if case["label"] == "legit"]
 
@@ -38,7 +43,30 @@ def summarise(results, customers_by_id):
     silent = [(case, action) for case, action in scams if not case["customer_evidence"]]
     tricky = [(case, action) for case, action in scams if case["has_injection"]]
 
+    # Optional hidden labels that some test sets carry. Shown only when present.
+    extra = {}
+    for label_name in ("difficulty", "case_category"):
+        if any(label_name in case for case, _ in results):
+            scam_groups = defaultdict(lambda: [0, 0])
+            legit_groups = defaultdict(lambda: [0, 0])
+            for case, action in results:
+                key = case.get(label_name)
+                if key is None:
+                    continue
+                if case["label"] == "scam":
+                    scam_groups[key][1] += 1
+                    scam_groups[key][0] += action in ("warn", "hold")
+                else:
+                    legit_groups[key][1] += 1
+                    legit_groups[key][0] += action != "allow"
+            extra[f"scams_caught_by_{label_name}"] = {k: _rate(h, t) for k, (h, t) in sorted(scam_groups.items())}
+            extra[f"normal_with_friction_by_{label_name}"] = {k: _rate(h, t) for k, (h, t) in sorted(legit_groups.items())}
+
+    if set_aside:
+        extra["low_confidence_cases_set_aside"] = len(set_aside)
+
     return {
+        **extra,
         "cases": len(results),
         "scams_caught": _rate(caught, len(scams)),
         "high_danger_scams_held": _rate(held_high, len(high)),

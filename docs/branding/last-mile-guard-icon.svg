@@ -1,0 +1,27 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512" role="img" aria-label="Last Mile Guard icon">
+  <title>Last Mile Guard</title>
+  <defs>
+    <linearGradient id="shield" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#14396B"/>
+      <stop offset="1" stop-color="#0A1F3D"/>
+    </linearGradient>
+    <linearGradient id="trail" x1="0" y1="1" x2="1" y2="0">
+      <stop offset="0" stop-color="#2DD4BF" stop-opacity="0.45"/>
+      <stop offset="1" stop-color="#2DD4BF"/>
+    </linearGradient>
+  </defs>
+  <!-- shield -->
+  <path d="M256 40 L440 110 V250 C440 360 360 440 256 480 C152 440 72 360 72 250 V110 Z"
+        fill="url(#shield)"/>
+  <path d="M256 62 L420 124 V250 C420 345 351 418 256 455 C161 418 92 345 92 250 V124 Z"
+        fill="none" stroke="#2DD4BF" stroke-opacity="0.25" stroke-width="3"/>
+  <!-- trail of dots: the payment travelling its last mile -->
+  <circle cx="150" cy="392" r="8"  fill="url(#trail)" opacity="0.55"/>
+  <circle cx="182" cy="352" r="10" fill="url(#trail)" opacity="0.7"/>
+  <circle cx="218" cy="318" r="12" fill="url(#trail)" opacity="0.85"/>
+  <circle cx="258" cy="286" r="14" fill="url(#trail)"/>
+  <!-- checkpoint ring with tick: the guard at the end -->
+  <circle cx="306" cy="212" r="62" fill="#0A1F3D" stroke="#2DD4BF" stroke-width="16"/>
+  <path d="M280 214 L300 236 L335 190" fill="none" stroke="#FFFFFF" stroke-width="16"
+        stroke-linecap="round" stroke-linejoin="round"/>
+</svg>

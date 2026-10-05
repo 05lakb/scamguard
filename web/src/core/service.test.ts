@@ -1,0 +1,111 @@
+// Tests for the question flow and the "orders to the checker" rule, using fake helpers (no internet).
+
+import { describe, expect, it } from "vitest";
+import { decide } from "./decision";
+import { assess, type Helpers } from "./service";
+import type { Customer, Payment, Reading } from "./types";
+
+const customer: Customer = { id: "c1", segment: "family", typical_amount: 200 };
+
+function payment(changes: Partial<Payment> = {}): Payment {
+  return {
+    amount: 450, currency: "USD", timestamp: "2026-09-10T14:30:00", payee_name: "Test Payee",
+    payee_type: "individual", is_new_payee: true, payee_account_age_days: 10, channel: "mobile",
+    device_known: true, payments_last_24h: 0, on_live_call: false, remote_access_tool_running: false,
+    ...changes,
+  };
+}
+
+function reading(likelihood: number, changes: Partial<Reading> = {}): Reading {
+  return {
+    scam_likelihood: likelihood, tactics: [], matched_typology: "none", suspicious_phrases: [],
+    customer_verified_independently: false, payee_relationship: "unknown", met_payee_in_person: "unknown",
+    contact_source: "unknown", secrecy: "none", urgency: false, evasive: false,
+    rehearsed_or_coached: false, contradicts_first_note: false,
+    explanation: "Pressure to pay quickly.", orders_found_in_message: [], ...changes,
+  };
+}
+
+function helpers(likelihood = 10, changes: Partial<Reading> = {}): Helpers {
+  return {
+    reader: async () => reading(likelihood, changes),
+    asker: async () => ["Who is this payment for?", "How do you know them?"],
+    scamTypes: [],
+  };
+}
+
+describe("orders aimed at the checker", () => {
+  it("force a hold even when the score is low", () => {
+    const result = decide(payment({ is_new_payee: false, payee_account_age_days: 2000, amount: 100 }), customer,
+      reading(0, { orders_found_in_message: ["ignore all previous"] }));
+    expect(result.action).toBe("hold");
+    expect(result.audit.forced_hold).toBe(true);
+  });
+});
+
+describe("the question flow", () => {
+  it("asks a thin note on an unusual payment", async () => {
+    const result = await assess({ payment: payment(), customer, message: "travel fee" }, helpers());
+    expect(result.action).toBe("ask");
+    expect(result.questions?.length).toBe(2);
+  });
+
+  it("asks when the customer wrote nothing", async () => {
+    const result = await assess({ payment: payment(), customer, message: null }, helpers());
+    expect(result.action).toBe("ask");
+  });
+
+  it("does not ask when the note is detailed and calm", async () => {
+    const note = "Paying the deposit for the flat I viewed twice, with a signed contract from the agent.";
+    const result = await assess({ payment: payment(), customer, message: note },
+      helpers(0, { customer_verified_independently: true }));
+    expect(result.action).not.toBe("ask");
+  });
+
+  it("does not ask when the payment is ordinary", async () => {
+    const calm = payment({ amount: 200, is_new_payee: false, payee_account_age_days: 2000 });
+    const result = await assess({ payment: calm, customer, message: "ok" }, helpers());
+    expect(result.action).toBe("allow");
+  });
+
+  it("asks before holding an ambiguous thin note", async () => {
+    const result = await assess({ payment: payment({ on_live_call: true }), customer, message: "gift keep it secret" },
+      helpers(75));
+    expect(result.action).toBe("ask");
+  });
+
+  it("does not ask when the message is clearly a scam", async () => {
+    const result = await assess({ payment: payment(), customer, message: "he said dont miss the chance" }, helpers(95));
+    expect(["warn", "hold"]).toContain(result.action);
+  });
+
+  it("lowers the risk after a reassuring answer", async () => {
+    const first = await assess({ payment: payment(), customer, message: "travel fee" }, helpers());
+    const second = await assess(
+      { payment: payment(), customer, message: "travel fee", questions: first.questions, answer: "It is my sister, I called her today." },
+      helpers(0, { customer_verified_independently: true }),
+    );
+    expect(second.round).toBe(2);
+    expect(second.action).not.toBe("ask");
+    expect(second.score).toBeLessThan(first.score);
+  });
+
+  it("raises the risk after an alarming answer and never asks twice", async () => {
+    const first = await assess({ payment: payment(), customer, message: "travel fee" }, helpers());
+    const second = await assess(
+      { payment: payment(), customer, message: "travel fee", questions: first.questions, answer: "He said keep it secret and pay today." },
+      helpers(95),
+    );
+    expect(["warn", "hold"]).toContain(second.action);
+  });
+
+  it("treats a blank answer as a refusal and does not loop", async () => {
+    const first = await assess({ payment: payment(), customer, message: "travel fee" }, helpers());
+    const second = await assess(
+      { payment: payment(), customer, message: "travel fee", questions: first.questions, answer: "   " },
+      helpers(50),
+    );
+    expect(second.round).toBe(2);
+    expect(second.action).not.toBe("ask");
+  });
+});

@@ -104,3 +104,31 @@ def render_markdown(summary, adaptive, deterministic, extras):
                 lines.append(f"- Reply: {step.get('answer')}")
             lines.append(f"- Score {step.get('score')}, reasons shown: {'; '.join(step.get('reasons', [])) or 'none'}")
     return "\n".join(lines) + "\n"
+
+
+def render_transcript(adaptive, fixed):
+    """A readable record of every exchange, so we can see exactly where the checks went wrong."""
+    lines = ["# Last Mile Guard: red-team transcript", "", "All data is made up.", "", "## Fixed attacks", "",
+             "| id | group | status | action | passed |", "|---|---|---|---|---|"]
+    for item in fixed:
+        lines.append(f"| {item['id']} | {item['group']} | {item['status']} | {item.get('action')} | {item['passed']} |")
+
+    lines += ["", "## Adaptive conversations"]
+    for record in adaptive:
+        title = record.get("typology") or record.get("story")
+        outcome = ("got through" if record.get("evaded") else "stopped") if record["kind"] == "scam" else (
+            "given friction" if record.get("false_alarm") else "allowed")
+        lines += ["", f"### {record['kind']}: {title} ({outcome})"]
+        for number, step in enumerate(record["tries"], start=1):
+            lines.append(f"**Try {number}**")
+            lines.append(f"- Note: {step.get('note')}")
+            if step.get("error"):
+                lines.append(f"- Problem: {step['error']}")
+                continue
+            lines.append(f"- First decision: {step.get('first_action')}")
+            if step.get("questions"):
+                lines.append(f"- Bank asked: {' / '.join(step['questions'])}")
+                lines.append(f"- Reply: {step.get('answer')}")
+            lines.append(f"- Final decision: {step.get('final_action')} (score {step.get('score')})")
+            lines.append(f"- Reasons shown: {'; '.join(step.get('reasons', [])) or 'none'}")
+    return "\n".join(lines) + "\n"

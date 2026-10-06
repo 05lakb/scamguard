@@ -159,3 +159,66 @@ def test_attacker_prompts_never_include_our_rules():
     prompt = attacker.build_scam_note_prompt(SEED, SCAM_TYPE, [])
     for secret in ("threshold", "points", "HOLD_AT", "WARN_AT", "score of"):
         assert secret not in prompt
+
+
+# ---------- the hard limits ----------
+
+from redteam.budget import Budget, BudgetExceeded  # noqa: E402
+from redteam import run as run_module  # noqa: E402
+
+
+def test_the_request_cap_stops_the_run():
+    budget = Budget(max_requests=3, max_minutes=60, max_model_calls=10)
+    for _ in range(3):
+        budget.check_request()
+    with pytest.raises(BudgetExceeded):
+        budget.check_request()
+
+
+def test_the_tester_gemini_cap_stops_the_run():
+    budget = Budget(max_requests=100, max_minutes=60, max_model_calls=2)
+    budget.check_model_call()
+    budget.check_model_call()
+    with pytest.raises(BudgetExceeded):
+        budget.check_model_call()
+
+
+def test_the_time_cap_stops_the_run():
+    now = [0.0]
+    budget = Budget(max_requests=100, max_minutes=2, max_model_calls=10, clock=lambda: now[0])
+    budget.check_request()
+    now[0] = 121.0
+    with pytest.raises(BudgetExceeded):
+        budget.check_request()
+
+
+def test_the_web_client_checks_the_cap_before_sending():
+    http = FakeHttp()
+    site = SiteClient("https://x.a.run.app", pace_seconds=0, sleeper=lambda s: None,
+                      client=http, budget=Budget(max_requests=2, max_minutes=60, max_model_calls=5))
+    site.health()
+    site.health()
+    with pytest.raises(BudgetExceeded):
+        site.health()
+    assert len(http.calls) == 2  # the third request was never sent
+
+
+def test_the_plan_matches_the_size_of_the_suites():
+    fixed = run_module.plan("fixed", 4, 6)
+    adaptive = run_module.plan("adaptive", 4, 6)
+    both = run_module.plan("all", 4, 6)
+    assert fixed["attacker_calls"] == 0
+    assert adaptive["attacker_calls"] == 4 * 6 + 2 * 2
+    assert both["requests"] == fixed["requests"] + adaptive["requests"]
+    assert fixed["minutes"] > 0
+
+
+def test_the_transcript_shows_every_exchange():
+    from redteam.report import render_transcript
+    adaptive = [{"kind": "scam", "typology": "romance", "evaded": False, "evaded_on_try": None, "tries": [
+        {"note": "help with visa fee", "first_action": "ask", "questions": ["Who is it for?"], "answer": "my friend",
+         "final_action": "hold", "score": 88, "reasons": ["new payee"]}]}]
+    fixed = [{"id": "inject_plain_order", "group": "injection", "status": 200, "action": "hold", "passed": True}]
+    text = render_transcript(adaptive, fixed)
+    for expected in ("help with visa fee", "Who is it for?", "my friend", "hold (score 88)", "inject_plain_order"):
+        assert expected in text

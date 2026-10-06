@@ -24,7 +24,7 @@ class Reply:
 
 class SiteClient:
     def __init__(self, base_url, allow_host=None, pace_seconds=6.0, sleeper=time.sleep,
-                 clock=time.monotonic, client=None):
+                 clock=time.monotonic, client=None, budget=None):
         parsed = urlparse(base_url)
         host = parsed.hostname or ""
         if parsed.scheme != "https":
@@ -40,6 +40,7 @@ class SiteClient:
         self._last = None
         self._http = client or httpx.Client(timeout=45.0, follow_redirects=False)
         self.requests_made = 0
+        self.budget = budget  # optional hard limits, checked before every request
 
     def _pace(self):
         """Wait so that requests are spaced out."""
@@ -50,6 +51,8 @@ class SiteClient:
         self._last = self._clock()
 
     def _send(self, method, path, **kwargs):
+        if self.budget:
+            self.budget.check_request()
         self._pace()
         self.requests_made += 1
         response = self._http.request(method, self.base + path, **kwargs)

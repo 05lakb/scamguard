@@ -35,3 +35,6 @@ eval/output/
 
 # Original download of the blind test (copied to data/blind_test_v1.json)
 data/randomdummy*
+
+# Output of the testing agent
+redteam/output/

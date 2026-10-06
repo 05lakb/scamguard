@@ -13,6 +13,13 @@ RUNTIME_ACCOUNT="lmg-runtime@${PROJECT_ID}.iam.gserviceaccount.com"
 echo "Project: ${PROJECT_ID}   Region: ${REGION}"
 gcloud config set project "${PROJECT_ID}" >/dev/null
 
+# New Google projects need this once: the builder identity must be allowed to build from source.
+# It is Google's narrow "Cloud Run Builder" role, and running it again does no harm.
+PROJECT_NUMBER="$(gcloud projects describe "${PROJECT_ID}" --format='value(projectNumber)')"
+gcloud projects add-iam-policy-binding "${PROJECT_ID}" \
+  --member="serviceAccount:${PROJECT_NUMBER}-compute@developer.gserviceaccount.com" \
+  --role="roles/run.builder" >/dev/null
+
 # Cost and safety limits:
 #   min-instances 0   -> costs nothing while nobody is using it
 #   max-instances 2   -> a flood of visitors cannot start many copies

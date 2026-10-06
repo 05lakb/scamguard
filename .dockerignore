@@ -1,0 +1,15 @@
+.git
+.github
+.venv
+.env
+.env.*
+MEMORY.md
+**/node_modules
+web/dist
+eval
+docs
+data/*.json
+!data/typologies.json
+data/randomdummy*
+__pycache__
+*.pyc

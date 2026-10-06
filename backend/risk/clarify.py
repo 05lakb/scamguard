@@ -15,6 +15,7 @@ from pydantic import BaseModel, Field
 from backend import gemini_client
 
 CACHE_DIR = Path(__file__).resolve().parents[2] / "eval" / "output" / "cache_questions"
+_memory_questions = {}  # used instead of the disk on a live server
 
 # Only ask when the payment has at least this many warning points from behaviour.
 ASK_FROM_BEHAVIOUR_SCORE = 25
@@ -72,12 +73,19 @@ def ask_questions(message, payment):
     prompt = build_prompt(message, payment)
     key = hashlib.sha256(f"q1|{gemini_client.FAST_MODEL}|{prompt}".encode()).hexdigest()[:24]
     path = CACHE_DIR / f"{key}.json"
-    if path.exists():
+    if gemini_client.DISK_CACHE and path.exists():
         return json.loads(path.read_text(encoding="utf-8"))
+    if not gemini_client.DISK_CACHE and key in _memory_questions:
+        return _memory_questions[key]
     answer = gemini_client.ask_structured(prompt, FollowUp)
     questions = [question.strip() for question in answer.questions[:2] if question.strip()]
-    CACHE_DIR.mkdir(parents=True, exist_ok=True)
-    path.write_text(json.dumps(questions), encoding="utf-8")
+    if gemini_client.DISK_CACHE:
+        CACHE_DIR.mkdir(parents=True, exist_ok=True)
+        path.write_text(json.dumps(questions), encoding="utf-8")
+    else:
+        if len(_memory_questions) >= 500:
+            _memory_questions.pop(next(iter(_memory_questions)))
+        _memory_questions[key] = questions
     return questions
 
 

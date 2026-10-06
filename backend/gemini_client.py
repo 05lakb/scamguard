@@ -29,6 +29,14 @@ load_dotenv(".env")
 FAST_MODEL = os.getenv("GEMINI_FAST_MODEL") or "gemini-3.5-flash-lite"
 SMART_MODEL = os.getenv("GEMINI_SMART_MODEL") or "gemini-3.8-flash"
 
+# When USE_VERTEX is "1" the app talks to Gemini through Google Cloud (Vertex AI).
+# The newer models are only offered through the "global" location.
+USE_VERTEX = os.getenv("USE_VERTEX") == "1"
+VERTEX_LOCATION = os.getenv("VERTEX_LOCATION") or "global"
+
+# Saving answers to disk is handy when testing. A live server keeps them in memory instead.
+DISK_CACHE = os.getenv("LMG_DISK_CACHE", "1") == "1"
+
 _client = None
 
 
@@ -36,10 +44,17 @@ def get_client():
     """Return the shared Gemini client, creating it the first time."""
     global _client
     if _client is None:
-        key = os.getenv("GEMINI_API_KEY")
-        if not key:
-            raise RuntimeError("GEMINI_API_KEY is missing. Add it to your .env file.")
-        _client = genai.Client(api_key=key)
+        if USE_VERTEX:
+            # On Google Cloud the app proves who it is with its own identity, so no key is needed.
+            project = os.getenv("GOOGLE_CLOUD_PROJECT")
+            if not project:
+                raise RuntimeError("GOOGLE_CLOUD_PROJECT is missing, so Vertex AI cannot be used.")
+            _client = genai.Client(vertexai=True, project=project, location=VERTEX_LOCATION)
+        else:
+            key = os.getenv("GEMINI_API_KEY")
+            if not key:
+                raise RuntimeError("GEMINI_API_KEY is missing. Add it to your .env file.")
+            _client = genai.Client(api_key=key)
     return _client
 
 

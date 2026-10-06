@@ -21,6 +21,10 @@ ROOT = Path(__file__).resolve().parents[2]
 CACHE_DIR = ROOT / "eval" / "output" / "cache"
 PROMPT_VERSION = "v2"  # change this to throw away old cached answers
 
+# On a live server, answers are kept in memory (not on disk), and only the newest few hundred.
+_memory_cache = {}
+MEMORY_CACHE_LIMIT = 500
+
 TACTICS = Literal[
     "urgency", "secrecy", "authority", "fear", "guaranteed_returns", "emotional_pressure",
     "scarcity", "fee_to_receive_money", "off_platform_payment", "remote_control",
@@ -112,13 +116,21 @@ def read_message(message, scam_types, model=None):
     """Ask Gemini to read one message. Answers are saved so repeat runs are free."""
     model = model or gemini_client.FAST_MODEL
     path = _cache_path(model, message)
-    if path.exists():
+    if gemini_client.DISK_CACHE and path.exists():
         reading = MessageReading.model_validate_json(path.read_text(encoding="utf-8"))
+        cached = True
+    elif not gemini_client.DISK_CACHE and path.name in _memory_cache:
+        reading = _memory_cache[path.name]
         cached = True
     else:
         reading = gemini_client.ask_structured(build_prompt(message, scam_types), MessageReading, model=model)
-        CACHE_DIR.mkdir(parents=True, exist_ok=True)
-        path.write_text(reading.model_dump_json(), encoding="utf-8")
+        if gemini_client.DISK_CACHE:
+            CACHE_DIR.mkdir(parents=True, exist_ok=True)
+            path.write_text(reading.model_dump_json(), encoding="utf-8")
+        else:
+            if len(_memory_cache) >= MEMORY_CACHE_LIMIT:
+                _memory_cache.pop(next(iter(_memory_cache)))  # drop the oldest entry
+            _memory_cache[path.name] = reading
         cached = False
 
     orders = find_orders_in_message(message)

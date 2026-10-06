@@ -108,3 +108,33 @@ def test_declining_to_answer_counts_as_an_answer_and_never_loops():
     second = run("travel fee", questions=first["questions"], answer="   ", reader=fake_reader(likelihood=50))
     assert second["round"] == 2
     assert second["action"] != "ask"
+
+
+# ---------- asking when a new payee is still unexplained ----------
+
+def calm_new_payee():
+    return payment(amount=200, payee_account_age_days=300, device_known=True)
+
+
+def explained_reader(text, scam_types):
+    reading = fake_reader(5)(text, scam_types)
+    reading.update(payee_relationship="landlord", met_payee_in_person="yes", contact_source="in_person")
+    return reading
+
+
+def test_an_unexplained_new_payee_gets_a_question_even_when_the_payment_looks_calm():
+    long_bland_note = "Please process this payment as soon as you can, thank you very much for your help today."
+    result = assess(calm_new_payee(), CUSTOMER, long_bland_note, reader=fake_reader(5), asker=fake_asker, scam_types=[])
+    assert result["action"] == "ask"
+
+
+def test_a_new_payee_the_customer_has_explained_is_not_questioned():
+    note = "Rent deposit for the flat I viewed on Saturday. I met the landlord and signed the lease."
+    result = assess(calm_new_payee(), CUSTOMER, note, reader=explained_reader, asker=fake_asker, scam_types=[])
+    assert result["action"] != "ask"
+
+
+def test_a_known_payee_is_never_questioned_just_for_being_unexplained():
+    known = payment(amount=190, is_new_payee=False, payee_account_age_days=3000)
+    result = assess(known, CUSTOMER, "ok", reader=fake_reader(5), asker=fake_asker, scam_types=[])
+    assert result["action"] == "allow"

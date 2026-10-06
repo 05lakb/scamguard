@@ -5,7 +5,7 @@ explain why a payment was flagged. It never calls any outside service.
 """
 
 # How much bigger than usual a payment can be before it looks odd, by customer type.
-AMOUNT_SLACK = {"small_business_owner": 2.0}
+AMOUNT_SLACK = {"small_business_owner": 1.5}
 
 # Score at or above these numbers decides what the behaviour check alone suggests.
 WARN_AT = 40

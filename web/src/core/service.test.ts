@@ -109,3 +109,26 @@ describe("the question flow", () => {
     expect(second.action).not.toBe("ask");
   });
 });
+
+describe("asking when a new payee is still unexplained", () => {
+  const calm = () => payment({ amount: 200, payee_account_age_days: 300, device_known: true });
+
+  it("asks even when the payment looks calm and the note is long but says nothing about the payee", async () => {
+    const note = "Please process this payment as soon as you can, thank you very much for your help today.";
+    const result = await assess({ payment: calm(), customer, message: note }, helpers(5));
+    expect(result.action).toBe("ask");
+  });
+
+  it("does not ask when the customer has explained the payee", async () => {
+    const note = "Rent deposit for the flat I viewed on Saturday. I met the landlord and signed the lease.";
+    const result = await assess({ payment: calm(), customer, message: note },
+      helpers(5, { payee_relationship: "landlord", met_payee_in_person: "yes", contact_source: "in_person" }));
+    expect(result.action).not.toBe("ask");
+  });
+
+  it("never asks about a known payee just because the note is bare", async () => {
+    const known = payment({ amount: 190, is_new_payee: false, payee_account_age_days: 3000 });
+    const result = await assess({ payment: known, customer, message: "ok" }, helpers(5));
+    expect(result.action).toBe("allow");
+  });
+});

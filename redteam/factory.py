@@ -46,8 +46,8 @@ VOICES = [
 
 # How many of each kind of scenario, as a share of the total.
 PLAN = [
-    ("obvious_scam", 15), ("quiet_scam", 20), ("coached_victim", 15), ("contradiction", 8), ("refusal", 8),
-    ("split_payments", 10), ("injection", 8), ("obvious_legit", 8), ("mixed_signal_legit", 8),
+    ("obvious_scam", 12), ("quiet_scam", 16), ("coached_victim", 12), ("contradiction", 6), ("refusal", 6),
+    ("split_payments", 8), ("injection", 6), ("obvious_legit", 14), ("mixed_signal_legit", 20),
 ]
 
 DIFFICULTY = {

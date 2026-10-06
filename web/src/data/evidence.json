@@ -1,28 +1,135 @@
 {
   "scamsFlagged": [
-    { "label": "Payment rules alone", "value": 70, "note": "200 cases we built" },
-    { "label": "Full system, our own cases", "value": 99, "note": "A ceiling: we wrote these cases" },
-    { "label": "Full system, blind test by someone else", "value": 84, "note": "50 cases, run once, before the fixes" }
+    {
+      "label": "Payment rules alone",
+      "value": 70,
+      "note": "200 cases we built"
+    },
+    {
+      "label": "Full system, our own cases",
+      "value": 99,
+      "note": "A ceiling: we wrote these cases"
+    },
+    {
+      "label": "Full system, blind test by someone else",
+      "value": 84,
+      "note": "50 cases, run once, before the fixes"
+    }
   ],
   "friction": [
-    { "label": "Our own 200 cases", "value": 1 },
-    { "label": "Blind test by someone else", "value": 12 }
+    {
+      "label": "Our own 200 cases",
+      "value": 1
+    },
+    {
+      "label": "Blind test by someone else",
+      "value": 12
+    }
   ],
   "findings": [
-    { "found": "Blind test: scams with tiny notes and small amounts slipped through (4 of 25).", "fix": "Ask the customer a short question when the evidence is thin, then decide again.", "status": "Fixed" },
-    { "found": "A surprise gift ('keep it secret') was treated as concealment and held.", "fix": "The reader now tells a harmless surprise from real concealment, and the guard asks before it holds.", "status": "Fixed" },
-    { "found": "Small-business owners got friction on 43% of normal payments.", "fix": "Larger payments count for less against a business customer's own habits.", "status": "Fixed" },
-    { "found": "Eight payments to one new payee in a day only ever earned a question.", "fix": "15 days of history: repeat payments to a new payee, total sent to one payee, and heavy spend all add risk.", "status": "Fixed, re-test pending" },
-    { "found": "Hidden orders to the checker, in eight wordings including other languages.", "fix": "Orders are treated as a warning sign. All eight were held on the first run.", "status": "Holding, control run pending" },
-    { "found": "A second test file was built from templates: 17 unique notes in 50 cases.", "fix": "Rejected as a headline test. Replaced by an automatic scenario factory with a simulated customer.", "status": "Fixed" },
-    { "found": "Cloud Run swallows the /healthz path, so the health check returned 404.", "fix": "The tester checks the home page, and the server's own route moved to /api/health.", "status": "Fixed" },
-    { "found": "Every answer reveals the risk score and reasons, which could help an attacker tune a message.", "fix": "Kept for the demo. A production version would send only the action and a warning to the customer.", "status": "Open by design" }
+    {
+      "found": "Blind scenarios: every coached victim with a bland note on an ordinary payment was allowed (0 of 5).",
+      "fix": "Ask when a new payee is still unexplained after reading the note. Payee reputation from other banks is the stronger defence and is not modelled.",
+      "status": "Fixed, re-test pending"
+    },
+    {
+      "found": "Our fix for business owners went too far: a $16,557 scam (5 times their usual payment) scored only 30 points.",
+      "fix": "The scenario factory caught it. The allowance for business customers was softened from double to one and a half times.",
+      "status": "Fixed, re-test pending"
+    },
+    {
+      "found": "Blind test: scams with tiny notes and small amounts slipped through (4 of 25).",
+      "fix": "Ask the customer a short question when the evidence is thin, then decide again.",
+      "status": "Fixed"
+    },
+    {
+      "found": "A surprise gift ('keep it secret') was treated as concealment and held.",
+      "fix": "The reader now tells a harmless surprise from real concealment, and the guard asks before it holds.",
+      "status": "Fixed"
+    },
+    {
+      "found": "Small-business owners got friction on 43% of normal payments.",
+      "fix": "Larger payments count for less against a business customer's own habits, by half as much again.",
+      "status": "Fixed"
+    },
+    {
+      "found": "Eight payments to one new payee in a day only ever earned a question.",
+      "fix": "15 days of history: repeat payments to a new payee, total sent to one payee, and heavy spend all add risk.",
+      "status": "Fixed, re-test pending"
+    },
+    {
+      "found": "Hidden orders to the checker, in eight wordings including other languages.",
+      "fix": "Orders are treated as a warning sign. All eight were held on the first run.",
+      "status": "Holding, control run pending"
+    },
+    {
+      "found": "A second test file was built from templates: 17 unique notes in 50 cases.",
+      "fix": "Rejected as a headline test. Replaced by an automatic scenario factory with a simulated customer.",
+      "status": "Fixed"
+    },
+    {
+      "found": "Cloud Run swallows the /healthz path, so the health check returned 404.",
+      "fix": "The tester checks the home page, and the server's own route moved to /api/health.",
+      "status": "Fixed"
+    },
+    {
+      "found": "Every answer reveals the risk score and reasons, which could help an attacker tune a message.",
+      "fix": "Kept for the demo. A production version would send only the action and a warning to the customer.",
+      "status": "Open by design"
+    }
   ],
   "limits": [
+    "A customer coached to be bland can still get a scam through when nothing else about the payment is unusual. This is the hardest case.",
     "All data is made up. Nothing here has met real customers or real fraud.",
     "Our own 99% is a ceiling, because we wrote the cases. The blind test is the fairer guide.",
     "Some quiet scams show nothing unusual in the payment itself. Only the customer's words can reveal them, and a coached customer can hide them.",
     "Payee reputation (for example accounts reported by other banks) is not modelled. A real bank would add it.",
     "The prototype runs on the free trial's allowance, with rate limits and a cost guard, so it is not sized for heavy traffic."
-  ]
+  ],
+  "scenarioRun": {
+    "title": "Blind scenarios, by kind (seed 7, 24 scenarios, before the latest change)",
+    "overall": "19 of 24 as expected",
+    "rows": [
+      {
+        "label": "Obvious scams",
+        "value": 100,
+        "n": 2
+      },
+      {
+        "label": "Quiet scams",
+        "value": 100,
+        "n": 5
+      },
+      {
+        "label": "Contradicting answers",
+        "value": 100,
+        "n": 2
+      },
+      {
+        "label": "Refusing to answer",
+        "value": 100,
+        "n": 2
+      },
+      {
+        "label": "Repeated payments",
+        "value": 100,
+        "n": 3
+      },
+      {
+        "label": "Hidden orders to the checker",
+        "value": 100,
+        "n": 2
+      },
+      {
+        "label": "Genuine but scary-sounding",
+        "value": 100,
+        "n": 2
+      },
+      {
+        "label": "Coached victims",
+        "value": 0,
+        "n": 5
+      }
+    ]
+  }
 }

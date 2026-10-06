@@ -37,6 +37,19 @@ export function Evidence() {
       </section>
 
       <section className="card wide-card">
+        <h2 className="eyebrow">{evidence.scenarioRun.title}</h2>
+        <p className="muted">
+          An automatic factory wrote made-up scenarios and a simulated customer played each one. The site never saw the
+          answers. {evidence.scenarioRun.overall}.
+        </p>
+        <ul className="chart">
+          {evidence.scenarioRun.rows.map((row) => (
+            <BarRow key={row.label} label={`${row.label} (${row.n})`} value={row.value} tone={row.value >= 80 ? "good" : "warn"} />
+          ))}
+        </ul>
+      </section>
+
+      <section className="card wide-card">
         <h2 className="eyebrow">What we tested, found and fixed</h2>
         <p className="muted">A red-team agent, a blind test written by someone else, and our own scenario factory attacked the system.</p>
         <div className="table-wrap">

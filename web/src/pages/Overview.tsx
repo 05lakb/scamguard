@@ -1,4 +1,14 @@
+import { EvidenceBars } from "../components/EvidenceBars";
+import { Gauge } from "../components/Gauge";
 import { Icon } from "../components/Icon";
+import type { Contribution } from "../lib/contrib";
+
+// A made-up sample, shown beside the headline so visitors see what the product produces.
+const SAMPLE: Contribution[] = [
+  { label: "The message reads like a romance scam", points: 49, why: "Pressure to pay, never met in person.", kind: "message" },
+  { label: "New payee, account 18 days old", points: 15, why: "Money is going to someone new.", kind: "payment" },
+  { label: "Told to keep this payment secret", points: 10, why: "Concealment from family.", kind: "message" },
+];
 
 interface Props {
   tryLive: () => void;
@@ -16,20 +26,37 @@ const STEPS = [
 export function Overview({ tryLive, playStory, goTo }: Props) {
   return (
     <div className="overview">
-      <section className="hero">
-        <p className="eyebrow">Fraud prevention for banks · Google Cloud AI Builder Cup 2026</p>
-        <h1>Scams don't hack accounts.<br />They talk customers into paying.</h1>
-        <p className="hero-sub">
-          Last Mile Guard is the second look at the final step. It reads the customer's story, checks fifteen days of
-          behaviour, asks a question when it is unsure, and keeps a person in charge of every hold.
-        </p>
-        <div className="row">
-          <button className="primary big" onClick={tryLive}>
-            Try a live case <Icon name="arrow" size={18} />
-          </button>
-          <button className="ghost big" onClick={playStory}>
-            <Icon name="play" size={16} /> Play the 90-second story
-          </button>
+      <section className="hero hero-grid">
+        <div>
+          <p className="eyebrow">Fraud prevention for banks · Google Cloud AI Builder Cup 2026</p>
+          <h1>Scams don't hack accounts. They talk customers into paying.</h1>
+          <p className="hero-sub">
+            Last Mile Guard is the second look at the final step. It reads the customer's story, checks fifteen days of
+            behaviour, asks a question when it is unsure, and keeps a person in charge of every hold.
+          </p>
+          <div className="row">
+            <button className="primary big" onClick={tryLive}>
+              Try a live case <Icon name="arrow" size={18} />
+            </button>
+            <button className="ghost big" onClick={playStory}>
+              <Icon name="play" size={16} /> Play the 90-second story
+            </button>
+          </div>
+        </div>
+        <div className="hero-card" aria-label="A sample decision, with made-up data">
+          <div className="card-head">
+            <span className="eyebrow">Sample decision</span>
+            <span className="muted small">Made-up case</span>
+          </div>
+          <div className="verdict-row">
+            <Gauge score={88} action="hold" />
+            <div>
+              <div className="status hold"><Icon name="hold" size={18} /> Held for review</div>
+              <p className="muted verdict-note">A specialist confirms before any money moves.</p>
+            </div>
+          </div>
+          <h3 className="mini">Why, ranked by weight</h3>
+          <EvidenceBars items={SAMPLE} />
         </div>
       </section>
 

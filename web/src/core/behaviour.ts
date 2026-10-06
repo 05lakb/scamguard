@@ -6,7 +6,7 @@ import type { BehaviourResult, Customer, Payment, Signal } from "./types";
 
 // How much bigger than usual a payment can be before it looks odd, by customer type.
 // Business owners' payments swing a lot, so the same jump counts for less.
-const AMOUNT_SLACK: Record<string, number> = { small_business_owner: 2.0 };
+const AMOUNT_SLACK: Record<string, number> = { small_business_owner: 1.5 };
 
 export const WARN_AT = 40;
 export const HOLD_AT = 70;

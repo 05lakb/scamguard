@@ -693,7 +693,7 @@
     "reasons": [
      "The customer is following instructions from a phone scammer posing as a bank security officer to protect savings, and attempts to override security checks.",
      "The customer was on a phone call while making the payment.",
-     "The amount is about 5 times what this customer usually pays.",
+     "The amount is about 7 times what this customer usually pays.",
      "Money is going to someone the customer has not paid before."
     ],
     "customer_warning": "We have paused this payment so a specialist can check it with you. This is to protect your money. A real bank never asks you to move money to keep it safe. Hang up and call the number on the back of your card."
@@ -1549,7 +1549,7 @@
     "should_ask": false,
     "reasons": [
      "This matches a classic family emergency scam where a scammer pretends to be a relative using a new number, demands urgent funds, and asks to keep it secret.",
-     "The amount is about 6 times what this customer usually pays.",
+     "The amount is about 8 times what this customer usually pays.",
      "Money is going to someone the customer has not paid before.",
      "The receiving account is only 13 days old."
     ],
@@ -2177,7 +2177,7 @@
     "reasons": [
      "This is a classic bank and police impersonation scam where fraudsters convince the victim to transfer funds to a safe account while staying on the phone.",
      "The customer was on a phone call while making the payment.",
-     "The amount is about 5 times what this customer usually pays.",
+     "The amount is about 7 times what this customer usually pays.",
      "Money is going to someone the customer has not paid before."
     ],
     "customer_warning": "We have paused this payment so a specialist can check it with you. This is to protect your money. A real bank never asks you to move money to keep it safe. Hang up and call the number on the back of your card."
@@ -2525,7 +2525,7 @@
     "should_ask": false,
     "reasons": [
      "The message matches a classic family emergency scam, complete with a new number, an urgent wire transfer request, and an excuse for why the relative cannot speak on the phone.",
-     "The amount is about 7 times what this customer usually pays.",
+     "The amount is about 9 times what this customer usually pays.",
      "Money is going to someone the customer has not paid before.",
      "The receiving account is only 5 days old."
     ],
@@ -3975,14 +3975,14 @@
    "expected": {
     "action": "hold",
     "score": 100,
-    "behaviour_score": 60,
+    "behaviour_score": 70,
     "message_points": 76,
     "verified_discount": 0,
     "forced_hold": false,
     "should_ask": false,
     "reasons": [
      "This message exhibits classic signs of a family emergency scam, including high urgency, a request for secrecy from other family members, and a large money transfer to a new account.",
-     "The amount is about 10 times what this customer usually pays.",
+     "The amount is about 13 times what this customer usually pays.",
      "Money is going to someone the customer has not paid before.",
      "The receiving account is only 16 days old."
     ],
@@ -4100,7 +4100,7 @@
    "expected": {
     "action": "hold",
     "score": 100,
-    "behaviour_score": 95,
+    "behaviour_score": 100,
     "message_points": 90,
     "verified_discount": 0,
     "forced_hold": false,
@@ -4108,8 +4108,8 @@
     "reasons": [
      "The customer is following instructions from someone claiming to be bank security to move funds to a secure account, which is a classic bank impersonation scam.",
      "The customer was on a phone call while making the payment.",
-     "Money is going to someone the customer has not paid before.",
-     "The receiving account is only 15 days old."
+     "The amount is about 6 times what this customer usually pays.",
+     "Money is going to someone the customer has not paid before."
     ],
     "customer_warning": "We have paused this payment so a specialist can check it with you. This is to protect your money. A real bank never asks you to move money to keep it safe. Hang up and call the number on the back of your card."
    }
@@ -4746,7 +4746,7 @@
      "This is a classic tech support refund scam where the fraudster pretends to accidentally overpay and demands a return of funds while accessing the victim's device.",
      "A remote-control tool was running, so someone else may be guiding or controlling the screen.",
      "The customer was on a phone call while making the payment.",
-     "The amount is about 6 times what this customer usually pays."
+     "The amount is about 8 times what this customer usually pays."
     ],
     "customer_warning": "We have paused this payment so a specialist can check it with you. This is to protect your money. Never let anyone control your device. Real support does not call you out of the blue."
    }
@@ -5264,7 +5264,7 @@
     "should_ask": false,
     "reasons": [
      "This has classic hallmarks of an invoice redirect scam, featuring a sudden bank account change notified by email combined with a request not to call.",
-     "The amount is about 12 times what this customer usually pays.",
+     "The amount is about 16 times what this customer usually pays.",
      "Money is going to someone the customer has not paid before.",
      "The receiving account is only 6 days old."
     ],
@@ -5869,7 +5869,7 @@
     "forced_hold": false,
     "should_ask": true,
     "reasons": [
-     "The amount is about 11 times what this customer usually pays.",
+     "The amount is about 14 times what this customer usually pays.",
      "Money is going to someone the customer has not paid before.",
      "The receiving account is only 3 days old."
     ],
@@ -5963,14 +5963,14 @@
    "expected": {
     "action": "hold",
     "score": 100,
-    "behaviour_score": 50,
+    "behaviour_score": 60,
     "message_points": 96,
     "verified_discount": 0,
     "forced_hold": false,
     "should_ask": false,
     "reasons": [
      "The customer is sending a large amount of money to an online advisor via a chat app and was explicitly told to hide the crypto investment from the bank, which is a strong indicator of an investment scam.",
-     "The amount is about 9 times what this customer usually pays.",
+     "The amount is about 12 times what this customer usually pays.",
      "Money is going to someone the customer has not paid before.",
      "The receiving account is only 14 days old."
     ],
@@ -8263,14 +8263,14 @@
    "expected": {
     "action": "allow",
     "score": 0,
-    "behaviour_score": 25,
+    "behaviour_score": 35,
     "message_points": -30,
     "verified_discount": 25,
     "forced_hold": false,
     "should_ask": false,
     "reasons": [
+     "The amount is about 5 times what this customer usually pays.",
      "Money is going to someone the customer has not paid before.",
-     "The amount is about 4 times what this customer usually pays.",
      "The customer says they checked this on their own, which lowers the risk.",
      "The customer knows or has met the payee in an ordinary way, which lowers the risk."
     ],
@@ -8600,7 +8600,7 @@
     "forced_hold": false,
     "should_ask": true,
     "reasons": [
-     "The amount is about 7 times what this customer usually pays.",
+     "The amount is about 10 times what this customer usually pays.",
      "Money is going to someone the customer has not paid before."
     ],
     "customer_warning": ""
@@ -8708,15 +8708,15 @@
    "expected": {
     "action": "allow",
     "score": 0,
-    "behaviour_score": 40,
+    "behaviour_score": 50,
     "message_points": -30,
     "verified_discount": 25,
     "forced_hold": false,
     "should_ask": false,
     "reasons": [
+     "The amount is about 6 times what this customer usually pays.",
      "Money is going to someone the customer has not paid before.",
      "The receiving account is only 11 days old.",
-     "The amount is about 4 times what this customer usually pays.",
      "The customer says they checked this on their own, which lowers the risk."
     ],
     "customer_warning": ""
@@ -8880,20 +8880,20 @@
     "orders_found_in_message": []
    },
    "expected": {
-    "action": "allow",
-    "score": 35,
-    "behaviour_score": 60,
+    "action": "warn",
+    "score": 45,
+    "behaviour_score": 70,
     "message_points": 0,
     "verified_discount": 25,
     "forced_hold": false,
     "should_ask": false,
     "reasons": [
-     "The amount is about 8 times what this customer usually pays.",
+     "The amount is about 11 times what this customer usually pays.",
      "Money is going to someone the customer has not paid before.",
      "The receiving account is only 12 days old.",
      "The customer says they checked this on their own, which lowers the risk."
     ],
-    "customer_warning": ""
+    "customer_warning": "Please stop for a moment before sending this payment. It has some signs that match known scams."
    }
   },
   {
@@ -8939,15 +8939,15 @@
    },
    "expected": {
     "action": "allow",
-    "score": 20,
-    "behaviour_score": 75,
+    "score": 30,
+    "behaviour_score": 85,
     "message_points": -30,
     "verified_discount": 25,
     "forced_hold": false,
     "should_ask": false,
     "reasons": [
+     "The amount is about 13 times what this customer usually pays.",
      "The customer was on a phone call while making the payment.",
-     "The amount is about 10 times what this customer usually pays.",
      "Money is going to someone the customer has not paid before.",
      "The customer says they checked this on their own, which lowers the risk."
     ],
@@ -9062,7 +9062,7 @@
     "message_points": 7,
     "verified_discount": 0,
     "forced_hold": false,
-    "should_ask": false,
+    "should_ask": true,
     "reasons": [
      "Money is going to someone the customer has not paid before.",
      "The amount is about 3 times what this customer usually pays."
@@ -9158,7 +9158,7 @@
     "message_points": 0,
     "verified_discount": 0,
     "forced_hold": false,
-    "should_ask": false,
+    "should_ask": true,
     "reasons": [
      "Money is going to someone the customer has not paid before."
     ],
@@ -9470,7 +9470,7 @@
     "should_ask": true,
     "reasons": [
      "Money is going to someone the customer has not paid before.",
-     "The amount is about 3 times what this customer usually pays."
+     "The amount is about 5 times what this customer usually pays."
     ],
     "customer_warning": ""
    }
@@ -10066,7 +10066,7 @@
     "message_points": 0,
     "verified_discount": 0,
     "forced_hold": false,
-    "should_ask": false,
+    "should_ask": true,
     "reasons": [
      "Money is going to someone the customer has not paid before.",
      "The receiving account is only 25 days old."

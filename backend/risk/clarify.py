@@ -21,6 +21,8 @@ _memory_questions = {}  # used instead of the disk on a live server
 ASK_FROM_BEHAVIOUR_SCORE = 25
 # A note shorter than this many words is treated as too thin to judge.
 THIN_NOTE_WORDS = 8
+# A new payee on its own scores 15. If we still know nothing about who the payee is, that is enough to ask.
+ASK_WHEN_PAYEE_UNEXPLAINED = 15
 # Past these levels the evidence is already strong, so we skip the question.
 STRONG_BEHAVIOUR_SCORE = 70
 STRONG_MESSAGE_LIKELIHOOD = 90
@@ -34,6 +36,16 @@ def note_is_thin(message):
     return not message or len(message.split()) < THIN_NOTE_WORDS
 
 
+def payee_unexplained(reading):
+    """True if, after reading the note, we still do not know who the payee is or how the customer knows them."""
+    if reading is None:
+        return True
+    return (reading.get("payee_relationship", "unknown") == "unknown"
+            and reading.get("met_payee_in_person", "unknown") == "unknown"
+            and reading.get("contact_source", "unknown") == "unknown"
+            and not reading.get("customer_verified_independently"))
+
+
 def should_ask(message, reading, decision):
     """Decide whether a question is worth asking for this payment."""
     audit = decision["audit"]
@@ -43,11 +55,15 @@ def should_ask(message, reading, decision):
         return False  # the payment alone is alarming enough, no need to ask
     if reading and reading["scam_likelihood"] >= STRONG_MESSAGE_LIKELIHOOD:
         return False  # the message alone is clearly a scam
-    if audit["behaviour_score"] < ASK_FROM_BEHAVIOUR_SCORE:
-        return False  # nothing unusual about the payment itself
     if reading and reading["customer_verified_independently"] and reading["scam_likelihood"] < 30:
         return False  # the customer already explained and checked
-    return note_is_thin(message)
+    new_payee = any(signal["name"] == "new_payee" for signal in audit["behaviour_signals"])
+    unexplained = new_payee and payee_unexplained(reading)
+    if audit["behaviour_score"] >= ASK_FROM_BEHAVIOUR_SCORE:
+        return note_is_thin(message) or unexplained
+    if audit["behaviour_score"] >= ASK_WHEN_PAYEE_UNEXPLAINED:
+        return unexplained  # only a new payee stands out, and we still know nothing about them
+    return False  # nothing unusual about the payment itself
 
 
 def build_prompt(message, payment):

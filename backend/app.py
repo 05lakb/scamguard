@@ -127,8 +127,8 @@ def create_app(reader=read_message, asker=clarify.ask_questions):
             response.headers["Cache-Control"] = "no-store"
         return response
 
-    @app.get("/healthz")
-    def healthz():
+    @app.get("/api/health")
+    def health():
         return {"ok": True}
 
     @app.post("/api/assess")

@@ -45,7 +45,7 @@ def make_client(reader=fake_reader):
 
 
 def test_health_check_answers():
-    assert make_client().get("/healthz").json() == {"ok": True}
+    assert make_client().get("/api/health").json() == {"ok": True}
 
 
 def test_a_thin_note_on_an_unusual_payment_gets_questions():
@@ -89,7 +89,7 @@ def test_if_the_reader_breaks_the_payment_details_still_get_a_decision():
 
 
 def test_security_headers_are_present():
-    headers = make_client().get("/healthz").headers
+    headers = make_client().get("/api/health").headers
     assert headers["x-content-type-options"] == "nosniff"
     assert headers["x-frame-options"] == "DENY"
     assert "default-src 'self'" in headers["content-security-policy"]

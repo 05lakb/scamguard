@@ -63,7 +63,8 @@ class SiteClient:
         return Reply(response.status_code, body if isinstance(body, dict) else None, response.text[:500])
 
     def health(self):
-        return self._send("GET", "/healthz")
+        """Check the home page answers. (Google reserves /healthz on Cloud Run, so we do not use it.)"""
+        return self._send("GET", "/")
 
     def assess(self, payload, retry_on_limit=True):
         """Send one payment check. If the site says "too many requests", wait and try again."""

@@ -138,3 +138,27 @@ def test_a_known_payee_is_never_questioned_just_for_being_unexplained():
     known = payment(amount=190, is_new_payee=False, payee_account_age_days=3000)
     result = assess(known, CUSTOMER, "ok", reader=fake_reader(5), asker=fake_asker, scam_types=[])
     assert result["action"] == "allow"
+
+
+def claimed_only_reader(text, scam_types):
+    reading = fake_reader(5)(text, scam_types)
+    reading.update(payee_relationship="family")  # the note only claims a relationship
+    return reading
+
+
+def referred_reader(text, scam_types):
+    reading = fake_reader(5)(text, scam_types)
+    reading.update(payee_relationship="supplier", contact_source="referral")
+    return reading
+
+
+def test_a_claimed_relationship_alone_does_not_count_as_proof():
+    note = "Sending money to my cousin for family expenses from the weekend, thank you for your help."
+    result = assess(calm_new_payee(), CUSTOMER, note, reader=claimed_only_reader, asker=fake_asker, scam_types=[])
+    assert result["action"] == "ask"
+
+
+def test_an_introduction_by_someone_trusted_counts_as_corroboration():
+    note = "Paying the new supplier my neighbour recommended, for the fence panels I ordered."
+    result = assess(calm_new_payee(), CUSTOMER, note, reader=referred_reader, asker=fake_asker, scam_types=[])
+    assert result["action"] != "ask"

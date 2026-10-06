@@ -564,7 +564,7 @@
     "message_points": 7,
     "verified_discount": 0,
     "forced_hold": false,
-    "should_ask": false,
+    "should_ask": true,
     "reasons": [
      "Money is going to someone the customer has not paid before."
     ],
@@ -855,7 +855,7 @@
     "message_points": 59,
     "verified_discount": 0,
     "forced_hold": false,
-    "should_ask": false,
+    "should_ask": true,
     "reasons": [
      "This is a classic invoice redirect scam where a scammer intercepts communications and requests payment to a new, unauthorized bank account right before the deadline.",
      "The amount is about 17 times what this customer usually pays.",
@@ -1357,7 +1357,7 @@
     "message_points": 69,
     "verified_discount": 0,
     "forced_hold": false,
-    "should_ask": false,
+    "should_ask": true,
     "reasons": [
      "The customer is making a payment to a supplier based on suddenly changed bank details received via email, and was told not to call to verify, which is a classic invoice redirection scam.",
      "Money is going to someone the customer has not paid before.",
@@ -1859,7 +1859,7 @@
     "message_points": 69,
     "verified_discount": 0,
     "forced_hold": false,
-    "should_ask": false,
+    "should_ask": true,
     "reasons": [
      "The customer received an unexpected email about changed bank details and was instructed not to call, which are classic red flags for an invoice redirect scam.",
      "The amount is about 25 times what this customer usually pays.",
@@ -2047,7 +2047,7 @@
     "message_points": 52,
     "verified_discount": 0,
     "forced_hold": false,
-    "should_ask": false,
+    "should_ask": true,
     "reasons": [
      "The customer is asked to send money quickly for an emergency without details, which matches family emergency or impersonation tactics.",
      "Money is going to someone the customer has not paid before.",
@@ -2235,7 +2235,7 @@
     "message_points": 59,
     "verified_discount": 0,
     "forced_hold": false,
-    "should_ask": false,
+    "should_ask": true,
     "reasons": [
      "This has classic hallmarks of a delivery fee scam where an unknown online contact asks for money to release a held gift.",
      "Money is going to someone the customer has not paid before."
@@ -2458,7 +2458,7 @@
     "message_points": 59,
     "verified_discount": 0,
     "forced_hold": false,
-    "should_ask": false,
+    "should_ask": true,
     "reasons": [
      "The customer is being asked to pay an upfront fee to receive a loan, which is a classic advance fee scam pattern.",
      "Money is going to someone the customer has not paid before.",
@@ -3192,7 +3192,7 @@
     "message_points": 62,
     "verified_discount": 0,
     "forced_hold": false,
-    "should_ask": false,
+    "should_ask": true,
     "reasons": [
      "The customer is asked to send money quickly for an overseas emergency and keep the transaction secret, which strongly suggests a family emergency impersonation scam.",
      "Money is going to someone the customer has not paid before.",
@@ -3479,7 +3479,7 @@
     "message_points": 59,
     "verified_discount": 0,
     "forced_hold": false,
-    "should_ask": false,
+    "should_ask": true,
     "reasons": [
      "This shows classic signs of a family emergency scam, where a fraudster pretends to be a relative using a new number and claims they cannot talk on the phone.",
      "Money is going to someone the customer has not paid before."
@@ -3667,7 +3667,7 @@
     "message_points": 59,
     "verified_discount": 0,
     "forced_hold": false,
-    "should_ask": false,
+    "should_ask": true,
     "reasons": [
      "The customer is being asked to pay a fee to receive an unexpected gift from someone they know only as Chris, which is a classic advance fee scam pattern.",
      "Money is going to someone the customer has not paid before.",
@@ -3791,7 +3791,7 @@
     "message_points": 62,
     "verified_discount": 0,
     "forced_hold": false,
-    "should_ask": false,
+    "should_ask": true,
     "reasons": [
      "The payment is going to a new bank account provided via email with instructions not to call, which is a classic indicator of an invoice redirection scam.",
      "Money is going to someone the customer has not paid before.",
@@ -3854,7 +3854,7 @@
     "message_points": 52,
     "verified_discount": 0,
     "forced_hold": false,
-    "should_ask": false,
+    "should_ask": true,
     "reasons": [
      "This payment is for an online puppy purchase where the buyer cannot visit in person and is pressured to pay today to hold the animal, which is a common setup for an online pet scam.",
      "Money is going to someone the customer has not paid before.",
@@ -4296,7 +4296,7 @@
     "message_points": 69,
     "verified_discount": 0,
     "forced_hold": false,
-    "should_ask": false,
+    "should_ask": true,
     "reasons": [
      "This shows classic signs of an invoice redirect scam, where a supplier's email is spoofed or hacked to provide new bank details and instruct the victim not to call to verify.",
      "The amount is about 6 times what this customer usually pays.",
@@ -5261,7 +5261,7 @@
     "message_points": 69,
     "verified_discount": 0,
     "forced_hold": false,
-    "should_ask": false,
+    "should_ask": true,
     "reasons": [
      "This has classic hallmarks of an invoice redirect scam, featuring a sudden bank account change notified by email combined with a request not to call.",
      "The amount is about 16 times what this customer usually pays.",
@@ -5325,7 +5325,7 @@
     "message_points": 59,
     "verified_discount": 0,
     "forced_hold": false,
-    "should_ask": false,
+    "should_ask": true,
     "reasons": [
      "The customer is attempting to buy an item at a steep discount from an online seller who is demanding a direct bank transfer outside of the platform's safety protections, which is a classic online purchase scam setup.",
      "Money is going to someone the customer has not paid before."
@@ -5766,7 +5766,7 @@
     "message_points": 49,
     "verified_discount": 0,
     "forced_hold": false,
-    "should_ask": false,
+    "should_ask": true,
     "reasons": [
      "The payment is going to an updated account number received via email, which is a common indicator of an invoice redirect scam.",
      "The amount is about 13 times what this customer usually pays.",
@@ -5829,7 +5829,7 @@
     "message_points": 59,
     "verified_discount": 0,
     "forced_hold": false,
-    "should_ask": false,
+    "should_ask": true,
     "reasons": [
      "The customer is sending a large deposit to an overseas landlord they have never met in person, which is a classic setup for a rental scam.",
      "Money is going to someone the customer has not paid before."

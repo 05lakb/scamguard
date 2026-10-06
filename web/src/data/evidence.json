@@ -14,6 +14,11 @@
       "label": "Full system, blind test by someone else",
       "value": 84,
       "note": "50 cases, run once, before the fixes"
+    },
+    {
+      "label": "Blind scenarios by a simulated customer",
+      "value": 85,
+      "note": "40 cases, a new seed, after the unexplained-payee rule"
     }
   ],
   "friction": [
@@ -24,12 +29,21 @@
     {
       "label": "Blind test by someone else",
       "value": 12
+    },
+    {
+      "label": "Blind scenarios, 14 genuine customers",
+      "value": 14
     }
   ],
   "findings": [
     {
       "found": "Blind scenarios: every coached victim with a bland note on an ordinary payment was allowed (0 of 5).",
       "fix": "Ask when a new payee is still unexplained after reading the note. Payee reputation from other banks is the stronger defence and is not modelled.",
+      "status": "Partly fixed: 0 of 5, then 2 of 5"
+    },
+    {
+      "found": "Coached victims still passed when the note only claimed a reason ('family expenses', 'legal fees').",
+      "fix": "A claim is not proof. For a new payee the guard now asks unless the customer met them, was introduced by someone, or checked independently.",
       "status": "Fixed, re-test pending"
     },
     {
@@ -87,18 +101,18 @@
     "The prototype runs on the free trial's allowance, with rate limits and a cost guard, so it is not sized for heavy traffic."
   ],
   "scenarioRun": {
-    "title": "Blind scenarios, by kind (seed 7, 24 scenarios, before the latest change)",
-    "overall": "19 of 24 as expected",
+    "title": "Blind scenarios, by kind (seed 11, 40 scenarios)",
+    "overall": "36 of 40 as expected. On the first run (seed 7, before the fixes) it was 19 of 24",
     "rows": [
       {
         "label": "Obvious scams",
         "value": 100,
-        "n": 2
+        "n": 5
       },
       {
         "label": "Quiet scams",
-        "value": 100,
-        "n": 5
+        "value": 86,
+        "n": 7
       },
       {
         "label": "Contradicting answers",
@@ -123,11 +137,16 @@
       {
         "label": "Genuine but scary-sounding",
         "value": 100,
-        "n": 2
+        "n": 8
+      },
+      {
+        "label": "Everyday genuine payments",
+        "value": 100,
+        "n": 6
       },
       {
         "label": "Coached victims",
-        "value": 0,
+        "value": 40,
         "n": 5
       }
     ]

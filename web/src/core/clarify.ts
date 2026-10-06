@@ -21,15 +21,16 @@ export function noteIsThin(message: string | null | undefined): boolean {
   return words.length < THIN_NOTE_WORDS;
 }
 
-// True if, after reading the note, we still do not know who the payee is or how the customer knows them.
+// True if nothing backs up who the payee is. A claimed relationship alone is not proof.
+// Corroboration means the customer met the payee in person, was introduced by someone they trust,
+// or checked the details independently.
 export function payeeUnexplained(reading: Reading | null): boolean {
   if (!reading) return true;
-  return (
-    (reading.payee_relationship ?? "unknown") === "unknown" &&
-    (reading.met_payee_in_person ?? "unknown") === "unknown" &&
-    (reading.contact_source ?? "unknown") === "unknown" &&
-    !reading.customer_verified_independently
-  );
+  const corroborated =
+    reading.customer_verified_independently ||
+    (reading.met_payee_in_person ?? "unknown") === "yes" ||
+    ["in_person", "referral"].includes(reading.contact_source ?? "unknown");
+  return !corroborated;
 }
 
 export function shouldAsk(message: string | null | undefined, reading: Reading | null, decision: Decision): boolean {

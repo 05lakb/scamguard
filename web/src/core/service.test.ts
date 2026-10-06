@@ -132,3 +132,20 @@ describe("asking when a new payee is still unexplained", () => {
     expect(result.action).toBe("allow");
   });
 });
+
+describe("a claimed relationship is not proof", () => {
+  const calm = () => payment({ amount: 200, payee_account_age_days: 300, device_known: true });
+
+  it("still asks when the note only claims a relationship", async () => {
+    const note = "Sending money to my cousin for family expenses from the weekend, thank you for your help.";
+    const result = await assess({ payment: calm(), customer, message: note }, helpers(5, { payee_relationship: "family" }));
+    expect(result.action).toBe("ask");
+  });
+
+  it("does not ask when someone trusted introduced the payee", async () => {
+    const note = "Paying the new supplier my neighbour recommended, for the fence panels I ordered.";
+    const result = await assess({ payment: calm(), customer, message: note },
+      helpers(5, { payee_relationship: "supplier", contact_source: "referral" }));
+    expect(result.action).not.toBe("ask");
+  });
+});

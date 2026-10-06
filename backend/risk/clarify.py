@@ -37,13 +37,19 @@ def note_is_thin(message):
 
 
 def payee_unexplained(reading):
-    """True if, after reading the note, we still do not know who the payee is or how the customer knows them."""
+    """True if nothing backs up who the payee is. A claimed relationship alone is not proof.
+
+    Corroboration means the customer met the payee in person, was introduced by someone they trust,
+    or checked the details independently.
+    """
     if reading is None:
         return True
-    return (reading.get("payee_relationship", "unknown") == "unknown"
-            and reading.get("met_payee_in_person", "unknown") == "unknown"
-            and reading.get("contact_source", "unknown") == "unknown"
-            and not reading.get("customer_verified_independently"))
+    corroborated = (
+        reading.get("customer_verified_independently")
+        or reading.get("met_payee_in_person", "unknown") == "yes"
+        or reading.get("contact_source", "unknown") in ("in_person", "referral")
+    )
+    return not corroborated
 
 
 def should_ask(message, reading, decision):

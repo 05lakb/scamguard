@@ -15,12 +15,18 @@ export interface Payment {
   payments_last_24h: number;
   on_live_call: boolean;
   remote_access_tool_running: boolean;
+  // What the customer did over the last 15 days (all optional).
+  payments_last_15d?: number | null;
+  spend_last_15d?: number | null;
+  payee_count_15d?: number | null;
+  payee_total_15d?: number | null;
 }
 
 export interface Customer {
   id: string;
   segment: string;
   typical_amount: number;
+  typical_spend_15d?: number | null;
 }
 
 export interface ScamType {

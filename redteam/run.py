@@ -20,13 +20,15 @@ from backend.risk.evidence import load_scam_types
 from redteam import attacks
 from redteam.attacker import BENIGN_SEEDS, SCAM_SEEDS, run_benign_seed, run_scam_seed
 from redteam.budget import Budget, BudgetExceeded
-from redteam.report import judge, render_markdown, render_transcript, summarise
+from redteam.customer_agent import play
+from redteam.report import (judge, render_markdown, render_scenario_transcript, render_scenarios,
+                             render_transcript, summarise, summarise_scenarios)
 from redteam.site_client import SiteClient
 
 OUTPUT_DIR = Path(__file__).resolve().parent / "output"
 
 
-def plan(suite, seeds, pace):
+def plan(suite, seeds, pace, count=0):
     """Worst-case size of a run, worked out before anything is sent."""
     requests = attacker_calls = server_calls = 0
     if suite in ("fixed", "all"):
@@ -39,6 +41,10 @@ def plan(suite, seeds, pace):
         requests += seeds * 6 + benign * 2
         attacker_calls += seeds * 6 + benign * 2
         server_calls += seeds * 9 + benign * 3
+    if suite == "scenarios":
+        requests += count * 2
+        attacker_calls += count * 2
+        server_calls += count * 3
     minutes = (requests * pace) / 60
     return {"requests": requests, "attacker_calls": attacker_calls, "server_calls": server_calls, "minutes": round(minutes, 1)}
 
@@ -83,7 +89,7 @@ def run_fixed(site, results, extras):
         reply = site.assess(step)
         actions.append((reply.body or {}).get("action", f"http{reply.status}"))
     results.append({"id": "split_payments", "group": "split", "description": "Eight payments to one payee in a day",
-                    "status": 200, "action": actions[-1], "passed": actions[-1] != "allow"})
+                    "status": 200, "action": actions[-1], "passed": actions[-1] in ("warn", "hold")})
     print(f"  split      actions: {actions}")
 
     # The speed-limit probe goes last, because it uses up the visitor's allowance.
@@ -119,11 +125,27 @@ def run_adaptive(site, seeds, records, budget):
         print(f"  genuine {seed['story'][:40]:42} {'friction' if record['false_alarm'] else 'allowed'}")
 
 
+def run_scenarios(site, scenarios, records, budget):
+    """Play each made-up scenario with the simulated customer, keeping every record as it comes."""
+    def writer(prompt):
+        budget.check_model_call()
+        return gemini_client.ask(prompt, model=gemini_client.SMART_MODEL)
+
+    for number, scenario in enumerate(scenarios, start=1):
+        record = play(site, writer, scenario)
+        records.append(record)
+        verdict = record.get("error") or ("ok" if record.get("ok") else "MISS" if record.get("ok") is False else "unreliable")
+        print(f"  {number:3}/{len(scenarios)} {scenario['id']:12} {scenario['category']:20} -> "
+              f"{record.get('final_action', '-'):5} {verdict}")
+
+
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("--url", required=True)
     parser.add_argument("--allow-host", default=None, help="one extra host name you own, if not *.run.app")
-    parser.add_argument("--suite", choices=["fixed", "adaptive", "all"], default="all")
+    parser.add_argument("--suite", choices=["fixed", "adaptive", "all", "scenarios"], default="all")
+    parser.add_argument("--scenarios", default=None, help="the scenarios file made by redteam.factory")
+    parser.add_argument("--count", type=int, default=40, help="how many scenarios to play from the file")
     parser.add_argument("--seeds", type=int, default=8, help="how many scam seeds for the adaptive attacker (max 8)")
     parser.add_argument("--pace", type=float, default=6.0, help="seconds between requests")
     parser.add_argument("--max-requests", type=int, default=150, help="hard cap on requests to the site")
@@ -134,7 +156,12 @@ def main():
     args = parser.parse_args()
 
     seeds = max(1, min(args.seeds, len(SCAM_SEEDS)))
-    worst = plan(args.suite, seeds, args.pace)
+    scenario_list = []
+    if args.suite == "scenarios":
+        if not args.scenarios:
+            parser.error("--scenarios is required for the scenarios suite")
+        scenario_list = json.loads(Path(args.scenarios).read_text(encoding="utf-8"))["scenarios"][:args.count]
+    worst = plan(args.suite, seeds, args.pace, len(scenario_list))
     print("Plan (worst case):")
     print(f"  requests to the site:        up to {worst['requests']}   (cap {args.max_requests})")
     print(f"  tester Gemini calls:         up to {worst['attacker_calls']}   (cap {args.max_model_calls})")
@@ -155,8 +182,11 @@ def main():
         sys.exit(1)
 
     notes = [f"Tested {site.base}"]
-    fixed, extras, adaptive = [], {}, []
+    fixed, extras, adaptive, played = [], {}, [], []
     try:
+        if args.suite == "scenarios":
+            print("Blind scenarios:")
+            run_scenarios(site, scenario_list, played, budget)
         if args.suite in ("fixed", "all"):
             print("Fixed attacks:")
             run_fixed(site, fixed, extras)
@@ -170,6 +200,16 @@ def main():
         notes.append("The run was cancelled by hand. The results below are partial.")
 
     notes.append(f"Used: {budget.used()}")
+    OUTPUT_DIR.mkdir(exist_ok=True)
+    if args.suite == "scenarios":
+        scored = summarise_scenarios(played)
+        report = render_scenarios(scored, notes)
+        (OUTPUT_DIR / "scenarios_report.md").write_text(report, encoding="utf-8")
+        (OUTPUT_DIR / "scenarios_transcript.md").write_text(render_scenario_transcript(played), encoding="utf-8")
+        (OUTPUT_DIR / "scenarios_results.json").write_text(json.dumps(played, indent=2), encoding="utf-8")
+        print("\n" + report)
+        print(f"Used: {budget.used()}. Saved in redteam/output/: scenarios_report.md and scenarios_transcript.md")
+        return
     summary = summarise(fixed, adaptive, notes)
     report = render_markdown(summary, adaptive, fixed, extras)
     OUTPUT_DIR.mkdir(exist_ok=True)

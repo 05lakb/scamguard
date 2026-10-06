@@ -7,6 +7,9 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).resolve().parents[2] / "data"))
 import generate_data  # noqa: E402
 
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+from blocklist import blocked_words_in  # noqa: E402
+
 
 def test_same_seed_gives_same_data():
     first = generate_data.build_all(seed=1)
@@ -60,7 +63,7 @@ def test_normal_payments_that_look_odd_are_included():
 def test_no_real_company_or_employer_names_in_the_data():
     # The data must never name the owner's employer, its clients, or well-known firms.
     blocked = [
-        "simcorp", "axioma", "deutsche", "barclays", "hsbc", "jpmorgan", "citibank",
+        "deutsche", "barclays", "hsbc", "jpmorgan", "citibank",
         "wells fargo", "vanguard", "fidelity", "blackrock", "amundi", "allianz",
         "aviva", "paypal", "revolut", "pioneer", "harbor", "summit",
     ]
@@ -68,6 +71,7 @@ def test_no_real_company_or_employer_names_in_the_data():
     text = (str(customers) + str(scenarios)).lower()
     found = [word for word in blocked if word in text]
     assert not found, f"Real-looking names found in test data: {found}"
+    assert not blocked_words_in(text), "A blocked word was found in the test data"
 
 
 def test_every_scenario_points_at_a_real_customer():

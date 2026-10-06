@@ -119,7 +119,9 @@ def split_payment_sequence(count=8):
     for index in range(count):
         steps.append(_with_message(
             "monthly instalment",
-            risky_payment(amount=450, payee_account_age_days=45, device_known=True, payments_last_24h=index),
+            risky_payment(amount=450, payee_account_age_days=45, device_known=True, payments_last_24h=index,
+                          payments_last_15d=index, spend_last_15d=450 * index, payee_count_15d=index,
+                          payee_total_15d=450 * index),
         ))
     return steps
 

@@ -1,0 +1,98 @@
+import { Icon } from "../components/Icon";
+
+interface Props {
+  tryLive: () => void;
+  playStory: () => void;
+  goTo: (page: "evidence" | "architecture") => void;
+}
+
+const STEPS = [
+  { icon: "list" as const, title: "A payment arrives", text: "The customer is about to send money, with a note if they wrote one." },
+  { icon: "chart" as const, title: "Three checks", text: "Behaviour over 15 days, the customer's own words read by Gemini, and a guide to known scam patterns." },
+  { icon: "ask" as const, title: "Ask when unsure", text: "A short, friendly question, then a second look at the answer. Never more than one round." },
+  { icon: "shield" as const, title: "Decide and explain", text: "Allow, warn or hold, with ranked reasons and an audit trail. A person confirms every hold." },
+];
+
+export function Overview({ tryLive, playStory, goTo }: Props) {
+  return (
+    <div className="overview">
+      <section className="hero">
+        <p className="eyebrow">Fraud prevention for banks · Google Cloud AI Builder Cup 2026</p>
+        <h1>Scams don't hack accounts.<br />They talk customers into paying.</h1>
+        <p className="hero-sub">
+          Last Mile Guard is the second look at the final step. It reads the customer's story, checks fifteen days of
+          behaviour, asks a question when it is unsure, and keeps a person in charge of every hold.
+        </p>
+        <div className="row">
+          <button className="primary big" onClick={tryLive}>
+            Try a live case <Icon name="arrow" size={18} />
+          </button>
+          <button className="ghost big" onClick={playStory}>
+            <Icon name="play" size={16} /> Play the 90-second story
+          </button>
+        </div>
+      </section>
+
+      <section aria-labelledby="why">
+        <h2 id="why" className="eyebrow">Why it matters</h2>
+        <div className="stats">
+          <div className="stat">
+            <div className="stat-number mono">$442B</div>
+            <p>lost to scams by people in 42 countries in a single year.</p>
+            <span className="source">Global State of Scams 2025, GASA and Feedzai</span>
+          </div>
+          <div className="stat">
+            <div className="stat-number mono">23%</div>
+            <p>of adults lost money to a scam in the past year. Another 34% were targeted and did not lose money.</p>
+            <span className="source">Global State of Scams 2025, GASA and Feedzai</span>
+          </div>
+          <div className="stat">
+            <div className="stat-number mono">+40%</div>
+            <p>growth in UK investment-scam losses in 2025, now £221M, the largest authorised-payment fraud type.</p>
+            <span className="source">UK Finance Annual Fraud Report 2026</span>
+          </div>
+        </div>
+        <p className="muted wide-text">
+          In these scams the customer approves the payment, so ordinary fraud checks see a valid payment from the right
+          person. Regulators are moving the cost to banks: UK reimbursement rules, the EU's agreed payment-services
+          regulation, and Australia's Scams Prevention Framework with penalties up to A$50 million.
+        </p>
+      </section>
+
+      <section aria-labelledby="how">
+        <h2 id="how" className="eyebrow">How it works</h2>
+        <ol className="steps">
+          {STEPS.map((step, index) => (
+            <li key={step.title}>
+              <div className="step-icon"><Icon name={step.icon} size={20} /></div>
+              <span className="step-no mono">0{index + 1}</span>
+              <h3>{step.title}</h3>
+              <p className="muted">{step.text}</p>
+            </li>
+          ))}
+        </ol>
+      </section>
+
+      <section aria-labelledby="built" className="built">
+        <div>
+          <h2 id="built" className="eyebrow">Built on Google Cloud</h2>
+          <ul className="badges">
+            <li>Gemini on Vertex AI</li>
+            <li>Cloud Run, serverless</li>
+            <li>Cloud Build</li>
+            <li>Service identity, no keys</li>
+          </ul>
+        </div>
+        <div className="row">
+          <button className="ghost" onClick={() => goTo("architecture")}>See the architecture</button>
+          <button className="ghost" onClick={() => goTo("evidence")}>See the evidence</button>
+        </div>
+      </section>
+
+      <p className="honest">
+        This is a prototype on made-up data. The Evidence page shows what works, what does not yet, and what the red-team
+        tests found and fixed.
+      </p>
+    </div>
+  );
+}

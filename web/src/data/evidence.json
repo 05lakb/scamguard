@@ -1,0 +1,28 @@
+{
+  "scamsFlagged": [
+    { "label": "Payment rules alone", "value": 70, "note": "200 cases we built" },
+    { "label": "Full system, our own cases", "value": 99, "note": "A ceiling: we wrote these cases" },
+    { "label": "Full system, blind test by someone else", "value": 84, "note": "50 cases, run once, before the fixes" }
+  ],
+  "friction": [
+    { "label": "Our own 200 cases", "value": 1 },
+    { "label": "Blind test by someone else", "value": 12 }
+  ],
+  "findings": [
+    { "found": "Blind test: scams with tiny notes and small amounts slipped through (4 of 25).", "fix": "Ask the customer a short question when the evidence is thin, then decide again.", "status": "Fixed" },
+    { "found": "A surprise gift ('keep it secret') was treated as concealment and held.", "fix": "The reader now tells a harmless surprise from real concealment, and the guard asks before it holds.", "status": "Fixed" },
+    { "found": "Small-business owners got friction on 43% of normal payments.", "fix": "Larger payments count for less against a business customer's own habits.", "status": "Fixed" },
+    { "found": "Eight payments to one new payee in a day only ever earned a question.", "fix": "15 days of history: repeat payments to a new payee, total sent to one payee, and heavy spend all add risk.", "status": "Fixed, re-test pending" },
+    { "found": "Hidden orders to the checker, in eight wordings including other languages.", "fix": "Orders are treated as a warning sign. All eight were held on the first run.", "status": "Holding, control run pending" },
+    { "found": "A second test file was built from templates: 17 unique notes in 50 cases.", "fix": "Rejected as a headline test. Replaced by an automatic scenario factory with a simulated customer.", "status": "Fixed" },
+    { "found": "Cloud Run swallows the /healthz path, so the health check returned 404.", "fix": "The tester checks the home page, and the server's own route moved to /api/health.", "status": "Fixed" },
+    { "found": "Every answer reveals the risk score and reasons, which could help an attacker tune a message.", "fix": "Kept for the demo. A production version would send only the action and a warning to the customer.", "status": "Open by design" }
+  ],
+  "limits": [
+    "All data is made up. Nothing here has met real customers or real fraud.",
+    "Our own 99% is a ceiling, because we wrote the cases. The blind test is the fairer guide.",
+    "Some quiet scams show nothing unusual in the payment itself. Only the customer's words can reveal them, and a coached customer can hide them.",
+    "Payee reputation (for example accounts reported by other banks) is not modelled. A real bank would add it.",
+    "The prototype runs on the free trial's allowance, with rate limits and a cost guard, so it is not sized for heavy traffic."
+  ]
+}

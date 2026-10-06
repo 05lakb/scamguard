@@ -5,7 +5,7 @@ import type { Customer, Decision, Payment } from "./core/types";
 
 export interface AssessRequest {
   payment: Payment;
-  customer: Pick<Customer, "segment" | "typical_amount">;
+  customer: Pick<Customer, "segment" | "typical_amount" | "typical_spend_15d">;
   message?: string | null;
   questions?: string[];
   answer?: string | null;

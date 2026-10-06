@@ -52,6 +52,34 @@ def check_behaviour(payment, customer):
     if payment["payee_type"] == "crypto_exchange":
         _add(signals, "crypto_payee", 10, "The money is going to a crypto exchange.")
 
+    # What the customer has done over the last 15 days. Missing history simply adds nothing.
+    spend = payment.get("spend_last_15d")
+    if spend is not None:
+        typical_spend = (customer.get("typical_spend_15d") or customer["typical_amount"] * 8) * slack
+        ratio_15 = (spend + payment["amount"]) / max(typical_spend, 1)
+        if ratio_15 >= 5:
+            _add(signals, "heavy_spend_15d", 30,
+                 f"About {ratio_15:.0f} times the usual 15-day spending has gone out, counting this payment.")
+        elif ratio_15 >= 3:
+            _add(signals, "heavy_spend_15d", 20,
+                 f"About {ratio_15:.0f} times the usual 15-day spending has gone out, counting this payment.")
+        elif ratio_15 >= 2:
+            _add(signals, "heavy_spend_15d", 10,
+                 f"About {ratio_15:.0f} times the usual 15-day spending has gone out, counting this payment.")
+
+    repeats = payment.get("payee_count_15d") or 0
+    if payment["is_new_payee"] and repeats >= 4:
+        _add(signals, "repeat_payments_new_payee", 25,
+             f"This would be payment number {repeats + 1} in 15 days to a payee that is still new.")
+    elif payment["is_new_payee"] and repeats >= 2:
+        _add(signals, "repeat_payments_new_payee", 15,
+             f"This would be payment number {repeats + 1} in 15 days to a payee that is still new.")
+
+    payee_total = payment.get("payee_total_15d")
+    if payee_total is not None and (payee_total + payment["amount"]) / usual >= 8:
+        _add(signals, "large_total_to_payee", 15,
+             "The total sent to this one payee in 15 days is very large for this customer.")
+
     score = min(100, sum(item["points"] for item in signals))
     return {"score": score, "signals": signals, "suggestion": suggest(score)}
 

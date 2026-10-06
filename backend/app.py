@@ -54,11 +54,17 @@ class PaymentIn(BaseModel):
     payments_last_24h: int = Field(ge=0, le=50)
     on_live_call: bool
     remote_access_tool_running: bool
+    # What the customer did over the last 15 days (all optional).
+    payments_last_15d: Optional[int] = Field(default=None, ge=0, le=1000)
+    spend_last_15d: Optional[float] = Field(default=None, ge=0, le=10_000_000)
+    payee_count_15d: Optional[int] = Field(default=None, ge=0, le=1000)
+    payee_total_15d: Optional[float] = Field(default=None, ge=0, le=10_000_000)
 
 
 class CustomerIn(BaseModel):
     segment: Literal["retiree", "young_professional", "small_business_owner", "student", "family"]
     typical_amount: int = Field(ge=1, le=1_000_000)
+    typical_spend_15d: Optional[int] = Field(default=None, ge=1, le=10_000_000)
 
 
 class AssessIn(BaseModel):

@@ -132,3 +132,81 @@ def render_transcript(adaptive, fixed):
             lines.append(f"- Final decision: {step.get('final_action')} (score {step.get('score')})")
             lines.append(f"- Reasons shown: {'; '.join(step.get('reasons', [])) or 'none'}")
     return "\n".join(lines) + "\n"
+
+
+def summarise_scenarios(records):
+    """Score the scenario runs against their hidden answers."""
+    judged = [r for r in records if r.get("ok") is not None]
+    errors = [r for r in records if r.get("error")]
+    unreliable = [r for r in records if "ok" in r and r["ok"] is None]
+
+    def rate(items):
+        return (sum(1 for r in items if r["ok"]), len(items))
+
+    scams = [r for r in judged if r["label"] == "scam"]
+    legit = [r for r in judged if r["label"] == "legit"]
+    summary = {
+        "scenarios_run": len(records), "scored": len(judged), "errors": len(errors), "unreliable": len(unreliable),
+        "scams_flagged": (sum(1 for r in scams if r["final_action"] in ("warn", "hold")), len(scams)),
+        "genuine_with_friction": (sum(1 for r in legit if r["final_action"] != "allow"), len(legit)),
+        "overall_correct": rate(judged),
+        "by_category": {}, "by_difficulty": {},
+        "failures": [r for r in judged if not r["ok"]],
+    }
+    for key, field in (("by_category", "category"), ("by_difficulty", "difficulty")):
+        groups = {}
+        for r in judged:
+            groups.setdefault(r[field], []).append(r)
+        summary[key] = {name: rate(items) for name, items in sorted(groups.items())}
+    return summary
+
+
+def _pct(pair):
+    done, total = pair
+    return f"{done}/{total}" + (f" ({round(100 * done / total)}%)" if total else "")
+
+
+def render_scenarios(summary, notes):
+    lines = ["# Last Mile Guard: blind scenario test", "", "All data is made up. The site never saw the labels.", ""]
+    for note in notes:
+        lines.append(f"> {note}")
+    lines += ["", f"- Scenarios run: {summary['scenarios_run']} (scored {summary['scored']}, errors {summary['errors']}, "
+                  f"unreliable {summary['unreliable']})",
+              f"- Scams flagged (warning or hold): {_pct(summary['scams_flagged'])}",
+              f"- Genuine customers given any friction: {_pct(summary['genuine_with_friction'])}",
+              f"- Overall as expected: {_pct(summary['overall_correct'])}", "", "## By kind of scenario"]
+    for name, pair in summary["by_category"].items():
+        lines.append(f"- {name}: {_pct(pair)}")
+    lines += ["", "## By difficulty"]
+    for name, pair in summary["by_difficulty"].items():
+        lines.append(f"- {name}: {_pct(pair)}")
+    if summary["failures"]:
+        lines += ["", "## Where the system got it wrong"]
+        for r in summary["failures"]:
+            lines += ["", f"### {r['id']} ({r['category']}, {r['label']})",
+                      f"- Expected: {' or '.join(r['expected_actions'])}   Got: {r['final_action']} (score {r.get('score')})",
+                      f"- Note: {r.get('note')}"]
+            if r.get("questions"):
+                lines.append(f"- Bank asked: {' / '.join(r['questions'])}")
+                lines.append(f"- Customer replied: {r.get('answer')}")
+            lines.append(f"- Reasons shown: {'; '.join(r.get('reasons', [])) or 'none'}")
+    return "\n".join(lines) + "\n"
+
+
+def render_scenario_transcript(records):
+    lines = ["# Last Mile Guard: every scenario exchange", "", "All data is made up.", ""]
+    for r in records:
+        lines += [f"## {r['id']} ({r['category']}, {r['label']}, {r['difficulty']})"]
+        if r.get("error"):
+            lines += [f"- Problem: {r['error']}", ""]
+            continue
+        lines.append(f"- Note: {r.get('note')}")
+        lines.append(f"- First decision: {r.get('first_action')}")
+        if r.get("questions"):
+            lines.append(f"- Bank asked: {' / '.join(r['questions'])}")
+            lines.append(f"- Customer replied: {r.get('answer')}")
+        verdict = "OK" if r.get("ok") else "MISS" if r.get("ok") is False else "not reliable"
+        lines.append(f"- Final: {r.get('final_action')} (score {r.get('score')}), expected "
+                     f"{' or '.join(r['expected_actions'])}, {verdict}")
+        lines.append("")
+    return "\n".join(lines) + "\n"

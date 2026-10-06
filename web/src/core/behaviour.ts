@@ -65,6 +65,28 @@ export function checkBehaviour(payment: Payment, customer: Customer): BehaviourR
     add("crypto_payee", 10, "The money is going to a crypto exchange.");
   }
 
+  // What the customer has done over the last 15 days. Missing history simply adds nothing.
+  const spend = payment.spend_last_15d;
+  if (spend !== undefined && spend !== null) {
+    const typicalSpend = (customer.typical_spend_15d || customer.typical_amount * 8) * slack;
+    const ratio15 = (spend + payment.amount) / Math.max(typicalSpend, 1);
+    const times15 = pyRound(ratio15);
+    const text = `About ${times15} times the usual 15-day spending has gone out, counting this payment.`;
+    if (ratio15 >= 5) add("heavy_spend_15d", 30, text);
+    else if (ratio15 >= 3) add("heavy_spend_15d", 20, text);
+    else if (ratio15 >= 2) add("heavy_spend_15d", 10, text);
+  }
+
+  const repeats = payment.payee_count_15d || 0;
+  const repeatText = `This would be payment number ${repeats + 1} in 15 days to a payee that is still new.`;
+  if (payment.is_new_payee && repeats >= 4) add("repeat_payments_new_payee", 25, repeatText);
+  else if (payment.is_new_payee && repeats >= 2) add("repeat_payments_new_payee", 15, repeatText);
+
+  const payeeTotal = payment.payee_total_15d;
+  if (payeeTotal !== undefined && payeeTotal !== null && (payeeTotal + payment.amount) / usual >= 8) {
+    add("large_total_to_payee", 15, "The total sent to this one payee in 15 days is very large for this customer.");
+  }
+
   const score = Math.min(100, signals.reduce((sum, item) => sum + item.points, 0));
   return { score, signals, suggestion: suggest(score) };
 }

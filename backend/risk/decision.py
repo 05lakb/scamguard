@@ -6,7 +6,7 @@ so a bank analyst can review it later.
 """
 
 from backend.risk.behaviour import check_behaviour
-from backend.risk.corroboration import payee_unexplained
+from backend.risk.corroboration import claims_history_only, payee_unexplained
 
 # At or above these scores, the action gets stricter.
 WARN_AT = 40
@@ -16,6 +16,8 @@ HOLD_AT = 70
 MESSAGE_WEIGHT = 0.7
 # After we asked, a new payee that nothing backs up adds this many points.
 UNCORROBORATED_AFTER_ASKING = 20
+# A customer who says they already know a payee we have never seen them pay adds this many points.
+CLAIMED_HISTORY_MISMATCH = 15
 # A customer who clearly checked things on their own, with a calm message, earns a discount.
 VERIFIED_DISCOUNT = 25
 CALM_BELOW = 30
@@ -88,10 +90,12 @@ def decide(payment, customer, reading=None, scam_types=None, asked=False):
     forced_hold = False
 
     if reading:
+        new_payee = any(signal["name"] == "new_payee" for signal in behaviour["signals"])
+        claims_only = new_payee and claims_history_only(reading)  # a claim of history, with no record to match
         message_points = round(reading["scam_likelihood"] * MESSAGE_WEIGHT)
         if reading["scam_likelihood"] >= 50:
             reasons.insert(0, reading["explanation"])
-        if reading["customer_verified_independently"] and reading["scam_likelihood"] < CALM_BELOW:
+        if reading["customer_verified_independently"] and reading["scam_likelihood"] < CALM_BELOW and not claims_only:
             discount = VERIFIED_DISCOUNT
             reasons.append("The customer says they checked this on their own, which lowers the risk.")
 
@@ -99,7 +103,9 @@ def decide(payment, customer, reading=None, scam_types=None, asked=False):
         message_points += extra_points
         reasons.extend(extra_reasons)
 
-        new_payee = any(signal["name"] == "new_payee" for signal in behaviour["signals"])
+        if claims_only:
+            message_points += CLAIMED_HISTORY_MISMATCH
+            reasons.append("The customer says they already know this payee, but we have no record of ever paying them.")
         if asked and new_payee and payee_unexplained(reading):
             message_points += UNCORROBORATED_AFTER_ASKING
             reasons.append("We asked, but nothing backs up who the payee is.")

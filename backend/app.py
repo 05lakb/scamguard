@@ -12,18 +12,23 @@ Safety built in:
   - the server never logs what customers wrote.
 """
 
+import json
 import logging
 import os
+import random
+import threading
 import time
 from collections import defaultdict, deque
 from pathlib import Path
 from typing import Literal, Optional
 
 from fastapi import FastAPI, Request
-from fastapi.responses import JSONResponse
+from fastapi.responses import JSONResponse, StreamingResponse
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel, Field
 
+from backend import arena as arena_module
+from backend import gemini_client
 from backend.risk import clarify
 from backend.risk.decision import decide
 from backend.risk.evidence import load_scam_types, read_message
@@ -39,6 +44,11 @@ MAX_BODY_BYTES = 20_000
 PER_VISITOR_PER_MINUTE = int(os.getenv("LMG_RATE_PER_MINUTE", "12"))
 PER_VISITOR_PER_HOUR = int(os.getenv("LMG_RATE_PER_HOUR", "100"))
 GEMINI_CALLS_PER_HOUR = int(os.getenv("LMG_GEMINI_PER_HOUR", "300"))
+# The live red-team run: how often visitors may start one, and how many can run at once.
+ARENA_ENABLED = os.getenv("LMG_ARENA", "1") == "1"
+ARENA_PER_VISITOR_PER_HOUR = int(os.getenv("LMG_ARENA_PER_VISITOR_HOUR", "5"))
+ARENA_RUNS_PER_HOUR = int(os.getenv("LMG_ARENA_PER_HOUR", "10"))
+ARENA_AT_ONCE = int(os.getenv("LMG_ARENA_AT_ONCE", "2"))
 
 
 class PaymentIn(BaseModel):
@@ -75,6 +85,10 @@ class AssessIn(BaseModel):
     answer: Optional[str] = Field(default=None, max_length=1000)
 
 
+class ArenaIn(BaseModel):
+    count: int = Field(default=8, ge=3, le=9)
+
+
 class SlidingWindow:
     """Counts events in the last minute and hour, per key (such as a visitor's address)."""
 
@@ -109,11 +123,15 @@ def visitor_key(request: Request):
     return request.client.host if request.client else "unknown"
 
 
-def create_app(reader=read_message, asker=clarify.ask_questions):
+def create_app(reader=read_message, asker=clarify.ask_questions, arena_writer=None):
     app = FastAPI(title="Last Mile Guard", docs_url=None, redoc_url=None, openapi_url=None)
     visitors = SlidingWindow(PER_VISITOR_PER_MINUTE, PER_VISITOR_PER_HOUR)
     gemini_budget = SlidingWindow(10**9, GEMINI_CALLS_PER_HOUR)  # one shared counter
     scam_types = load_scam_types()
+    arena_visitors = SlidingWindow(1, ARENA_PER_VISITOR_PER_HOUR)  # one a minute, a few an hour
+    arena_total = SlidingWindow(10**9, ARENA_RUNS_PER_HOUR)
+    arena_slots = threading.BoundedSemaphore(ARENA_AT_ONCE)
+    write_for_arena = arena_writer or (lambda prompt: gemini_client.ask(prompt, model=gemini_client.FAST_MODEL))
 
     @app.middleware("http")
     async def protect(request: Request, call_next):
@@ -167,6 +185,32 @@ def create_app(reader=read_message, asker=clarify.ask_questions):
         log.info("assess action=%s score=%s round=%s degraded=%s ms=%d", outcome["action"], outcome["score"],
                  outcome.get("round"), bool(degraded), (time.monotonic() - started) * 1000)
         return outcome
+
+    @app.post("/api/arena")
+    def arena_run(body: ArenaIn, request: Request):
+        """Play made-up scenarios against the guard and stream each result as it is decided."""
+        if not ARENA_ENABLED:
+            return JSONResponse({"detail": "The live red-team run is switched off."}, status_code=403)
+        if not arena_visitors.allow(visitor_key(request)):
+            return JSONResponse({"detail": "Please wait a few minutes between live runs."}, status_code=429)
+        if not arena_total.allow("arena"):
+            return JSONResponse({"detail": "Live runs are paused for now to keep costs low. Try again later."},
+                                status_code=429)
+        if not arena_slots.acquire(blocking=False):
+            return JSONResponse({"detail": "Two live runs are already going. Please try again in a minute."},
+                                status_code=429)
+        seed = random.SystemRandom().randrange(1, 10**6)
+
+        def lines():
+            try:
+                for event in arena_module.stream_run(body.count, seed, write_for_arena, reader, asker, scam_types):
+                    yield json.dumps(event) + "\n"
+            finally:
+                arena_slots.release()
+
+        log.info("arena run started count=%d", body.count)
+        return StreamingResponse(lines(), media_type="application/x-ndjson",
+                                 headers={"Cache-Control": "no-store", "X-Accel-Buffering": "no"})
 
     if WEB_DIST.exists():
         app.mount("/", StaticFiles(directory=WEB_DIST, html=True), name="web")

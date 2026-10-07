@@ -1319,3 +1319,80 @@ thead th {
     transition: none !important;
   }
 }
+
+/* ---------- live red-team run ---------- */
+
+.seg {
+  display: inline-flex;
+  gap: 4px;
+  margin-bottom: 16px;
+  padding: 4px;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  background: var(--surface);
+}
+
+.seg button {
+  min-height: 40px;
+  padding: 0 16px;
+  border: 0;
+  border-radius: 8px;
+  background: none;
+  color: var(--muted);
+  cursor: pointer;
+}
+
+.seg button.on {
+  background: var(--accent);
+  color: var(--accent-ink);
+  font-weight: 700;
+}
+
+.arena {
+  display: grid;
+  gap: 16px;
+}
+
+.inline-field {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 0.9rem;
+}
+
+.inline-field select {
+  width: auto;
+  min-height: 40px;
+}
+
+.verdict {
+  padding: 1px 9px;
+  border-radius: 6px;
+  font-size: 0.74rem;
+  font-weight: 700;
+}
+
+.verdict.good { background: var(--allow-bg); color: var(--allow); }
+.verdict.miss { background: var(--hold-bg); color: var(--hold); }
+.verdict.error,
+.verdict.unsure { background: var(--warn-bg); color: var(--warn); }
+
+.case-row.playing {
+  cursor: default;
+}
+
+.spinner.small {
+  width: 18px;
+  height: 18px;
+  flex: none;
+  border-width: 2px;
+}
+
+.tag.test {
+  border-color: var(--warn);
+  color: var(--warn);
+}
+
+[hidden] {
+  display: none !important;
+}

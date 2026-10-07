@@ -21,13 +21,20 @@ export function noteIsThin(message: string | null | undefined): boolean {
   return words.length < THIN_NOTE_WORDS;
 }
 
+// True if the customer claims to know the payee already, but did not say they met them in person.
+export function claimsHistoryOnly(reading: Reading | null): boolean {
+  if (!reading) return false;
+  return Boolean(reading.claims_existing_relationship) && (reading.met_payee_in_person ?? "unknown") !== "yes";
+}
+
 // True if nothing backs up who the payee is. A claimed relationship alone is not proof.
 // Corroboration means the customer met the payee in person, was introduced by someone they trust,
 // or checked the details independently.
 export function payeeUnexplained(reading: Reading | null): boolean {
   if (!reading) return true;
+  const verified = reading.customer_verified_independently && !claimsHistoryOnly(reading);
   const corroborated =
-    reading.customer_verified_independently ||
+    verified ||
     (reading.met_payee_in_person ?? "unknown") === "yes" ||
     ["in_person", "referral"].includes(reading.contact_source ?? "unknown");
   return !corroborated;
@@ -38,8 +45,9 @@ export function shouldAsk(message: string | null | undefined, reading: Reading |
   if (audit.forced_hold) return false; // the message tried to give orders, a person must look
   if (audit.behaviour_score >= STRONG_BEHAVIOUR_SCORE) return false; // the payment alone is alarming enough
   if (reading && reading.scam_likelihood >= STRONG_MESSAGE_LIKELIHOOD) return false; // clearly a scam already
-  if (reading && reading.customer_verified_independently && reading.scam_likelihood < 30) return false;
   const newPayee = audit.behaviour_signals.some((signal) => signal.name === "new_payee");
+  const claimsOnly = newPayee && claimsHistoryOnly(reading);
+  if (reading && reading.customer_verified_independently && reading.scam_likelihood < 30 && !claimsOnly) return false;
   const unexplained = newPayee && payeeUnexplained(reading);
   if (audit.behaviour_score >= ASK_FROM_BEHAVIOUR_SCORE) return noteIsThin(message) || unexplained;
   if (audit.behaviour_score >= ASK_WHEN_PAYEE_UNEXPLAINED) return unexplained; // only a new payee stands out

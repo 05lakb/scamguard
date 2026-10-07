@@ -24,7 +24,7 @@ gcloud projects add-iam-policy-binding "${PROJECT_ID}" \
 #   min-instances 0   -> costs nothing while nobody is using it
 #   max-instances 2   -> a flood of visitors cannot start many copies
 #   concurrency 20    -> each copy handles up to 20 requests at once
-#   memory 512Mi, 1 cpu, 60 second timeout
+#   memory 512Mi, 1 cpu, 300 second timeout (a live red-team run takes a few minutes)
 # The app runs as the "lmg-runtime" identity, which can only call Gemini. No keys are used.
 gcloud run deploy "${SERVICE}" \
   --source . \
@@ -36,7 +36,7 @@ gcloud run deploy "${SERVICE}" \
   --concurrency 20 \
   --cpu 1 \
   --memory 512Mi \
-  --timeout 60 \
+  --timeout 300 \
   --set-env-vars "USE_VERTEX=1,GOOGLE_CLOUD_PROJECT=${PROJECT_ID},VERTEX_LOCATION=global,LMG_DISK_CACHE=0"
 
 echo

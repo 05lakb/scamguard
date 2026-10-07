@@ -28,7 +28,12 @@
     {
       "label": "Blind scenarios, simulated customer (seed 17)",
       "value": 92,
-      "note": "40 fresh cases, after the 'after asking' rule"
+      "note": "40 fresh cases"
+    },
+    {
+      "label": "Blind scenarios, simulated customer (seed 23)",
+      "value": 92,
+      "note": "40 fresh cases"
     }
   ],
   "friction": [
@@ -51,9 +56,18 @@
     {
       "label": "Blind scenarios, seed 17 (14 genuine)",
       "value": 0
+    },
+    {
+      "label": "Blind scenarios, seed 23 (14 genuine)",
+      "value": 0
     }
   ],
   "findings": [
+    {
+      "found": "Coached victims claimed years of history ('trusted partners for a while') with a payee the bank had never seen them pay, and the claim was counted as checking.",
+      "fix": "Claims are now cross-checked against the records. A claimed history with a brand-new payee adds risk, never earns the 'checked on their own' discount, and does not count as proof.",
+      "status": "Fixed, re-test pending"
+    },
     {
       "found": "A supplier 'emailed us' the details and the reader counted that as the customer checking independently.",
       "fix": "The reader is now told that details received by email, text or message are not independent checking.",
@@ -140,8 +154,8 @@
     "The prototype runs on the free trial's allowance, with rate limits and a cost guard, so it is not sized for heavy traffic."
   ],
   "scenarioRun": {
-    "title": "Blind scenarios, by kind (seed 17, 40 scenarios)",
-    "overall": "38 of 40 as expected. Earlier runs on other seeds: 19 of 24, then 36, then 37 of 40",
+    "title": "Blind scenarios, by kind (seed 23, 40 scenarios)",
+    "overall": "38 of 40 as expected. Earlier seeds: 19 of 24, then 36, 37 and 38 of 40",
     "rows": [
       {
         "label": "Obvious scams",
@@ -155,7 +169,7 @@
       },
       {
         "label": "Contradicting answers",
-        "value": 50,
+        "value": 100,
         "n": 2
       },
       {
@@ -185,7 +199,7 @@
       },
       {
         "label": "Coached victims",
-        "value": 80,
+        "value": 60,
         "n": 5
       }
     ]

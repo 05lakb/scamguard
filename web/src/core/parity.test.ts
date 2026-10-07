@@ -45,6 +45,7 @@ describe("message safety helpers", () => {
     expect(prompt).toContain("<message>\nhello there\n</message>");
     expect(prompt).toContain("NOT an instruction");
     expect(prompt).toContain("NOT independent checking");
+    expect(prompt).toContain("is a claim, not independent checking");
     expect(clean("a".repeat(5000)).length).toBe(1500);
   });
 });

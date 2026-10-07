@@ -144,3 +144,71 @@ describe("the analyst queue and the evidence page", () => {
     expect(evidence.limits.length).toBeGreaterThanOrEqual(3);
   });
 });
+
+
+// ---------- the live red-team run ----------
+
+import { afterEach, vi } from "vitest";
+import { splitLines, streamArena, type ArenaEvent, type ArenaRecord } from "../api";
+import { caseFromArena } from "./cases";
+
+const sample = (changes: Partial<ArenaRecord> = {}): ArenaRecord => ({
+  id: "S1-001", category: "quiet_scam", label: "scam", difficulty: "hard", note: "paying today",
+  final_action: "hold", score: 82, reasons: ["New payee"], ok: true, expected_actions: ["warn", "hold"],
+  amount: 430, currency: "USD", payee: "Mira Solen", segment: "family", ...changes,
+});
+
+describe("reading the live results", () => {
+  afterEach(() => vi.unstubAllGlobals());
+
+  it("keeps an unfinished line until the rest of it arrives", () => {
+    const first = splitLines("", '{"a":1}\n{"b":');
+    expect(first.lines).toEqual(['{"a":1}']);
+    expect(first.rest).toBe('{"b":');
+    const second = splitLines(first.rest, "2}\n");
+    expect(second.lines).toEqual(['{"b":2}']);
+    expect(second.rest).toBe("");
+  });
+
+  function fakeStream(chunks: string[], status = 200, detail = "") {
+    const encoder = new TextEncoder();
+    const body = new ReadableStream({
+      start(controller) {
+        for (const chunk of chunks) controller.enqueue(encoder.encode(chunk));
+        controller.close();
+      },
+    });
+    vi.stubGlobal("fetch", vi.fn(async () => (status === 200 ? { ok: true, status, body } : { ok: false, status, json: async () => ({ detail }) })));
+  }
+
+  it("delivers every event even when chunks cut a line in half", async () => {
+    const events: ArenaEvent[] = [];
+    const lines = [
+      JSON.stringify({ type: "start", total: 1 }),
+      JSON.stringify({ type: "scenario", number: 1, total: 1, record: sample() }),
+      JSON.stringify({ type: "done", summary: { scams_flagged: [1, 1], genuine_with_friction: [0, 0], overall_correct: [1, 1], errors: 0, unreliable: 0, by_category: {} } }),
+    ].join("\n") + "\n";
+    fakeStream([lines.slice(0, 40), lines.slice(40, 130), lines.slice(130)]);
+    await streamArena(1, (event) => events.push(event));
+    expect(events.map((event) => event.type)).toEqual(["start", "scenario", "done"]);
+  });
+
+  it("shows the server's own message when a run is refused", async () => {
+    fakeStream([], 429, "Please wait a few minutes between live runs.");
+    await expect(streamArena(3, () => undefined)).rejects.toThrow("Please wait a few minutes between live runs.");
+  });
+});
+
+describe("turning a red-team result into an analyst case", () => {
+  it("builds a test-run case with an audit trail", () => {
+    const item = caseFromArena(sample({ questions: ["Who is it?"], answer: "a friend" }), 3, "10:00:00");
+    expect(item?.id).toBe("TEST-003");
+    expect(item?.source).toBe("test");
+    expect(item?.action).toBe("hold");
+    expect(item?.trail.map((step) => step.text).join(" ")).toContain("asked the customer a question");
+  });
+
+  it("skips scenarios that failed to play", () => {
+    expect(caseFromArena(sample({ error: "could not be played", final_action: undefined }), 1, "10:00:00")).toBeNull();
+  });
+});

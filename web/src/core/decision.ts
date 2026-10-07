@@ -3,7 +3,7 @@
 // Every decision comes with plain reasons and a record of what was used.
 
 import { checkBehaviour, HOLD_AT, WARN_AT } from "./behaviour";
-import { payeeUnexplained } from "./clarify";
+import { claimsHistoryOnly, payeeUnexplained } from "./clarify";
 import { pyRound } from "./pyround";
 import type { Action, Customer, Decision, Payment, Reading, ScamType } from "./types";
 
@@ -11,6 +11,8 @@ import type { Action, Customer, Decision, Payment, Reading, ScamType } from "./t
 const MESSAGE_WEIGHT = 0.7;
 // After we asked, a new payee that nothing backs up adds this many points.
 const UNCORROBORATED_AFTER_ASKING = 20;
+// A customer who says they already know a payee we have never seen them pay adds this many points.
+const CLAIMED_HISTORY_MISMATCH = 15;
 // A customer who clearly checked on their own, with a calm message, earns a discount.
 const VERIFIED_DISCOUNT = 25;
 const CALM_BELOW = 30;
@@ -96,9 +98,11 @@ export function decide(
   let forcedHold = false;
 
   if (reading) {
+    const newPayee = behaviour.signals.some((signal) => signal.name === "new_payee");
+    const claimsOnly = newPayee && claimsHistoryOnly(reading); // a claim of history, with no record to match
     messagePoints = pyRound(reading.scam_likelihood * MESSAGE_WEIGHT);
     if (reading.scam_likelihood >= 50) reasons.unshift(reading.explanation);
-    if (reading.customer_verified_independently && reading.scam_likelihood < CALM_BELOW) {
+    if (reading.customer_verified_independently && reading.scam_likelihood < CALM_BELOW && !claimsOnly) {
       discount = VERIFIED_DISCOUNT;
       reasons.push("The customer says they checked this on their own, which lowers the risk.");
     }
@@ -106,7 +110,10 @@ export function decide(
     messagePoints += extra.points;
     reasons.push(...extra.reasons);
 
-    const newPayee = behaviour.signals.some((signal) => signal.name === "new_payee");
+    if (claimsOnly) {
+      messagePoints += CLAIMED_HISTORY_MISMATCH;
+      reasons.push("The customer says they already know this payee, but we have no record of ever paying them.");
+    }
     if (asked && newPayee && payeeUnexplained(reading)) {
       messagePoints += UNCORROBORATED_AFTER_ASKING;
       reasons.push("We asked, but nothing backs up who the payee is.");

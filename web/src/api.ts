@@ -27,3 +27,80 @@ export async function assessPayment(request: AssessRequest): Promise<ServerDecis
   }
   return (await response.json()) as ServerDecision;
 }
+
+// ---------- the live red-team run ----------
+
+export interface ArenaRecord {
+  id: string;
+  category: string;
+  label: "scam" | "legit";
+  difficulty: string;
+  note: string | null;
+  first_action?: string;
+  questions?: string[] | null;
+  answer?: string | null;
+  final_action?: "allow" | "warn" | "hold";
+  score?: number;
+  reasons?: string[];
+  ok?: boolean | null;
+  expected_actions: string[];
+  error?: string;
+  degraded?: boolean;
+  amount: number;
+  currency: string;
+  payee: string;
+  segment: string;
+}
+
+export interface ArenaSummary {
+  scams_flagged: [number, number];
+  genuine_with_friction: [number, number];
+  overall_correct: [number, number];
+  errors: number;
+  unreliable: number;
+  by_category: Record<string, [number, number]>;
+}
+
+export type ArenaEvent =
+  | { type: "start"; total: number }
+  | { type: "working"; number: number; total: number; category: string }
+  | { type: "scenario"; number: number; total: number; record: ArenaRecord }
+  | { type: "done"; summary: ArenaSummary };
+
+// Results arrive as lines of text. A chunk can end in the middle of a line, so keep the unfinished part.
+export function splitLines(buffer: string, chunk: string): { lines: string[]; rest: string } {
+  const parts = (buffer + chunk).split("\n");
+  const rest = parts.pop() ?? "";
+  return { lines: parts.filter((line) => line.trim()), rest };
+}
+
+export async function streamArena(count: number, onEvent: (event: ArenaEvent) => void, signal?: AbortSignal): Promise<void> {
+  const response = await fetch("/api/arena", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ count }),
+    signal,
+  });
+  if (!response.ok) {
+    let detail = "The live run could not start. Please try again.";
+    try {
+      const body = (await response.json()) as { detail?: string };
+      if (typeof body.detail === "string") detail = body.detail;
+    } catch {
+      /* keep the general message */
+    }
+    throw new Error(detail);
+  }
+  if (!response.body) throw new Error("Your browser could not read the live results.");
+  const reader = response.body.getReader();
+  const decoder = new TextDecoder();
+  let buffer = "";
+  for (;;) {
+    const { done, value } = await reader.read();
+    if (done) break;
+    const { lines, rest } = splitLines(buffer, decoder.decode(value, { stream: true }));
+    buffer = rest;
+    for (const line of lines) onEvent(JSON.parse(line) as ArenaEvent);
+  }
+  if (buffer.trim()) onEvent(JSON.parse(buffer) as ArenaEvent);
+}

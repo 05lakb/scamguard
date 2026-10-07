@@ -16,6 +16,7 @@ WORKDIR /app
 COPY backend/requirements.txt backend/requirements.txt
 RUN pip install --no-cache-dir -r backend/requirements.txt
 COPY backend/ backend/
+COPY redteam/__init__.py redteam/factory.py redteam/attacks.py redteam/customer_agent.py redteam/report.py redteam/
 COPY data/typologies.json data/typologies.json
 COPY --from=web /web/dist web/dist
 

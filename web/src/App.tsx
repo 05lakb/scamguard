@@ -2,11 +2,13 @@ import { useEffect, useRef, useState } from "react";
 import demo from "./data/demo.json";
 import { Icon } from "./components/Icon";
 import { Logo } from "./components/Logo";
-import { recordedCases, type CaseItem, type CaseStatus } from "./lib/cases";
+import type { ArenaRecord } from "./api";
+import { caseFromArena, recordedCases, type CaseItem, type CaseStatus } from "./lib/cases";
 import { STORY, STORY_PAUSE_MS } from "./lib/story";
 import { Analyst } from "./pages/Analyst";
 import { Architecture } from "./pages/Architecture";
-import { Console, type FinishedCase, type Scenario } from "./pages/Console";
+import { type FinishedCase, type Scenario } from "./pages/Console";
+import { ConsoleArea } from "./pages/ConsoleArea";
 import { Evidence } from "./pages/Evidence";
 import { Overview } from "./pages/Overview";
 
@@ -97,6 +99,12 @@ export function App() {
     setCases((old) => [item, ...old]);
   }
 
+  function addArenaCase(record: ArenaRecord) {
+    counter.current += 1;
+    const item = caseFromArena(record, counter.current, clock());
+    if (item) setCases((old) => [item, ...old]);
+  }
+
   function decide(id: string, status: CaseStatus) {
     setCases((old) =>
       old.map((item) =>
@@ -127,7 +135,7 @@ export function App() {
           {PAGES.map((entry) => (
             <button key={entry.id} className={`tab ${page === entry.id ? "on" : ""}`} aria-current={page === entry.id ? "page" : undefined} onClick={() => setPage(entry.id)}>
               {entry.label}
-              {entry.id === "analyst" && cases.some((item) => item.source === "live") && <span className="count mono">{cases.filter((item) => item.source === "live").length}</span>}
+              {entry.id === "analyst" && cases.some((item) => item.source !== "recorded") && <span className="count mono">{cases.filter((item) => item.source !== "recorded").length}</span>}
             </button>
           ))}
         </nav>
@@ -145,7 +153,7 @@ export function App() {
 
       <main>
         {page === "overview" && <Overview tryLive={() => setPage("console")} playStory={startStory} goTo={setPage} />}
-        {page === "console" && <Console scenarios={scenarios} onCase={addCase} autoplay={autoplay} onFinished={() => setStory((current) => (current && current.phase === "running" ? { ...current, phase: "showing" } : current))} />}
+        {page === "console" && <ConsoleArea scenarios={scenarios} onCase={addCase} onArenaCase={addArenaCase} autoplay={autoplay} onFinished={() => setStory((current) => (current && current.phase === "running" ? { ...current, phase: "showing" } : current))} />}
         {page === "analyst" && <Analyst cases={cases} decide={decide} />}
         {page === "evidence" && <Evidence />}
         {page === "architecture" && <Architecture />}

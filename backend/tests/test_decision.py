@@ -140,3 +140,28 @@ def test_no_extra_points_for_a_known_payee_or_in_the_first_round():
     assert decide(known, CUSTOMER, story(), asked=True)["score"] == decide(known, CUSTOMER, story())["score"]
     new_payee = payment(is_new_payee=True, payee_account_age_days=300)
     assert decide(new_payee, CUSTOMER, story())["score"] == decide(new_payee, CUSTOMER, story(), asked=False)["score"]
+
+
+# ---------- a claimed history is checked against what the bank knows ----------
+
+def test_claiming_to_know_a_new_payee_adds_risk_and_never_earns_the_checked_discount():
+    new_payee = payment(is_new_payee=True, payee_account_age_days=300)
+    claim = story(customer_verified_independently=True, claims_existing_relationship=True)
+    result = decide(new_payee, CUSTOMER, claim)
+    assert result["audit"]["verified_discount"] == 0
+    assert "no record of ever paying them" in " ".join(result["reasons"])
+    plain = decide(new_payee, CUSTOMER, story(customer_verified_independently=True))
+    assert plain["audit"]["verified_discount"] > 0  # without the claim, the discount still works
+    assert result["score"] > plain["score"]
+
+
+def test_a_known_payee_with_a_claimed_history_is_not_a_mismatch():
+    known = payment(is_new_payee=False)
+    result = decide(known, CUSTOMER, story(claims_existing_relationship=True))
+    assert "no record of ever paying them" not in " ".join(result["reasons"])
+
+
+def test_having_met_the_payee_in_person_is_not_a_mismatch():
+    new_payee = payment(is_new_payee=True, payee_account_age_days=300)
+    met = story(claims_existing_relationship=True, met_payee_in_person="yes", payee_relationship="supplier")
+    assert "no record of ever paying them" not in " ".join(decide(new_payee, CUSTOMER, met)["reasons"])

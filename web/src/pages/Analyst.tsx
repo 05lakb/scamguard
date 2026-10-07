@@ -2,7 +2,7 @@ import { useState } from "react";
 import { EvidenceBars } from "../components/EvidenceBars";
 import { Gauge } from "../components/Gauge";
 import { Icon, type IconName } from "../components/Icon";
-import { needsReview, type CaseItem, type CaseStatus } from "../lib/cases";
+import { needsReview, sourceLabel, type CaseItem, type CaseStatus } from "../lib/cases";
 import { contributions, type Contribution } from "../lib/contrib";
 import { ACTION_LABEL, SEGMENT_LABEL } from "../lib/labels";
 
@@ -57,7 +57,7 @@ export function Analyst({ cases, decide }: { cases: CaseItem[]; decide: (id: str
         <section className="card queue" aria-labelledby="queue-title">
           <div className="card-head">
             <h2 id="queue-title" className="eyebrow">Case queue</h2>
-            <span className="muted">Recorded cases come from our own test runs. Live ones appear as you use the console.</span>
+            <span className="muted">Recorded cases come from our own test runs. Live and test-run cases appear as you use the console.</span>
           </div>
           <div className="filters" role="group" aria-label="Filter cases">
             {FILTERS.map((entry) => (
@@ -80,7 +80,7 @@ export function Analyst({ cases, decide }: { cases: CaseItem[]; decide: (id: str
                     <span className={`dot ${item.action}`} aria-hidden="true" />
                     <span className="case-main">
                       <strong>{item.title}</strong>
-                      <span className="muted">{item.id} · {item.when} · {item.source === "live" ? "live" : "recorded"}</span>
+                      <span className="muted">{item.id} · {item.when} · {sourceLabel(item.source).toLowerCase()}</span>
                     </span>
                     <span className="case-side">
                       <span className="mono">{item.amount.toLocaleString()}</span>
@@ -100,7 +100,7 @@ export function Analyst({ cases, decide }: { cases: CaseItem[]; decide: (id: str
             <>
               <div className="card-head">
                 <h2 id="case-title" className="eyebrow">Case {selected.id}</h2>
-                <span className={`tag ${selected.source}`}>{selected.source === "live" ? "Live" : "Recorded"}</span>
+                <span className={`tag ${selected.source}`}>{sourceLabel(selected.source)}</span>
               </div>
               <h3 className="case-title">{selected.title}</h3>
               <div className="verdict-row">

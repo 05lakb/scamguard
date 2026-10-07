@@ -173,3 +173,27 @@ describe("after asking, a payee nothing backs up adds risk", () => {
     expect(second.reasons.join(" ")).not.toContain("nothing backs up");
   });
 });
+
+describe("a claimed history is checked against what the bank knows", () => {
+  const calm = () => payment({ amount: 200, payee_account_age_days: 300, device_known: true });
+  const claim = { customer_verified_independently: true, claims_existing_relationship: true, payee_relationship: "supplier" };
+
+  it("still asks, and is penalised after the answer", async () => {
+    const note = "Payment for our latest invoice from our regular supplier, thank you very much for your help.";
+    const first = await assess({ payment: calm(), customer, message: note }, helpers(5, claim));
+    expect(first.action).toBe("ask");
+    const second = await assess(
+      { payment: calm(), customer, message: note, questions: first.questions, answer: "Trusted partners of ours for years." },
+      helpers(5, claim),
+    );
+    expect(["warn", "hold"]).toContain(second.action);
+    expect(second.audit.verified_discount).toBe(0);
+    expect(second.reasons.join(" ")).toContain("no record of ever paying them");
+  });
+
+  it("does not treat a known payee's claimed history as a mismatch", async () => {
+    const known = payment({ amount: 190, is_new_payee: false, payee_account_age_days: 3000 });
+    const result = await assess({ payment: known, customer, message: "regular supplier" }, helpers(5, claim));
+    expect(result.reasons.join(" ")).not.toContain("no record of ever paying them");
+  });
+});

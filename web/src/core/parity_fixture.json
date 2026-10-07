@@ -188,6 +188,7 @@
     "evasive": false,
     "rehearsed_or_coached": false,
     "contradicts_first_note": false,
+    "claims_existing_relationship": false,
     "explanation": "This exhibits classic signs of a fake investment scam, featuring unrealistic returns and high pressure to deposit funds quickly before an artificial deadline.",
     "orders_found_in_message": []
    },
@@ -253,6 +254,7 @@
     "evasive": false,
     "rehearsed_or_coached": false,
     "contradicts_first_note": false,
+    "claims_existing_relationship": false,
     "explanation": "The customer is falling for a classic bank impersonation scam, where a fraudster poses as authority, claims branch staff are corrupt, and convinces them to transfer money to a fake safe account.",
     "orders_found_in_message": []
    },
@@ -394,6 +396,7 @@
     "evasive": false,
     "rehearsed_or_coached": false,
     "contradicts_first_note": false,
+    "claims_existing_relationship": false,
     "explanation": "This matches a CEO fraud or business email compromise scam, where a worker is urged by email to pay a new vendor quickly and keep the transaction secret.",
     "orders_found_in_message": []
    },
@@ -497,6 +500,7 @@
     "evasive": false,
     "rehearsed_or_coached": false,
     "contradicts_first_note": false,
+    "claims_existing_relationship": false,
     "explanation": "This is a classic advance fee scam where the victim is asked to pay money upfront to claim an unexpected lottery prize.",
     "orders_found_in_message": []
    },
@@ -554,6 +558,7 @@
     "evasive": false,
     "rehearsed_or_coached": false,
     "contradicts_first_note": false,
+    "claims_existing_relationship": false,
     "explanation": "The message appears to be a normal transaction sent to a family member using a provided account number, showing no clear signs of a scam.",
     "orders_found_in_message": []
    },
@@ -614,6 +619,7 @@
     "evasive": false,
     "rehearsed_or_coached": true,
     "contradicts_first_note": false,
+    "claims_existing_relationship": false,
     "explanation": "The customer is following instructions from an advisor to hide crypto transactions from the bank and send money quickly to an exchange wallet, which are classic signs of an investment scam.",
     "orders_found_in_message": []
    },
@@ -679,6 +685,7 @@
     "evasive": false,
     "rehearsed_or_coached": true,
     "contradicts_first_note": false,
+    "claims_existing_relationship": false,
     "explanation": "The customer is following instructions from a phone scammer posing as a bank security officer to protect savings, and attempts to override security checks.",
     "orders_found_in_message": []
    },
@@ -743,6 +750,7 @@
     "evasive": false,
     "rehearsed_or_coached": false,
     "contradicts_first_note": false,
+    "claims_existing_relationship": false,
     "explanation": "This shows classic romance scam signs with an online-only contact, an urgent medical emergency request, and instructions to keep the transfer secret from family.",
     "orders_found_in_message": []
    },
@@ -845,6 +853,7 @@
     "evasive": false,
     "rehearsed_or_coached": false,
     "contradicts_first_note": false,
+    "claims_existing_relationship": false,
     "explanation": "This is a classic invoice redirect scam where a scammer intercepts communications and requests payment to a new, unauthorized bank account right before the deadline.",
     "orders_found_in_message": []
    },
@@ -908,6 +917,7 @@
     "evasive": false,
     "rehearsed_or_coached": false,
     "contradicts_first_note": false,
+    "claims_existing_relationship": false,
     "explanation": "This is a classic rental scam where the supposed landlord is abroad and demands upfront payment before sending keys, without having met the tenant in person.",
     "orders_found_in_message": []
    },
@@ -970,6 +980,7 @@
     "evasive": false,
     "rehearsed_or_coached": false,
     "contradicts_first_note": false,
+    "claims_existing_relationship": false,
     "explanation": "This is a classic advance fee scam where the victim is asked to pay a small fee in order to receive a large inheritance that does not exist.",
     "orders_found_in_message": []
    },
@@ -1032,6 +1043,7 @@
     "evasive": false,
     "rehearsed_or_coached": false,
     "contradicts_first_note": false,
+    "claims_existing_relationship": false,
     "explanation": "This matches a classic family emergency scam where fraudsters pretend to be a child who lost their phone and urgently request money to a new account.",
     "orders_found_in_message": []
    },
@@ -1096,6 +1108,7 @@
     "evasive": false,
     "rehearsed_or_coached": false,
     "contradicts_first_note": false,
+    "claims_existing_relationship": false,
     "explanation": "The customer is dealing with an online contact promising high unrealistic returns with urgent pressure to deposit money quickly before an arbitrary deadline, which is a classic investment scam.",
     "orders_found_in_message": []
    },
@@ -1159,6 +1172,7 @@
     "evasive": false,
     "rehearsed_or_coached": true,
     "contradicts_first_note": false,
+    "claims_existing_relationship": false,
     "explanation": "The customer is following instructions from a supposed agent to move money into a secure account, which is a classic bank impersonation scam.",
     "orders_found_in_message": []
    },
@@ -1223,6 +1237,7 @@
     "evasive": false,
     "rehearsed_or_coached": false,
     "contradicts_first_note": false,
+    "claims_existing_relationship": false,
     "explanation": "The customer was asked to send gift card codes for a frozen bank account, which is a classic impersonation and advance-fee scam pattern often associated with compromised or fake accounts.",
     "orders_found_in_message": []
    },
@@ -1284,6 +1299,7 @@
     "evasive": false,
     "rehearsed_or_coached": true,
     "contradicts_first_note": false,
+    "claims_existing_relationship": false,
     "explanation": "The customer is following instructions from an unknown remote computer support person, which is a classic indicator of a tech support scam.",
     "orders_found_in_message": []
    },
@@ -1347,6 +1363,7 @@
     "evasive": false,
     "rehearsed_or_coached": false,
     "contradicts_first_note": false,
+    "claims_existing_relationship": false,
     "explanation": "The customer is making a payment to a supplier based on suddenly changed bank details received via email, and was told not to call to verify, which is a classic invoice redirection scam.",
     "orders_found_in_message": []
    },
@@ -1410,6 +1427,7 @@
     "evasive": false,
     "rehearsed_or_coached": false,
     "contradicts_first_note": false,
+    "claims_existing_relationship": false,
     "explanation": "This is a classic online vehicle purchase scam involving an overseas seller, an unrealistically low price, and pressure to pay quickly through a shipping agent.",
     "orders_found_in_message": []
    },
@@ -1472,6 +1490,7 @@
     "evasive": false,
     "rehearsed_or_coached": false,
     "contradicts_first_note": false,
+    "claims_existing_relationship": false,
     "explanation": "This is a classic advance fee loan scam where the victim is asked to pay money upfront to release a loan that will never arrive.",
     "orders_found_in_message": []
    },
@@ -1536,6 +1555,7 @@
     "evasive": false,
     "rehearsed_or_coached": false,
     "contradicts_first_note": false,
+    "claims_existing_relationship": false,
     "explanation": "This matches a classic family emergency scam where a scammer pretends to be a relative using a new number, demands urgent funds, and asks to keep it secret.",
     "orders_found_in_message": []
    },
@@ -1600,6 +1620,7 @@
     "evasive": false,
     "rehearsed_or_coached": false,
     "contradicts_first_note": false,
+    "claims_existing_relationship": false,
     "explanation": "This is a classic celebrity-endorsed investment scam using false scarcity and promises of bonuses to pressure the customer into paying immediately.",
     "orders_found_in_message": []
    },
@@ -1663,6 +1684,7 @@
     "evasive": false,
     "rehearsed_or_coached": true,
     "contradicts_first_note": false,
+    "claims_existing_relationship": false,
     "explanation": "The customer is following instructions from someone claiming to be bank support to move money to a 'secure account', which is a classic bank impersonation scam.",
     "orders_found_in_message": []
    },
@@ -1724,6 +1746,7 @@
     "evasive": false,
     "rehearsed_or_coached": false,
     "contradicts_first_note": false,
+    "claims_existing_relationship": false,
     "explanation": "This shows classic signs of a family emergency scam where a fraudster impersonates a relative asking for gift cards urgently.",
     "orders_found_in_message": []
    },
@@ -1787,6 +1810,7 @@
     "evasive": false,
     "rehearsed_or_coached": false,
     "contradicts_first_note": false,
+    "claims_existing_relationship": false,
     "explanation": "The customer fell for a classic tech support pop-up scam and is interacting with an untrusted remote support agent who is charging a high fee for fake repairs.",
     "orders_found_in_message": []
    },
@@ -1849,6 +1873,7 @@
     "evasive": false,
     "rehearsed_or_coached": false,
     "contradicts_first_note": false,
+    "claims_existing_relationship": false,
     "explanation": "The customer received an unexpected email about changed bank details and was instructed not to call, which are classic red flags for an invoice redirect scam.",
     "orders_found_in_message": []
    },
@@ -1912,6 +1937,7 @@
     "evasive": false,
     "rehearsed_or_coached": true,
     "contradicts_first_note": false,
+    "claims_existing_relationship": false,
     "explanation": "The customer is attempting to buy a puppy from an online seller who refuses in-person visits and includes suspicious phrasing attempting to override bank compliance checks.",
     "orders_found_in_message": []
    },
@@ -1975,6 +2001,7 @@
     "evasive": false,
     "rehearsed_or_coached": false,
     "contradicts_first_note": false,
+    "claims_existing_relationship": false,
     "explanation": "This is a classic advance fee scam where the customer is asked to pay a fee via email to receive a promised inheritance.",
     "orders_found_in_message": []
    },
@@ -2037,6 +2064,7 @@
     "evasive": false,
     "rehearsed_or_coached": false,
     "contradicts_first_note": false,
+    "claims_existing_relationship": false,
     "explanation": "The customer is asked to send money quickly for an emergency without details, which matches family emergency or impersonation tactics.",
     "orders_found_in_message": []
    },
@@ -2099,6 +2127,7 @@
     "evasive": false,
     "rehearsed_or_coached": true,
     "contradicts_first_note": false,
+    "claims_existing_relationship": false,
     "explanation": "The customer is pressured by a trading group contact to deposit money quickly to lock in unrealistically high returns before a deadline.",
     "orders_found_in_message": []
    },
@@ -2163,6 +2192,7 @@
     "evasive": false,
     "rehearsed_or_coached": true,
     "contradicts_first_note": false,
+    "claims_existing_relationship": false,
     "explanation": "This is a classic bank and police impersonation scam where fraudsters convince the victim to transfer funds to a safe account while staying on the phone.",
     "orders_found_in_message": []
    },
@@ -2225,6 +2255,7 @@
     "evasive": false,
     "rehearsed_or_coached": false,
     "contradicts_first_note": false,
+    "claims_existing_relationship": false,
     "explanation": "This has classic hallmarks of a delivery fee scam where an unknown online contact asks for money to release a held gift.",
     "orders_found_in_message": []
    },
@@ -2285,6 +2316,7 @@
     "evasive": false,
     "rehearsed_or_coached": false,
     "contradicts_first_note": false,
+    "claims_existing_relationship": false,
     "explanation": "The customer is paying an unknown computer technician who is remotely accessing their device, which strongly indicates a tech support scam.",
     "orders_found_in_message": []
    },
@@ -2386,6 +2418,7 @@
     "evasive": false,
     "rehearsed_or_coached": false,
     "contradicts_first_note": false,
+    "claims_existing_relationship": false,
     "explanation": "The payment is for an online puppy purchase from a seller the customer has never met in person, with pressure to pay quickly to hold the animal.",
     "orders_found_in_message": []
    },
@@ -2448,6 +2481,7 @@
     "evasive": false,
     "rehearsed_or_coached": false,
     "contradicts_first_note": false,
+    "claims_existing_relationship": false,
     "explanation": "The customer is being asked to pay an upfront fee to receive a loan, which is a classic advance fee scam pattern.",
     "orders_found_in_message": []
    },
@@ -2512,6 +2546,7 @@
     "evasive": false,
     "rehearsed_or_coached": true,
     "contradicts_first_note": false,
+    "claims_existing_relationship": false,
     "explanation": "The message matches a classic family emergency scam, complete with a new number, an urgent wire transfer request, and an excuse for why the relative cannot speak on the phone.",
     "orders_found_in_message": []
    },
@@ -2577,6 +2612,7 @@
     "evasive": false,
     "rehearsed_or_coached": false,
     "contradicts_first_note": false,
+    "claims_existing_relationship": false,
     "explanation": "The customer is falling for a classic fake investment scam promoted by a misleading online ad and high-pressure sales tactics.",
     "orders_found_in_message": []
    },
@@ -2640,6 +2676,7 @@
     "evasive": false,
     "rehearsed_or_coached": true,
     "contradicts_first_note": false,
+    "claims_existing_relationship": false,
     "explanation": "The customer is falling for a classic bank or police impersonation scam where fraudsters convince victims to move funds to a 'safe account'.",
     "orders_found_in_message": []
    },
@@ -2740,6 +2777,7 @@
     "evasive": false,
     "rehearsed_or_coached": true,
     "contradicts_first_note": false,
+    "claims_existing_relationship": false,
     "explanation": "The customer is following instructions from a remote technician to pay an unfamiliar company account, which is a classic sign of a tech support or remote access scam.",
     "orders_found_in_message": []
    },
@@ -2803,6 +2841,7 @@
     "evasive": false,
     "rehearsed_or_coached": false,
     "contradicts_first_note": false,
+    "claims_existing_relationship": false,
     "explanation": "This shows classic red flags of a Business Email Compromise or invoice redirection scam, featuring urgent instructions from a boss via email coupled with demands for secrecy.",
     "orders_found_in_message": []
    },
@@ -2866,6 +2905,7 @@
     "evasive": false,
     "rehearsed_or_coached": false,
     "contradicts_first_note": false,
+    "claims_existing_relationship": false,
     "explanation": "The listing features an unrealistically low price for a car and uses high-pressure tactics like urgency and artificial scarcity to rush the payment.",
     "orders_found_in_message": []
    },
@@ -2930,6 +2970,7 @@
     "evasive": false,
     "rehearsed_or_coached": false,
     "contradicts_first_note": false,
+    "claims_existing_relationship": false,
     "explanation": "This is a classic advance fee lottery scam where the victim is asked to pay upfront taxes to release winnings that do not exist.",
     "orders_found_in_message": []
    },
@@ -2992,6 +3033,7 @@
     "evasive": false,
     "rehearsed_or_coached": false,
     "contradicts_first_note": false,
+    "claims_existing_relationship": false,
     "explanation": "The message strongly matches a family emergency scam where someone pretends to be a relative in trouble from an unknown number and refuses to speak on the phone.",
     "orders_found_in_message": []
    },
@@ -3055,6 +3097,7 @@
     "evasive": false,
     "rehearsed_or_coached": false,
     "contradicts_first_note": false,
+    "claims_existing_relationship": false,
     "explanation": "The customer is responding to an online ad featuring a famous presenter and feels pressured by fake scarcity and time limits to deposit money into a high-risk investment platform.",
     "orders_found_in_message": []
    },
@@ -3118,6 +3161,7 @@
     "evasive": false,
     "rehearsed_or_coached": true,
     "contradicts_first_note": false,
+    "claims_existing_relationship": false,
     "explanation": "The customer is following instructions from a phone scammer posing as a bank official, who told them to hide the transaction from branch staff and move money to a 'safe account'.",
     "orders_found_in_message": []
    },
@@ -3182,6 +3226,7 @@
     "evasive": false,
     "rehearsed_or_coached": false,
     "contradicts_first_note": false,
+    "claims_existing_relationship": false,
     "explanation": "The customer is asked to send money quickly for an overseas emergency and keep the transaction secret, which strongly suggests a family emergency impersonation scam.",
     "orders_found_in_message": []
    },
@@ -3282,6 +3327,7 @@
     "evasive": false,
     "rehearsed_or_coached": false,
     "contradicts_first_note": false,
+    "claims_existing_relationship": false,
     "explanation": "The payment involves a sudden change of bank details for a contractor with some urgency, matching patterns for an invoice redirect scam, though it may also be legitimate construction business.",
     "orders_found_in_message": []
    },
@@ -3344,6 +3390,7 @@
     "evasive": false,
     "rehearsed_or_coached": false,
     "contradicts_first_note": false,
+    "claims_existing_relationship": false,
     "explanation": "The customer is sending money to an absentee landlord they have never met in person, which is a classic rental scam setup.",
     "orders_found_in_message": []
    },
@@ -3406,6 +3453,7 @@
     "evasive": false,
     "rehearsed_or_coached": false,
     "contradicts_first_note": false,
+    "claims_existing_relationship": false,
     "explanation": "The customer believes they won a lottery via email and must pay an upfront fee to claim the prize, which is a classic advance fee scam.",
     "orders_found_in_message": []
    },
@@ -3469,6 +3517,7 @@
     "evasive": false,
     "rehearsed_or_coached": false,
     "contradicts_first_note": false,
+    "claims_existing_relationship": false,
     "explanation": "This shows classic signs of a family emergency scam, where a fraudster pretends to be a relative using a new number and claims they cannot talk on the phone.",
     "orders_found_in_message": []
    },
@@ -3530,6 +3579,7 @@
     "evasive": false,
     "rehearsed_or_coached": false,
     "contradicts_first_note": false,
+    "claims_existing_relationship": false,
     "explanation": "This is a classic advance-fee investment scam where the victim is asked to pay taxes or fees to withdraw fictitious daily returns.",
     "orders_found_in_message": []
    },
@@ -3594,6 +3644,7 @@
     "evasive": false,
     "rehearsed_or_coached": true,
     "contradicts_first_note": false,
+    "claims_existing_relationship": false,
     "explanation": "The customer is following instructions from a phone scammer claiming to be bank security, and is actively trying to conceal the transfer from the bank staff.",
     "orders_found_in_message": []
    },
@@ -3657,6 +3708,7 @@
     "evasive": false,
     "rehearsed_or_coached": false,
     "contradicts_first_note": false,
+    "claims_existing_relationship": false,
     "explanation": "The customer is being asked to pay a fee to receive an unexpected gift from someone they know only as Chris, which is a classic advance fee scam pattern.",
     "orders_found_in_message": []
    },
@@ -3719,6 +3771,7 @@
     "evasive": false,
     "rehearsed_or_coached": true,
     "contradicts_first_note": false,
+    "claims_existing_relationship": false,
     "explanation": "The customer fell for a classic tech support scam involving a fake virus popup and remote access software, and the message even includes a suspicious automated system injection attempt.",
     "orders_found_in_message": []
    },
@@ -3781,6 +3834,7 @@
     "evasive": false,
     "rehearsed_or_coached": false,
     "contradicts_first_note": false,
+    "claims_existing_relationship": false,
     "explanation": "The payment is going to a new bank account provided via email with instructions not to call, which is a classic indicator of an invoice redirection scam.",
     "orders_found_in_message": []
    },
@@ -3844,6 +3898,7 @@
     "evasive": false,
     "rehearsed_or_coached": false,
     "contradicts_first_note": false,
+    "claims_existing_relationship": false,
     "explanation": "This payment is for an online puppy purchase where the buyer cannot visit in person and is pressured to pay today to hold the animal, which is a common setup for an online pet scam.",
     "orders_found_in_message": []
    },
@@ -3905,6 +3960,7 @@
     "evasive": false,
     "rehearsed_or_coached": false,
     "contradicts_first_note": false,
+    "claims_existing_relationship": false,
     "explanation": "This is a classic advance fee inheritance scam where the victim is asked to pay a fee to release a large sum of money that does not exist.",
     "orders_found_in_message": []
    },
@@ -3969,6 +4025,7 @@
     "evasive": false,
     "rehearsed_or_coached": false,
     "contradicts_first_note": false,
+    "claims_existing_relationship": false,
     "explanation": "This message exhibits classic signs of a family emergency scam, including high urgency, a request for secrecy from other family members, and a large money transfer to a new account.",
     "orders_found_in_message": []
    },
@@ -4031,6 +4088,7 @@
     "evasive": false,
     "rehearsed_or_coached": false,
     "contradicts_first_note": false,
+    "claims_existing_relationship": false,
     "explanation": "The customer is being asked to pay an upfront fee in order to release supposed funds or returns, which is a classic advance fee scam characteristic.",
     "orders_found_in_message": []
    },
@@ -4094,6 +4152,7 @@
     "evasive": false,
     "rehearsed_or_coached": true,
     "contradicts_first_note": false,
+    "claims_existing_relationship": false,
     "explanation": "The customer is following instructions from someone claiming to be bank security to move funds to a secure account, which is a classic bank impersonation scam.",
     "orders_found_in_message": []
    },
@@ -4158,6 +4217,7 @@
     "evasive": false,
     "rehearsed_or_coached": false,
     "contradicts_first_note": false,
+    "claims_existing_relationship": false,
     "explanation": "This is a classic advance fee scam where the victim is asked to pay unexpected shipping fees to receive a gift from someone they know online, under high urgency.",
     "orders_found_in_message": []
    },
@@ -4223,6 +4283,7 @@
     "evasive": false,
     "rehearsed_or_coached": true,
     "contradicts_first_note": false,
+    "claims_existing_relationship": false,
     "explanation": "This is a classic tech support and remote access scam where the victim believes they received an accidental overpayment refund and allows a stranger remote access to their screen to return funds.",
     "orders_found_in_message": []
    },
@@ -4286,6 +4347,7 @@
     "evasive": false,
     "rehearsed_or_coached": false,
     "contradicts_first_note": false,
+    "claims_existing_relationship": false,
     "explanation": "This shows classic signs of an invoice redirect scam, where a supplier's email is spoofed or hacked to provide new bank details and instruct the victim not to call to verify.",
     "orders_found_in_message": []
    },
@@ -4349,6 +4411,7 @@
     "evasive": false,
     "rehearsed_or_coached": true,
     "contradicts_first_note": false,
+    "claims_existing_relationship": false,
     "explanation": "This exhibits classic online vehicle purchase scam traits, including an absent seller using a shipping agent, high pressure to buy quickly, and injected prompt-override text.",
     "orders_found_in_message": []
    },
@@ -4412,6 +4475,7 @@
     "evasive": false,
     "rehearsed_or_coached": false,
     "contradicts_first_note": false,
+    "claims_existing_relationship": false,
     "explanation": "This is a classic advance fee scam where the customer believes they won a prize but must pay a fee first to receive it.",
     "orders_found_in_message": []
    },
@@ -4476,6 +4540,7 @@
     "evasive": false,
     "rehearsed_or_coached": false,
     "contradicts_first_note": false,
+    "claims_existing_relationship": false,
     "explanation": "The customer is likely being scammed by someone impersonating their son via a new number and demanding urgent secrecy.",
     "orders_found_in_message": []
    },
@@ -4539,6 +4604,7 @@
     "evasive": false,
     "rehearsed_or_coached": false,
     "contradicts_first_note": false,
+    "claims_existing_relationship": false,
     "explanation": "This is a classic advance-fee investment scam where the victim is blocked from withdrawing funds until they pay an additional fee.",
     "orders_found_in_message": []
    },
@@ -4602,6 +4668,7 @@
     "evasive": false,
     "rehearsed_or_coached": true,
     "contradicts_first_note": false,
+    "claims_existing_relationship": false,
     "explanation": "The customer is following instructions from someone claiming to be bank security who created panic by saying hackers are emptying the account, which is a classic bank impersonation scam.",
     "orders_found_in_message": []
    },
@@ -4666,6 +4733,7 @@
     "evasive": false,
     "rehearsed_or_coached": false,
     "contradicts_first_note": false,
+    "claims_existing_relationship": false,
     "explanation": "This shows classic signs of a romance scam where an online-only partner requests money urgently for an overseas emergency and asks to keep the transaction a secret.",
     "orders_found_in_message": []
    },
@@ -4731,6 +4799,7 @@
     "evasive": false,
     "rehearsed_or_coached": false,
     "contradicts_first_note": false,
+    "claims_existing_relationship": false,
     "explanation": "This is a classic tech support refund scam where the fraudster pretends to accidentally overpay and demands a return of funds while accessing the victim's device.",
     "orders_found_in_message": []
    },
@@ -4793,6 +4862,7 @@
     "evasive": false,
     "rehearsed_or_coached": false,
     "contradicts_first_note": false,
+    "claims_existing_relationship": false,
     "explanation": "This has classic red flags for an invoice redirect scam, including sudden bank detail changes via email and instructions not to call to verify.",
     "orders_found_in_message": []
    },
@@ -4895,6 +4965,7 @@
     "evasive": false,
     "rehearsed_or_coached": false,
     "contradicts_first_note": false,
+    "claims_existing_relationship": false,
     "explanation": "This is a classic advance fee scam where the victim is told they won a prize but must pay a fee first to receive it.",
     "orders_found_in_message": []
    },
@@ -4958,6 +5029,7 @@
     "evasive": false,
     "rehearsed_or_coached": false,
     "contradicts_first_note": false,
+    "claims_existing_relationship": false,
     "explanation": "This message exhibits classic signs of a family emergency impersonation scam, featuring a new phone number, an urgent request for money, and instructions to keep it secret from other family members.",
     "orders_found_in_message": []
    },
@@ -5061,6 +5133,7 @@
     "evasive": false,
     "rehearsed_or_coached": true,
     "contradicts_first_note": false,
+    "claims_existing_relationship": false,
     "explanation": "The customer is following instructions from someone on the phone to transfer money to a supposed secure account and ignore bank warnings, which is a classic bank impersonation scam.",
     "orders_found_in_message": []
    },
@@ -5125,6 +5198,7 @@
     "evasive": false,
     "rehearsed_or_coached": false,
     "contradicts_first_note": false,
+    "claims_existing_relationship": false,
     "explanation": "The customer is sending money for an online contact they have never met, who claims an emergency abroad, and is asking to keep the transfer secret from family, which strongly indicates a romance scam.",
     "orders_found_in_message": []
    },
@@ -5188,6 +5262,7 @@
     "evasive": false,
     "rehearsed_or_coached": true,
     "contradicts_first_note": false,
+    "claims_existing_relationship": false,
     "explanation": "The customer appears to be following instructions from an external technician, which strongly suggests a remote access scam.",
     "orders_found_in_message": []
    },
@@ -5251,6 +5326,7 @@
     "evasive": false,
     "rehearsed_or_coached": false,
     "contradicts_first_note": false,
+    "claims_existing_relationship": false,
     "explanation": "This has classic hallmarks of an invoice redirect scam, featuring a sudden bank account change notified by email combined with a request not to call.",
     "orders_found_in_message": []
    },
@@ -5315,6 +5391,7 @@
     "evasive": false,
     "rehearsed_or_coached": false,
     "contradicts_first_note": false,
+    "claims_existing_relationship": false,
     "explanation": "The customer is attempting to buy an item at a steep discount from an online seller who is demanding a direct bank transfer outside of the platform's safety protections, which is a classic online purchase scam setup.",
     "orders_found_in_message": []
    },
@@ -5377,6 +5454,7 @@
     "evasive": false,
     "rehearsed_or_coached": false,
     "contradicts_first_note": false,
+    "claims_existing_relationship": false,
     "explanation": "This is a classic advance fee lottery scam where the victim is asked to pay a fee via wire transfer to claim a supposed prize that does not exist.",
     "orders_found_in_message": []
    },
@@ -5442,6 +5520,7 @@
     "evasive": false,
     "rehearsed_or_coached": true,
     "contradicts_first_note": false,
+    "claims_existing_relationship": false,
     "explanation": "This follows classic family emergency scam patterns where a relative cannot be reached by phone, demands urgent payment to a third party, and instructs the victim not to call to verify.",
     "orders_found_in_message": []
    },
@@ -5505,6 +5584,7 @@
     "evasive": false,
     "rehearsed_or_coached": true,
     "contradicts_first_note": false,
+    "claims_existing_relationship": false,
     "explanation": "The customer is following instructions from an online advisor to fund an exchange wallet and is explicitly told to mislead the bank, which are classic signs of an investment scam.",
     "orders_found_in_message": []
    },
@@ -5569,6 +5649,7 @@
     "evasive": false,
     "rehearsed_or_coached": true,
     "contradicts_first_note": false,
+    "claims_existing_relationship": false,
     "explanation": "The customer is following instructions from a caller impersonating authority figures and claiming bank staff are involved, which are classic signs of a bank impersonation scam.",
     "orders_found_in_message": []
    },
@@ -5632,6 +5713,7 @@
     "evasive": false,
     "rehearsed_or_coached": false,
     "contradicts_first_note": false,
+    "claims_existing_relationship": false,
     "explanation": "The customer is sending gift card codes to an online contact whose bank account is allegedly frozen, which is a classic romance and gift card scam pattern.",
     "orders_found_in_message": []
    },
@@ -5695,6 +5777,7 @@
     "evasive": false,
     "rehearsed_or_coached": false,
     "contradicts_first_note": false,
+    "claims_existing_relationship": false,
     "explanation": "The customer believes they are paying a tech support expert who is fixing their computer remotely, which is a classic setup for a remote access scam.",
     "orders_found_in_message": []
    },
@@ -5756,6 +5839,7 @@
     "evasive": false,
     "rehearsed_or_coached": false,
     "contradicts_first_note": false,
+    "claims_existing_relationship": false,
     "explanation": "The payment is going to an updated account number received via email, which is a common indicator of an invoice redirect scam.",
     "orders_found_in_message": []
    },
@@ -5819,6 +5903,7 @@
     "evasive": false,
     "rehearsed_or_coached": false,
     "contradicts_first_note": false,
+    "claims_existing_relationship": false,
     "explanation": "The customer is sending a large deposit to an overseas landlord they have never met in person, which is a classic setup for a rental scam.",
     "orders_found_in_message": []
    },
@@ -5957,6 +6042,7 @@
     "evasive": false,
     "rehearsed_or_coached": true,
     "contradicts_first_note": false,
+    "claims_existing_relationship": false,
     "explanation": "The customer is sending a large amount of money to an online advisor via a chat app and was explicitly told to hide the crypto investment from the bank, which is a strong indicator of an investment scam.",
     "orders_found_in_message": []
    },
@@ -6020,6 +6106,7 @@
     "evasive": false,
     "rehearsed_or_coached": true,
     "contradicts_first_note": false,
+    "claims_existing_relationship": false,
     "explanation": "This is a classic bank impersonation scam where a caller convinces the customer that branch staff are corrupt and directs them to transfer funds to a fake safe account.",
     "orders_found_in_message": []
    },
@@ -6083,6 +6170,7 @@
     "evasive": false,
     "rehearsed_or_coached": false,
     "contradicts_first_note": false,
+    "claims_existing_relationship": false,
     "explanation": "This is a classic romance scam where an online partner met on a dating app asks for money urgently while making excuses to avoid a video call.",
     "orders_found_in_message": []
    },
@@ -6145,6 +6233,7 @@
     "evasive": false,
     "rehearsed_or_coached": false,
     "contradicts_first_note": false,
+    "claims_existing_relationship": false,
     "explanation": "The customer is following instructions from a computer technician to make a payment, which strongly indicates a tech support scam.",
     "orders_found_in_message": []
    },
@@ -7609,6 +7698,7 @@
     "evasive": false,
     "rehearsed_or_coached": false,
     "contradicts_first_note": false,
+    "claims_existing_relationship": false,
     "explanation": "The payment is for a legitimate rent deposit with a signed contract, met the agent in person, and the customer successfully identified and avoided a phone scammer.",
     "orders_found_in_message": []
    },
@@ -7667,6 +7757,7 @@
     "evasive": false,
     "rehearsed_or_coached": false,
     "contradicts_first_note": false,
+    "claims_existing_relationship": false,
     "explanation": "The customer viewed the flat twice, signed a lease, and proactively hung up on a suspicious caller, showing strong verification and no signs of a scam.",
     "orders_found_in_message": []
    },
@@ -7725,6 +7816,7 @@
     "evasive": false,
     "rehearsed_or_coached": false,
     "contradicts_first_note": false,
+    "claims_existing_relationship": false,
     "explanation": "This is a legitimate rent payment for a flat the customer toured in person and signed a lease for, so no scam indicators are present.",
     "orders_found_in_message": []
    },
@@ -7785,6 +7877,7 @@
     "evasive": false,
     "rehearsed_or_coached": false,
     "contradicts_first_note": false,
+    "claims_existing_relationship": false,
     "explanation": "The customer is paying a rent deposit to an agent they met in person after signing a contract. Although it is urgent, there are no classic scam indicators present.",
     "orders_found_in_message": []
    },
@@ -7845,6 +7938,7 @@
     "evasive": false,
     "rehearsed_or_coached": false,
     "contradicts_first_note": false,
+    "claims_existing_relationship": false,
     "explanation": "The payment is for a legitimate-looking rental deposit where the customer met the agent and signed a contract in person. The urgency is due to their own housing deadline rather than external manipulation.",
     "orders_found_in_message": []
    },
@@ -7903,6 +7997,7 @@
     "evasive": false,
     "rehearsed_or_coached": false,
     "contradicts_first_note": false,
+    "claims_existing_relationship": false,
     "explanation": "The customer has met the landlord in person, inspected the property, and has a signed contract, indicating this is a normal and safe rental payment.",
     "orders_found_in_message": []
    },
@@ -7961,6 +8056,7 @@
     "evasive": false,
     "rehearsed_or_coached": false,
     "contradicts_first_note": false,
+    "claims_existing_relationship": false,
     "explanation": "The customer met the agent in person and signed a contract for an apartment rent deposit, and the secrecy requested is for a personal surprise rather than concealment from authorities.",
     "orders_found_in_message": []
    },
@@ -8021,6 +8117,7 @@
     "evasive": false,
     "rehearsed_or_coached": false,
     "contradicts_first_note": false,
+    "claims_existing_relationship": false,
     "explanation": "The customer has visited the property twice and signed a lease, indicating a legitimate transaction. The request for secrecy is explicitly for a surprise moving announcement.",
     "orders_found_in_message": []
    },
@@ -8079,6 +8176,7 @@
     "evasive": false,
     "rehearsed_or_coached": false,
     "contradicts_first_note": false,
+    "claims_existing_relationship": false,
     "explanation": "The customer has visited the flat in person and signed a lease, making this a legitimate rental payment.",
     "orders_found_in_message": []
    },
@@ -8139,6 +8237,7 @@
     "evasive": false,
     "rehearsed_or_coached": false,
     "contradicts_first_note": false,
+    "claims_existing_relationship": false,
     "explanation": "The payment is for rent to a landlord after touring the flat and signing a lease, and the secrecy is requested because it is meant to be a surprise for the family.",
     "orders_found_in_message": []
    },
@@ -8199,6 +8298,7 @@
     "evasive": false,
     "rehearsed_or_coached": false,
     "contradicts_first_note": false,
+    "claims_existing_relationship": false,
     "explanation": "The customer has met the agent in person and signed a contract, and the urgency is driven by their own travel plans rather than an external scam pressure.",
     "orders_found_in_message": []
    },
@@ -8257,6 +8357,7 @@
     "evasive": false,
     "rehearsed_or_coached": false,
     "contradicts_first_note": false,
+    "claims_existing_relationship": false,
     "explanation": "The customer is paying a landlord for a lease they signed after touring the property in person, and the secrecy is merely to keep a family surprise.",
     "orders_found_in_message": []
    },
@@ -8315,6 +8416,7 @@
     "evasive": false,
     "rehearsed_or_coached": false,
     "contradicts_first_note": false,
+    "claims_existing_relationship": false,
     "explanation": "The customer has met the agent in person, signed a contract, and is paying a standard rent deposit, indicating a normal and legitimate transaction.",
     "orders_found_in_message": []
    },
@@ -8373,6 +8475,7 @@
     "evasive": false,
     "rehearsed_or_coached": false,
     "contradicts_first_note": false,
+    "claims_existing_relationship": false,
     "explanation": "The customer has met the landlord in person, visited the flat, and signed a lease, indicating a normal and legitimate rental payment.",
     "orders_found_in_message": []
    },
@@ -8431,6 +8534,7 @@
     "evasive": false,
     "rehearsed_or_coached": false,
     "contradicts_first_note": false,
+    "claims_existing_relationship": false,
     "explanation": "The customer met the landlord in person, inspected the property, and has a signed contract, which significantly reduces the likelihood of a scam.",
     "orders_found_in_message": []
    },
@@ -8491,6 +8595,7 @@
     "evasive": false,
     "rehearsed_or_coached": false,
     "contradicts_first_note": false,
+    "claims_existing_relationship": false,
     "explanation": "The customer inspected the used car and documents in person, which indicates a low risk of a scam despite the rushed timeline.",
     "orders_found_in_message": []
    },
@@ -8548,6 +8653,7 @@
     "evasive": false,
     "rehearsed_or_coached": false,
     "contradicts_first_note": false,
+    "claims_existing_relationship": false,
     "explanation": "The customer is making a legitimate payment to a wedding venue they have toured, signed a contract with, and verified independently after recognizing a bank impersonation scam attempt.",
     "orders_found_in_message": []
    },
@@ -8644,6 +8750,7 @@
     "evasive": false,
     "rehearsed_or_coached": false,
     "contradicts_first_note": false,
+    "claims_existing_relationship": false,
     "explanation": "The customer is paying for a wedding venue they have personally toured and signed a contract for, and the secrecy is only to keep a surprise for their family.",
     "orders_found_in_message": []
    },
@@ -8702,6 +8809,7 @@
     "evasive": false,
     "rehearsed_or_coached": false,
     "contradicts_first_note": false,
+    "claims_existing_relationship": false,
     "explanation": "The customer is making a legitimate payment for a wedding venue they have personally toured and signed a contract with, and they actively verified the security of the transaction themselves.",
     "orders_found_in_message": []
    },
@@ -8760,6 +8868,7 @@
     "evasive": false,
     "rehearsed_or_coached": false,
     "contradicts_first_note": false,
+    "claims_existing_relationship": false,
     "explanation": "The customer toured the venue, signed a contract, and independently verified the payment after hanging up on a potential scammer, indicating a legitimate transaction.",
     "orders_found_in_message": []
    },
@@ -8818,6 +8927,7 @@
     "evasive": false,
     "rehearsed_or_coached": false,
     "contradicts_first_note": false,
+    "claims_existing_relationship": false,
     "explanation": "The customer inspected the car in person and is purchasing it with proper documentation, keeping the payment secret only as a benign surprise for their family.",
     "orders_found_in_message": []
    },
@@ -8876,6 +8986,7 @@
     "evasive": false,
     "rehearsed_or_coached": false,
     "contradicts_first_note": false,
+    "claims_existing_relationship": false,
     "explanation": "The customer inspected the car in person and is keeping the purchase secret only as a surprise for their family.",
     "orders_found_in_message": []
    },
@@ -8934,6 +9045,7 @@
     "evasive": false,
     "rehearsed_or_coached": false,
     "contradicts_first_note": false,
+    "claims_existing_relationship": false,
     "explanation": "The customer has verified the venue in person, signed a contract, and checked reviews independently, indicating a legitimate transaction.",
     "orders_found_in_message": []
    },
@@ -8992,6 +9104,7 @@
     "evasive": false,
     "rehearsed_or_coached": false,
     "contradicts_first_note": false,
+    "claims_existing_relationship": false,
     "explanation": "The customer met the seller in person, inspected the car, and checked the registration papers, making this a low-risk transaction.",
     "orders_found_in_message": []
    },
@@ -9052,6 +9165,7 @@
     "evasive": false,
     "rehearsed_or_coached": false,
     "contradicts_first_note": false,
+    "claims_existing_relationship": false,
     "explanation": "The customer is making a payment to a regulated broker account under time pressure, which appears to stem from their own delay rather than external scam tactics.",
     "orders_found_in_message": []
    },
@@ -9110,6 +9224,7 @@
     "evasive": false,
     "rehearsed_or_coached": false,
     "contradicts_first_note": false,
+    "claims_existing_relationship": false,
     "explanation": "The customer is transferring funds to their own regulated broker account as a surprise for their family, showing no signs of a scam.",
     "orders_found_in_message": []
    },
@@ -9205,6 +9320,7 @@
     "evasive": false,
     "rehearsed_or_coached": false,
     "contradicts_first_note": false,
+    "claims_existing_relationship": false,
     "explanation": "The customer states they verified the broker on an official register, and the urgency is driven by their upcoming travel rather than external pressure.",
     "orders_found_in_message": []
    },
@@ -9263,6 +9379,7 @@
     "evasive": false,
     "rehearsed_or_coached": false,
     "contradicts_first_note": false,
+    "claims_existing_relationship": false,
     "explanation": "The customer describes a routine monthly pension payment with a personal deadline, showing no signs of external manipulation or scam tactics.",
     "orders_found_in_message": []
    },
@@ -9322,6 +9439,7 @@
     "evasive": false,
     "rehearsed_or_coached": false,
     "contradicts_first_note": false,
+    "claims_existing_relationship": false,
     "explanation": "The customer is in a rush due to upcoming travel, but they independently verified the regulated broker and set up the transfer themselves.",
     "orders_found_in_message": []
    },
@@ -9419,6 +9537,7 @@
     "evasive": false,
     "rehearsed_or_coached": false,
     "contradicts_first_note": false,
+    "claims_existing_relationship": false,
     "explanation": "The customer is in a rush due to travel, but they independently verified the broker on the official register and initiated the transfer themselves, indicating a low risk of a scam.",
     "orders_found_in_message": []
    },
@@ -9513,6 +9632,7 @@
     "evasive": false,
     "rehearsed_or_coached": false,
     "contradicts_first_note": false,
+    "claims_existing_relationship": false,
     "explanation": "The customer states they are funding their own regulated broker account and keeping the transfer secret as a family surprise gift, with no typical scam indicators present.",
     "orders_found_in_message": []
    },
@@ -9570,6 +9690,7 @@
     "evasive": false,
     "rehearsed_or_coached": false,
     "contradicts_first_note": false,
+    "claims_existing_relationship": false,
     "explanation": "The customer is sending money to their daughter for tuition, which they have done before, and they have verified everything in person.",
     "orders_found_in_message": []
    },
@@ -9626,6 +9747,7 @@
     "evasive": false,
     "rehearsed_or_coached": false,
     "contradicts_first_note": false,
+    "claims_existing_relationship": false,
     "explanation": "The customer is sending money to their daughter for tuition, which is a regular payment. They have met in person and verified the details, indicating this is a normal family transaction.",
     "orders_found_in_message": []
    },
@@ -9682,6 +9804,7 @@
     "evasive": false,
     "rehearsed_or_coached": false,
     "contradicts_first_note": false,
+    "claims_existing_relationship": false,
     "explanation": "The customer is sending a birthday gift to a family member they have met in person and verified, indicating a normal and safe transaction.",
     "orders_found_in_message": []
    },
@@ -9740,6 +9863,7 @@
     "evasive": false,
     "rehearsed_or_coached": false,
     "contradicts_first_note": false,
+    "claims_existing_relationship": false,
     "explanation": "The customer is sending a small birthday gift to their nephew and has independently confirmed it with him over the phone, indicating a low risk of a scam despite the personal rush.",
     "orders_found_in_message": []
    },
@@ -9797,6 +9921,7 @@
     "evasive": false,
     "rehearsed_or_coached": false,
     "contradicts_first_note": false,
+    "claims_existing_relationship": false,
     "explanation": "The customer is sending a birthday gift to their nephew and verified the request by speaking to him directly on the phone.",
     "orders_found_in_message": []
    },
@@ -9889,6 +10014,7 @@
     "evasive": false,
     "rehearsed_or_coached": false,
     "contradicts_first_note": false,
+    "claims_existing_relationship": false,
     "explanation": "The customer is sending money for a family member's birthday gift with personal time pressure, showing very low indicators of a scam.",
     "orders_found_in_message": []
    },
@@ -9944,6 +10070,7 @@
     "evasive": false,
     "rehearsed_or_coached": false,
     "contradicts_first_note": false,
+    "claims_existing_relationship": false,
     "explanation": "The customer is sending money to their daughter for tuition, similar to a previous payment, with urgency due to a legitimate payment deadline.",
     "orders_found_in_message": []
    },
@@ -9999,6 +10126,7 @@
     "evasive": false,
     "rehearsed_or_coached": false,
     "contradicts_first_note": false,
+    "claims_existing_relationship": false,
     "explanation": "The customer successfully recognized a potential scam call, verified their account through the official app, and is merely paying a standard utility bill.",
     "orders_found_in_message": []
    },
@@ -10056,6 +10184,7 @@
     "evasive": false,
     "rehearsed_or_coached": false,
     "contradicts_first_note": false,
+    "claims_existing_relationship": false,
     "explanation": "The customer is making a routine payment with a tight deadline due to their own delay, with no signs of external scam tactics.",
     "orders_found_in_message": []
    },
@@ -10115,6 +10244,7 @@
     "evasive": false,
     "rehearsed_or_coached": false,
     "contradicts_first_note": false,
+    "claims_existing_relationship": false,
     "explanation": "The customer is making a routine payment to a regular payee and verified their account independently despite feeling rushed.",
     "orders_found_in_message": []
    },
@@ -10171,6 +10301,7 @@
     "evasive": false,
     "rehearsed_or_coached": false,
     "contradicts_first_note": false,
+    "claims_existing_relationship": false,
     "explanation": "The customer is making a standard payment to a friend whom they have met in person and independently verified, with no signs of a scam.",
     "orders_found_in_message": []
    },
@@ -10229,6 +10360,7 @@
     "evasive": false,
     "rehearsed_or_coached": false,
     "contradicts_first_note": false,
+    "claims_existing_relationship": false,
     "explanation": "The customer verified the situation independently by calling the number on the back of their card, and the secrecy is merely a benign surprise for their family.",
     "orders_found_in_message": []
    },
@@ -10285,6 +10417,7 @@
     "evasive": false,
     "rehearsed_or_coached": false,
     "contradicts_first_note": false,
+    "claims_existing_relationship": false,
     "explanation": "The customer is simply paying a routine electricity bill and has independently verified the situation with no signs of a scam.",
     "orders_found_in_message": []
    },
@@ -10343,6 +10476,7 @@
     "evasive": false,
     "rehearsed_or_coached": false,
     "contradicts_first_note": false,
+    "claims_existing_relationship": false,
     "explanation": "The customer verified the bank call independently using the number on their card and is simply paying a routine electricity bill.",
     "orders_found_in_message": []
    },
@@ -10401,6 +10535,7 @@
     "evasive": false,
     "rehearsed_or_coached": false,
     "contradicts_first_note": false,
+    "claims_existing_relationship": false,
     "explanation": "The customer is paying a legitimate cleaning company based on a signed contract and verified the details independently by phone.",
     "orders_found_in_message": []
    },
@@ -10458,6 +10593,7 @@
     "evasive": false,
     "rehearsed_or_coached": false,
     "contradicts_first_note": false,
+    "claims_existing_relationship": false,
     "explanation": "The customer is paying a legitimate cleaning company invoice and has independently verified the details by phone and through the official app after hanging up on a potential scammer.",
     "orders_found_in_message": []
    },
@@ -10516,6 +10652,7 @@
     "evasive": false,
     "rehearsed_or_coached": false,
     "contradicts_first_note": false,
+    "claims_existing_relationship": false,
     "explanation": "The customer took the proper precaution of calling the supplier on their usual known number to verify the changed bank details, and they have met the supplier in person.",
     "orders_found_in_message": []
    },
@@ -10574,6 +10711,7 @@
     "evasive": false,
     "rehearsed_or_coached": false,
     "contradicts_first_note": false,
+    "claims_existing_relationship": false,
     "explanation": "The payment is for a legitimate cleaning company with a signed contract and phone verification, and the secrecy is merely a benign family surprise.",
     "orders_found_in_message": []
    },

@@ -13,7 +13,7 @@ from pathlib import Path
 from pydantic import BaseModel, Field
 
 from backend import gemini_client
-from backend.risk.corroboration import payee_unexplained
+from backend.risk.corroboration import claims_history_only, payee_unexplained
 
 CACHE_DIR = Path(__file__).resolve().parents[2] / "eval" / "output" / "cache_questions"
 _memory_questions = {}  # used instead of the disk on a live server
@@ -46,9 +46,10 @@ def should_ask(message, reading, decision):
         return False  # the payment alone is alarming enough, no need to ask
     if reading and reading["scam_likelihood"] >= STRONG_MESSAGE_LIKELIHOOD:
         return False  # the message alone is clearly a scam
-    if reading and reading["customer_verified_independently"] and reading["scam_likelihood"] < 30:
-        return False  # the customer already explained and checked
     new_payee = any(signal["name"] == "new_payee" for signal in audit["behaviour_signals"])
+    claims_only = new_payee and claims_history_only(reading)
+    if reading and reading["customer_verified_independently"] and reading["scam_likelihood"] < 30 and not claims_only:
+        return False  # the customer already explained and checked
     unexplained = new_payee and payee_unexplained(reading)
     if audit["behaviour_score"] >= ASK_FROM_BEHAVIOUR_SCORE:
         return note_is_thin(message) or unexplained

@@ -162,3 +162,20 @@ def test_an_introduction_by_someone_trusted_counts_as_corroboration():
     note = "Paying the new supplier my neighbour recommended, for the fence panels I ordered."
     result = assess(calm_new_payee(), CUSTOMER, note, reader=referred_reader, asker=fake_asker, scam_types=[])
     assert result["action"] != "ask"
+
+
+def claims_reader(text, scam_types):
+    reading = fake_reader(5)(text, scam_types)
+    reading.update(customer_verified_independently=True, claims_existing_relationship=True, payee_relationship="supplier")
+    return reading
+
+
+def test_a_claimed_history_does_not_stop_the_question_and_is_penalised_afterwards():
+    note = "Payment for our latest invoice from our regular supplier, thank you very much for your help."
+    first = assess(calm_new_payee(), CUSTOMER, note, reader=claims_reader, asker=fake_asker, scam_types=[])
+    assert first["action"] == "ask"  # a claim of history is not enough to skip the question
+    second = assess(calm_new_payee(), CUSTOMER, note, questions=first["questions"],
+                    answer="They are trusted partners of ours for years.", reader=claims_reader,
+                    asker=fake_asker, scam_types=[])
+    assert second["action"] in ("warn", "hold")
+    assert second["audit"]["verified_discount"] == 0

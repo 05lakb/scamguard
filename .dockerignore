@@ -7,6 +7,7 @@ MEMORY.md
 **/node_modules
 web/dist
 eval
+redteam/output
 docs
 data/*.json
 !data/typologies.json

@@ -8,7 +8,7 @@ refuses a request we can see exactly which parameter caused it.
 
 import httpx
 
-from redteam.intel.cfpb import BASE, ComplaintClient, extract_records, id_of, narrative_of
+from redteam.intel.cfpb import BASE, ComplaintClient, extract_records, id_of, narrative_of, record_from_detail
 from redteam.intel.scrub import scrub
 
 LIGHT = {"size": 3, "no_aggs": "true"}  # tells the server not to total up millions of complaints
@@ -16,15 +16,11 @@ STEPS = [
     ("size and no_aggs only", dict(LIGHT)),
     ("add search_term", {**LIGHT, "search_term": "scam"}),
     ("add has_narrative", {**LIGHT, "search_term": "scam", "has_narrative": "true"}),
-    ("add field", {**LIGHT, "search_term": "scam", "has_narrative": "true", "field": "complaint_what_happened"}),
-    ("add sort", {**LIGHT, "search_term": "scam", "has_narrative": "true", "field": "complaint_what_happened",
-                  "sort": "created_date_desc"}),
-    ("add date", {**LIGHT, "search_term": "scam", "has_narrative": "true", "field": "complaint_what_happened",
-                  "sort": "created_date_desc", "date_received_min": "2023-01-01"}),
-    ("add frm", {**LIGHT, "search_term": "scam", "has_narrative": "true", "field": "complaint_what_happened",
-                 "sort": "created_date_desc", "date_received_min": "2023-01-01", "frm": 0}),
-    ("add format", {**LIGHT, "search_term": "scam", "has_narrative": "true", "field": "complaint_what_happened",
-                    "sort": "created_date_desc", "date_received_min": "2023-01-01", "frm": 0, "format": "json"}),
+    ("add sort", {**LIGHT, "search_term": "scam", "has_narrative": "true", "sort": "created_date_desc"}),
+    ("add date", {**LIGHT, "search_term": "scam", "has_narrative": "true", "sort": "created_date_desc",
+                  "date_received_min": "2023-01-01"}),
+    ("add frm", {**LIGHT, "search_term": "scam", "has_narrative": "true", "sort": "created_date_desc",
+                 "date_received_min": "2023-01-01", "frm": 0}),
 ]
 
 
@@ -67,6 +63,18 @@ def main():
         story = narrative_of(record)
         print(f"Record {number}: id={id_of(record)} product={record.get('product')!r} issue={record.get('issue')!r}")
         print(f"  story length: {len(story)} characters; scrubbed snippet: {scrub(story, 140)!r}")
+    # Does the single-complaint address carry the story?
+    first_id = id_of(records[0])
+    try:
+        status, payload, text = client.detail(first_id)
+        print(f"\nFetch by id ({first_id}): status={status} {describe(payload) if payload is not None else repr(text[:80])}")
+        detail = record_from_detail(payload) if status == 200 else None
+        if detail:
+            story = narrative_of(detail)
+            print(f"  fields: {sorted(detail)}")
+            print(f"  story length: {len(story)} characters; scrubbed snippet: {scrub(story, 160)!r}")
+    except httpx.HTTPError as error:
+        print(f"\nFetch by id ({first_id}): no answer: {type(error).__name__}")
     print(f"\nRequests made: {client.requests_made}. Nothing was saved.")
 
 

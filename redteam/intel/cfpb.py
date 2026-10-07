@@ -53,14 +53,25 @@ class ComplaintClient:
             payload = None
         return response.status_code, payload, response.text[:300], str(getattr(response, "url", ""))
 
+    def detail(self, complaint_id):
+        """Fetch one complaint by its id. Returns (status, payload, text)."""
+        self._pace()
+        self.requests_made += 1
+        response = self._http.get(self.base + str(complaint_id),
+                                  headers={"User-Agent": USER_AGENT, "Accept": "application/json"})
+        try:
+            payload = response.json()
+        except ValueError:
+            payload = None
+        return response.status_code, payload, response.text[:300]
+
     def search(self, term, size=25, offset=0, date_min="2023-01-01"):
         """Ask for complaints that mention a term and have a published story. Returns (status, payload)."""
         self._pace()
         self.requests_made += 1
         params = {
-            "search_term": term, "field": "complaint_what_happened", "size": size, "frm": offset,
-            "has_narrative": "true", "date_received_min": date_min, "sort": "created_date_desc",
-            "no_aggs": "true", "format": "json",
+            "search_term": term, "size": size, "frm": offset, "has_narrative": "true",
+            "date_received_min": date_min, "sort": "created_date_desc", "no_aggs": "true",
         }
         response = self._http.get(self.base, params=params, headers={"User-Agent": USER_AGENT, "Accept": "application/json"})
         try:
@@ -68,6 +79,16 @@ class ComplaintClient:
         except ValueError:
             payload = None
         return response.status_code, payload, response.text[:300]
+
+
+def record_from_detail(payload):
+    """The single complaint inside a fetch-by-id response, whichever shape it comes in."""
+    if isinstance(payload, dict):
+        if isinstance(payload.get("hits"), dict):
+            records = extract_records(payload)
+            return records[0] if records else None
+        return payload.get("_source", payload)
+    return None
 
 
 def extract_records(payload):

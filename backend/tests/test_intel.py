@@ -224,3 +224,30 @@ def test_the_probe_starts_light_and_survives_a_timeout():
     client = cfpb.ComplaintClient(pace_seconds=0, sleeper=lambda s: None, client=Timing())
     with pytest.raises(httpx.ReadTimeout):
         client.get({"size": 3})  # the client raises; the probe's loop is what catches it
+
+
+def test_the_client_never_sends_the_parameters_the_source_rejects():
+    client = make_client([{"hits": {"hits": []}}])
+    client.search("scam")
+    params = client._http.calls[0][1]
+    assert "field" not in params and "format" not in params
+    assert params["no_aggs"] == "true"
+
+
+def test_a_single_complaint_response_is_understood_in_either_shape():
+    record = {"complaint_id": "9", "complaint_what_happened": "story"}
+    assert cfpb.record_from_detail({"hits": {"hits": [{"_source": record}]}}) == record
+    assert cfpb.record_from_detail({"_source": record}) == record
+    assert cfpb.record_from_detail(record) == record
+    assert cfpb.record_from_detail(None) is None
+
+
+def test_the_collector_asks_for_each_story_by_id_when_the_list_has_none():
+    listing = {"hits": {"hits": [{"_source": {"complaint_id": "1", "product": "p", "issue": "i"}},
+                                 {"_source": {"complaint_id": "2", "product": "p", "issue": "i"}}]}}
+    detail_one = {"hits": {"hits": [{"_source": {"complaint_id": "1", "complaint_what_happened": LONG}}]}}
+    detail_two = {"hits": {"hits": [{"_source": {"complaint_id": "2", "complaint_what_happened": "too short"}}]}}
+    client = make_client([listing, detail_one, detail_two])
+    stories = collect.collect(client, count=5, per_term=25, max_requests=4)
+    assert [story["id"] for story in stories] == ["1"]
+    assert client.requests_made <= 4

@@ -9,7 +9,7 @@ import argparse
 import json
 from pathlib import Path
 
-from redteam.intel.cfpb import ComplaintClient, extract_records, id_of, narrative_of
+from redteam.intel.cfpb import ComplaintClient, extract_records, id_of, narrative_of, record_from_detail
 from redteam.intel.scrub import looks_clean, scrub
 
 OUTPUT = Path(__file__).resolve().parents[1] / "output" / "intel"
@@ -17,7 +17,7 @@ TERMS = ["scam", "zelle", "impersonat", "wire transfer", "tricked", "romance", "
 MIN_STORY = 250  # shorter stories rarely explain what happened
 
 
-def collect(client, count, per_term=25, max_requests=40):
+def collect(client, count, per_term=25, max_requests=80):
     found = {}
     for term in TERMS:
         offset = 0
@@ -30,9 +30,18 @@ def collect(client, count, per_term=25, max_requests=40):
             if not records:
                 break
             for record in records:
-                narrative = scrub(narrative_of(record))
                 key = id_of(record)
-                if key and key not in found and len(narrative) >= MIN_STORY and looks_clean(narrative):
+                if not key or key in found:
+                    continue
+                text = narrative_of(record)
+                if not text:  # the list did not carry the story, so ask for this one complaint by itself
+                    if client.requests_made >= max_requests:
+                        break
+                    status, payload, _ = client.detail(key)
+                    detail = record_from_detail(payload) if status == 200 else None
+                    text = narrative_of(detail) if detail else ""
+                narrative = scrub(text)
+                if len(narrative) >= MIN_STORY and looks_clean(narrative):
                     found[key] = {
                         "id": key, "product": record.get("product"), "issue": record.get("issue"),
                         "date_received": record.get("date_received"), "story": narrative,
@@ -47,7 +56,7 @@ def collect(client, count, per_term=25, max_requests=40):
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("--count", type=int, default=60)
-    parser.add_argument("--max-requests", type=int, default=40, help="hard cap on requests to the source")
+    parser.add_argument("--max-requests", type=int, default=80, help="hard cap on requests to the source")
     parser.add_argument("--out", default=str(OUTPUT / "complaints_scrubbed.jsonl"))
     args = parser.parse_args()
 

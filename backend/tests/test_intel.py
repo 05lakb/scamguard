@@ -206,3 +206,21 @@ def test_the_client_can_send_exact_parameters_and_report_the_address():
     status, payload, text, url = client.get({"size": 3})
     assert status == 200
     assert client._http.calls[0][1] == {"size": 3}
+
+
+def test_the_probe_starts_light_and_survives_a_timeout():
+    from redteam.intel import probe
+    import httpx
+
+    assert probe.STEPS[0][1].get("no_aggs") == "true"  # never start with the heavy, unfiltered request
+
+    class Timing:
+        calls = 0
+
+        def get(self, url, params=None, headers=None):
+            Timing.calls += 1
+            raise httpx.ReadTimeout("slow")
+
+    client = cfpb.ComplaintClient(pace_seconds=0, sleeper=lambda s: None, client=Timing())
+    with pytest.raises(httpx.ReadTimeout):
+        client.get({"size": 3})  # the client raises; the probe's loop is what catches it

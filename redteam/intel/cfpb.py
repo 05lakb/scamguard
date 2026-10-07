@@ -21,7 +21,8 @@ USER_AGENT = "LastMileGuard-research/0.1 (hackathon prototype; reads public comp
 
 
 class ComplaintClient:
-    def __init__(self, base=BASE, pace_seconds=2.0, client=None, sleeper=time.sleep, clock=time.monotonic):
+    def __init__(self, base=BASE, pace_seconds=2.0, client=None, sleeper=time.sleep, clock=time.monotonic,
+                 timeout=45.0):
         parsed = urlparse(base)
         if parsed.scheme != "https" or parsed.hostname != ALLOWED_HOST:
             raise ValueError(f"Refusing to talk to {parsed.hostname!r}. Only {ALLOWED_HOST} is allowed.")
@@ -30,7 +31,7 @@ class ComplaintClient:
         self._sleep = sleeper
         self._clock = clock
         self._last = None
-        self._http = client or httpx.Client(timeout=45.0, follow_redirects=False)
+        self._http = client or httpx.Client(timeout=timeout, follow_redirects=False)
         self.requests_made = 0
 
     def _pace(self):

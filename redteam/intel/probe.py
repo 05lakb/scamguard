@@ -6,22 +6,25 @@ It asks for 3 complaints in small steps, adding one parameter at a time, so that
 refuses a request we can see exactly which parameter caused it.
 """
 
+import httpx
+
 from redteam.intel.cfpb import BASE, ComplaintClient, extract_records, id_of, narrative_of
 from redteam.intel.scrub import scrub
 
+LIGHT = {"size": 3, "no_aggs": "true"}  # tells the server not to total up millions of complaints
 STEPS = [
-    ("no parameters", {}),
-    ("size only", {"size": 3}),
-    ("add search_term", {"size": 3, "search_term": "scam"}),
-    ("add has_narrative", {"size": 3, "search_term": "scam", "has_narrative": "true"}),
-    ("add field", {"size": 3, "search_term": "scam", "has_narrative": "true", "field": "complaint_what_happened"}),
-    ("add sort", {"size": 3, "search_term": "scam", "has_narrative": "true", "field": "complaint_what_happened",
+    ("size and no_aggs only", dict(LIGHT)),
+    ("add search_term", {**LIGHT, "search_term": "scam"}),
+    ("add has_narrative", {**LIGHT, "search_term": "scam", "has_narrative": "true"}),
+    ("add field", {**LIGHT, "search_term": "scam", "has_narrative": "true", "field": "complaint_what_happened"}),
+    ("add sort", {**LIGHT, "search_term": "scam", "has_narrative": "true", "field": "complaint_what_happened",
                   "sort": "created_date_desc"}),
-    ("add date", {"size": 3, "search_term": "scam", "has_narrative": "true", "field": "complaint_what_happened",
+    ("add date", {**LIGHT, "search_term": "scam", "has_narrative": "true", "field": "complaint_what_happened",
                   "sort": "created_date_desc", "date_received_min": "2023-01-01"}),
-    ("add no_aggs and format", {"size": 3, "search_term": "scam", "has_narrative": "true",
-                                "field": "complaint_what_happened", "sort": "created_date_desc",
-                                "date_received_min": "2023-01-01", "no_aggs": "true", "format": "json"}),
+    ("add frm", {**LIGHT, "search_term": "scam", "has_narrative": "true", "field": "complaint_what_happened",
+                 "sort": "created_date_desc", "date_received_min": "2023-01-01", "frm": 0}),
+    ("add format", {**LIGHT, "search_term": "scam", "has_narrative": "true", "field": "complaint_what_happened",
+                    "sort": "created_date_desc", "date_received_min": "2023-01-01", "frm": 0, "format": "json"}),
 ]
 
 
@@ -33,19 +36,26 @@ def describe(payload):
 
 
 def main():
-    client = ComplaintClient()
+    client = ComplaintClient(timeout=25.0)
     print(f"Address: {BASE}")
     working = None
     for name, params in STEPS:
-        status, payload, text, url = client.get(params)
+        try:
+            status, payload, text, url = client.get(params)
+        except httpx.HTTPError as error:
+            print(f"- {name:24} no answer: {type(error).__name__}")
+            continue
         records = extract_records(payload)
         print(f"- {name:24} status={status} records={len(records)} {describe(payload) if payload is not None else repr(text[:80])}")
         if status == 200 and records:
             working = (name, params, records, url)
 
     # The same request without the trailing slash, in case the address is picky about it.
-    status, payload, text, url = client.get({"size": 3}, base=BASE.rstrip("/"))
-    print(f"- {'no trailing slash':24} status={status} records={len(extract_records(payload))}")
+    try:
+        status, payload, text, url = client.get(LIGHT, base=BASE.rstrip("/"))
+        print(f"- {'no trailing slash':24} status={status} records={len(extract_records(payload))}")
+    except httpx.HTTPError as error:
+        print(f"- {'no trailing slash':24} no answer: {type(error).__name__}")
 
     if not working:
         print("\nNothing worked. Send me this output and I will adjust.")

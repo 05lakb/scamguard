@@ -112,7 +112,7 @@ export function decide(
 
     if (claimsOnly) {
       messagePoints += CLAIMED_HISTORY_MISMATCH;
-      reasons.push("The customer says they already know this payee, but we have no record of ever paying them.");
+      reasons.push("The customer describes past dealings with this payee, but we have no record of ever paying them.");
     }
     if (asked && newPayee && payeeUnexplained(reading)) {
       messagePoints += UNCORROBORATED_AFTER_ASKING;

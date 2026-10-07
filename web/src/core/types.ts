@@ -53,7 +53,7 @@ export interface Reading {
   evasive: boolean;
   rehearsed_or_coached: boolean;
   contradicts_first_note: boolean;
-  claims_existing_relationship?: boolean;
+  claims_prior_dealings?: boolean;
   explanation: string;
   orders_found_in_message: string[];
 }

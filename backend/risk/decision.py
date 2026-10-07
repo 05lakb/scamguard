@@ -105,7 +105,7 @@ def decide(payment, customer, reading=None, scam_types=None, asked=False):
 
         if claims_only:
             message_points += CLAIMED_HISTORY_MISMATCH
-            reasons.append("The customer says they already know this payee, but we have no record of ever paying them.")
+            reasons.append("The customer describes past dealings with this payee, but we have no record of ever paying them.")
         if asked and new_payee and payee_unexplained(reading):
             message_points += UNCORROBORATED_AFTER_ASKING
             reasons.append("We asked, but nothing backs up who the payee is.")

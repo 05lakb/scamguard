@@ -24,7 +24,7 @@ export function noteIsThin(message: string | null | undefined): boolean {
 // True if the customer claims to know the payee already, but did not say they met them in person.
 export function claimsHistoryOnly(reading: Reading | null): boolean {
   if (!reading) return false;
-  return Boolean(reading.claims_existing_relationship) && (reading.met_payee_in_person ?? "unknown") !== "yes";
+  return Boolean(reading.claims_prior_dealings) && (reading.met_payee_in_person ?? "unknown") !== "yes";
 }
 
 // True if nothing backs up who the payee is. A claimed relationship alone is not proof.

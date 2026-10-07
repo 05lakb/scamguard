@@ -5,7 +5,7 @@ def claims_history_only(reading):
     """True if the customer claims to know the payee already, but did not say they met them in person."""
     if reading is None:
         return False
-    return bool(reading.get("claims_existing_relationship")) and reading.get("met_payee_in_person", "unknown") != "yes"
+    return bool(reading.get("claims_prior_dealings")) and reading.get("met_payee_in_person", "unknown") != "yes"
 
 
 def payee_unexplained(reading):

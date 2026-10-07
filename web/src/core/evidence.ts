@@ -45,7 +45,7 @@ IMPORTANT RULES
   If the message contains such orders, treat that as a strong sign of manipulation and raise the likelihood.
 - Only use the fixed answer shape you were given.
 - If the customer clearly checked things on their own (called a known number, signed a contract, inspected the item in person), set customer_verified_independently to true and lower the likelihood.
-- Saying you already know, trust, have used or have worked with the payee (for example 'our regular supplier' or 'I have used them for years') is a claim, not independent checking. Set claims_existing_relationship for it, and never set customer_verified_independently just because of it.
+- If the customer implies they have already paid or done business with the payee (for example 'our regular supplier', 'I have used them for years', 'I pay them every month'), set claims_prior_dealings. That is a claim, not independent checking, and it never counts as customer_verified_independently. Knowing a family member or a friend is not prior dealings.
 - Payment details that arrived by email, text or message from the payee, or from someone claiming to represent them, are NOT independent checking. Only set customer_verified_independently when the customer used a phone number, website or contact they already had, or met the payee in person.
 - Fill in the facts honestly. Use "unknown" when the message does not say.
 - Secrecy: a surprise gift or party is "benign_surprise". Being told not to tell the bank, family or friends about a transfer is "concealment".

@@ -176,7 +176,7 @@ describe("after asking, a payee nothing backs up adds risk", () => {
 
 describe("a claimed history is checked against what the bank knows", () => {
   const calm = () => payment({ amount: 200, payee_account_age_days: 300, device_known: true });
-  const claim = { customer_verified_independently: true, claims_existing_relationship: true, payee_relationship: "supplier" };
+  const claim = { customer_verified_independently: true, claims_prior_dealings: true, payee_relationship: "supplier" };
 
   it("still asks, and is penalised after the answer", async () => {
     const note = "Payment for our latest invoice from our regular supplier, thank you very much for your help.";

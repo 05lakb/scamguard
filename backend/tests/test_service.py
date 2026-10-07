@@ -166,7 +166,7 @@ def test_an_introduction_by_someone_trusted_counts_as_corroboration():
 
 def claims_reader(text, scam_types):
     reading = fake_reader(5)(text, scam_types)
-    reading.update(customer_verified_independently=True, claims_existing_relationship=True, payee_relationship="supplier")
+    reading.update(customer_verified_independently=True, claims_prior_dealings=True, payee_relationship="supplier")
     return reading
 
 

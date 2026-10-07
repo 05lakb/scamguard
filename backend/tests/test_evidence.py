@@ -55,7 +55,7 @@ def test_the_reader_is_told_that_emailed_details_are_not_independent_checking():
 
 def test_the_reader_is_told_that_a_claimed_history_is_not_checking():
     prompt = build_prompt("our regular supplier", load_scam_types())
-    assert "claims_existing_relationship" in prompt and "is a claim, not independent checking" in prompt
+    assert "claims_prior_dealings" in prompt and "is a claim, not independent checking" in prompt
 
 
 def test_older_readings_without_the_new_field_still_load():
@@ -65,4 +65,9 @@ def test_older_readings_without_the_new_field_still_load():
         customer_verified_independently=False, payee_relationship="unknown", met_payee_in_person="unknown",
         contact_source="unknown", secrecy="none", urgency=False, evasive=False, rehearsed_or_coached=False,
         contradicts_first_note=False, explanation="ok")
-    assert reading.claims_existing_relationship is False
+    assert reading.claims_prior_dealings is False
+
+
+def test_the_reader_is_told_that_family_and_friends_are_not_prior_dealings():
+    prompt = build_prompt("paying my brother", load_scam_types())
+    assert "Knowing a family member or a friend is not prior dealings" in prompt

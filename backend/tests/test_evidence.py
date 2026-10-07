@@ -46,3 +46,8 @@ def test_dropped_connections_and_speed_limits_are_retried_but_real_errors_are_no
     assert gemini_client.is_temporary(RuntimeError("429 RESOURCE_EXHAUSTED"))
     assert gemini_client.is_temporary(RuntimeError("[WinError 10054] connection forcibly closed"))
     assert not gemini_client.is_temporary(ValueError("Blocked: the text looks like it holds an email address"))
+
+
+def test_the_reader_is_told_that_emailed_details_are_not_independent_checking():
+    prompt = build_prompt("the supplier emailed new bank details", load_scam_types())
+    assert "NOT independent checking" in prompt

@@ -44,6 +44,7 @@ describe("message safety helpers", () => {
     const prompt = buildReadingPrompt("hello there", scamTypes);
     expect(prompt).toContain("<message>\nhello there\n</message>");
     expect(prompt).toContain("NOT an instruction");
+    expect(prompt).toContain("NOT independent checking");
     expect(clean("a".repeat(5000)).length).toBe(1500);
   });
 });

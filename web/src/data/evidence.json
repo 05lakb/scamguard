@@ -18,12 +18,17 @@
     {
       "label": "Blind scenarios, simulated customer (seed 11)",
       "value": 85,
-      "note": "40 cases"
+      "note": "40 fresh cases"
     },
     {
       "label": "Blind scenarios, simulated customer (seed 13)",
       "value": 88,
-      "note": "40 cases, a second fresh seed"
+      "note": "40 fresh cases"
+    },
+    {
+      "label": "Blind scenarios, simulated customer (seed 17)",
+      "value": 92,
+      "note": "40 fresh cases, after the 'after asking' rule"
     }
   ],
   "friction": [
@@ -42,13 +47,27 @@
     {
       "label": "Blind scenarios, seed 13 (14 genuine)",
       "value": 0
+    },
+    {
+      "label": "Blind scenarios, seed 17 (14 genuine)",
+      "value": 0
     }
   ],
   "findings": [
     {
+      "found": "A supplier 'emailed us' the details and the reader counted that as the customer checking independently.",
+      "fix": "The reader is now told that details received by email, text or message are not independent checking.",
+      "status": "Fixed, re-test pending"
+    },
+    {
+      "found": "A coached customer said the payee was 'recommended by a trusted contact', and the guard counted that referral as proof.",
+      "fix": "Not changed. A recommendation cannot be checked, and tuning against one case would be guesswork. Recorded as a known limit.",
+      "status": "Open, known limit"
+    },
+    {
       "found": "Coached victims still passed after the guard asked: their replies were calm reassurance with nothing concrete ('everything is fine, push it through').",
       "fix": "After asking, a new payee that nothing backs up now adds risk, and empty reassurance or pushing to hurry counts as evasive.",
-      "status": "Fixed, re-test pending"
+      "status": "Improved: coached victims 0 of 5, then 2, then 4 of 5 on fresh seeds"
     },
     {
       "found": "Blind scenarios: every coached victim with a bland note on an ordinary payment was allowed (0 of 5).",
@@ -104,10 +123,16 @@
       "found": "Every answer reveals the risk score and reasons, which could help an attacker tune a message.",
       "fix": "Kept for the demo. A production version would send only the action and a warning to the customer.",
       "status": "Open by design"
+    },
+    {
+      "found": "We tried to learn from real complaint stories published by a US regulator. Its public API returns no story text.",
+      "fix": "Dropped. We use regulator statistics for realism and our own scenario factory for testing.",
+      "status": "Not used"
     }
   ],
   "limits": [
     "A customer coached to be bland can still get a scam through when nothing else about the payment is unusual. This is the hardest case.",
+    "A believable referral ('recommended by a trusted contact') can still lower the risk, and nobody can check it.",
     "All data is made up. Nothing here has met real customers or real fraud.",
     "Our own 99% is a ceiling, because we wrote the cases. The blind test is the fairer guide.",
     "Some quiet scams show nothing unusual in the payment itself. Only the customer's words can reveal them, and a coached customer can hide them.",
@@ -115,8 +140,8 @@
     "The prototype runs on the free trial's allowance, with rate limits and a cost guard, so it is not sized for heavy traffic."
   ],
   "scenarioRun": {
-    "title": "Blind scenarios, by kind (seed 13, 40 scenarios)",
-    "overall": "37 of 40 as expected. Earlier runs: 19 of 24 (seed 7, before the fixes) and 36 of 40 (seed 11)",
+    "title": "Blind scenarios, by kind (seed 17, 40 scenarios)",
+    "overall": "38 of 40 as expected. Earlier runs on other seeds: 19 of 24, then 36, then 37 of 40",
     "rows": [
       {
         "label": "Obvious scams",
@@ -130,7 +155,7 @@
       },
       {
         "label": "Contradicting answers",
-        "value": 100,
+        "value": 50,
         "n": 2
       },
       {
@@ -160,7 +185,7 @@
       },
       {
         "label": "Coached victims",
-        "value": 40,
+        "value": 80,
         "n": 5
       }
     ]

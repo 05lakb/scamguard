@@ -146,6 +146,10 @@ def main():
     parser.add_argument("--suite", choices=["fixed", "adaptive", "all", "scenarios"], default="all")
     parser.add_argument("--scenarios", default=None, help="the scenarios file made by redteam.factory")
     parser.add_argument("--count", type=int, default=40, help="how many scenarios to play from the file")
+    parser.add_argument("--split", choices=["all", "dev", "test"], default="all",
+                        help="play only the dev half or the locked test half of a scenarios file that has a split")
+    parser.add_argument("--final-test", action="store_true",
+                        help="required to play the locked test half. Use it for the final score only")
     parser.add_argument("--seeds", type=int, default=8, help="how many scam seeds for the adaptive attacker (max 8)")
     parser.add_argument("--pace", type=float, default=6.0, help="seconds between requests")
     parser.add_argument("--max-requests", type=int, default=150, help="hard cap on requests to the site")
@@ -160,7 +164,12 @@ def main():
     if args.suite == "scenarios":
         if not args.scenarios:
             parser.error("--scenarios is required for the scenarios suite")
-        scenario_list = json.loads(Path(args.scenarios).read_text(encoding="utf-8"))["scenarios"][:args.count]
+        chosen = json.loads(Path(args.scenarios).read_text(encoding="utf-8"))["scenarios"]
+        if args.split == "test" and not args.final_test:
+            parser.error("The locked test half is for the final score only. Add --final-test to confirm.")
+        if args.split != "all":
+            chosen = [item for item in chosen if item.get("split") == args.split]
+        scenario_list = chosen[:args.count]
     worst = plan(args.suite, seeds, args.pace, len(scenario_list))
     print("Plan (worst case):")
     print(f"  requests to the site:        up to {worst['requests']}   (cap {args.max_requests})")

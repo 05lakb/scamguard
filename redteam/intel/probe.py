@@ -1,35 +1,62 @@
-"""A tiny first look: fetch 3 complaints and show what the data looks like. Run it in Cloud Shell.
+"""A small first look at the CFPB data. Run it in Cloud Shell. It saves nothing.
 
   python3 -m redteam.intel.probe
 
-It prints the shape of the response and a short scrubbed snippet. It saves nothing.
+It asks for 3 complaints in small steps, adding one parameter at a time, so that if the source
+refuses a request we can see exactly which parameter caused it.
 """
 
-from redteam.intel.cfpb import ComplaintClient, extract_records, id_of, narrative_of
+from redteam.intel.cfpb import BASE, ComplaintClient, extract_records, id_of, narrative_of
 from redteam.intel.scrub import scrub
+
+STEPS = [
+    ("no parameters", {}),
+    ("size only", {"size": 3}),
+    ("add search_term", {"size": 3, "search_term": "scam"}),
+    ("add has_narrative", {"size": 3, "search_term": "scam", "has_narrative": "true"}),
+    ("add field", {"size": 3, "search_term": "scam", "has_narrative": "true", "field": "complaint_what_happened"}),
+    ("add sort", {"size": 3, "search_term": "scam", "has_narrative": "true", "field": "complaint_what_happened",
+                  "sort": "created_date_desc"}),
+    ("add date", {"size": 3, "search_term": "scam", "has_narrative": "true", "field": "complaint_what_happened",
+                  "sort": "created_date_desc", "date_received_min": "2023-01-01"}),
+    ("add no_aggs and format", {"size": 3, "search_term": "scam", "has_narrative": "true",
+                                "field": "complaint_what_happened", "sort": "created_date_desc",
+                                "date_received_min": "2023-01-01", "no_aggs": "true", "format": "json"}),
+]
+
+
+def describe(payload):
+    if isinstance(payload, dict):
+        detail = payload.get("detail")
+        return f"keys={sorted(payload)[:6]}" + (f" detail={str(detail)[:100]!r}" if detail else "")
+    return f"type={type(payload).__name__}"
 
 
 def main():
     client = ComplaintClient()
-    status, payload, text = client.search("scam", size=3)
-    print(f"HTTP status: {status}")
-    if payload is None:
-        print(f"The answer was not JSON. First characters: {text!r}")
+    print(f"Address: {BASE}")
+    working = None
+    for name, params in STEPS:
+        status, payload, text, url = client.get(params)
+        records = extract_records(payload)
+        print(f"- {name:24} status={status} records={len(records)} {describe(payload) if payload is not None else repr(text[:80])}")
+        if status == 200 and records:
+            working = (name, params, records, url)
+
+    # The same request without the trailing slash, in case the address is picky about it.
+    status, payload, text, url = client.get({"size": 3}, base=BASE.rstrip("/"))
+    print(f"- {'no trailing slash':24} status={status} records={len(extract_records(payload))}")
+
+    if not working:
+        print("\nNothing worked. Send me this output and I will adjust.")
         return
-    print(f"Top-level keys: {sorted(payload) if isinstance(payload, dict) else type(payload).__name__}")
-    if isinstance(payload, dict) and isinstance(payload.get("hits"), dict):
-        total = payload["hits"].get("total")
-        print(f"Total matches reported: {total}")
-    records = extract_records(payload)
-    print(f"Records returned: {len(records)}")
-    if not records:
-        return
+    name, params, records, url = working
+    print(f"\nThe last working step was: {name}")
     print(f"Fields in the first record: {sorted(records[0])}")
     for number, record in enumerate(records, start=1):
-        narrative = narrative_of(record)
-        print(f"\nRecord {number}: id={id_of(record)} product={record.get('product')!r} issue={record.get('issue')!r}")
-        print(f"  story length: {len(narrative)} characters")
-        print(f"  scrubbed snippet: {scrub(narrative, 160)!r}")
+        story = narrative_of(record)
+        print(f"Record {number}: id={id_of(record)} product={record.get('product')!r} issue={record.get('issue')!r}")
+        print(f"  story length: {len(story)} characters; scrubbed snippet: {scrub(story, 140)!r}")
     print(f"\nRequests made: {client.requests_made}. Nothing was saved.")
 
 

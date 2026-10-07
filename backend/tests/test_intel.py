@@ -189,3 +189,20 @@ def test_the_locked_test_half_cannot_be_played_without_confirmation(tmp_path, mo
                                       "--scenarios", str(path), "--split", "test"])
     with pytest.raises(SystemExit):
         run_module.main()
+
+
+# ---------- the diagnostic probe ----------
+
+def test_the_probe_adds_one_parameter_at_a_time():
+    from redteam.intel import probe
+    sizes = [len(params) for _, params in probe.STEPS]
+    assert sizes == sorted(sizes)  # each step has at least as many parameters as the last
+    for (_, earlier), (_, later) in zip(probe.STEPS, probe.STEPS[1:]):
+        assert set(earlier) <= set(later)
+
+
+def test_the_client_can_send_exact_parameters_and_report_the_address():
+    client = make_client([{"hits": {"hits": []}}])
+    status, payload, text, url = client.get({"size": 3})
+    assert status == 200
+    assert client._http.calls[0][1] == {"size": 3}

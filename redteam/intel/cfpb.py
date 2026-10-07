@@ -40,6 +40,18 @@ class ComplaintClient:
                 self._sleep(wait)
         self._last = self._clock()
 
+    def get(self, params, base=None):
+        """Send one request with exactly these parameters. Returns (status, payload, text, final address)."""
+        self._pace()
+        self.requests_made += 1
+        response = self._http.get(base or self.base, params=params,
+                                  headers={"User-Agent": USER_AGENT, "Accept": "application/json"})
+        try:
+            payload = response.json()
+        except ValueError:
+            payload = None
+        return response.status_code, payload, response.text[:300], str(getattr(response, "url", ""))
+
     def search(self, term, size=25, offset=0, date_min="2023-01-01"):
         """Ask for complaints that mention a term and have a published story. Returns (status, payload)."""
         self._pace()

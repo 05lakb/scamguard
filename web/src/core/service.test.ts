@@ -149,3 +149,27 @@ describe("a claimed relationship is not proof", () => {
     expect(result.action).not.toBe("ask");
   });
 });
+
+describe("after asking, a payee nothing backs up adds risk", () => {
+  const calm = () => payment({ amount: 200, payee_account_age_days: 300, device_known: true });
+
+  it("raises the score on the second round when the answer proves nothing", async () => {
+    const first = await assess({ payment: calm(), customer, message: "ok thanks" }, helpers(5));
+    expect(first.action).toBe("ask");
+    const second = await assess(
+      { payment: calm(), customer, message: "ok thanks", questions: first.questions, answer: "Everything is fine, push it through." },
+      helpers(5),
+    );
+    expect(second.score).toBeGreaterThan(first.score);
+    expect(second.reasons.join(" ")).toContain("nothing backs up");
+  });
+
+  it("does not raise it when the answer shows they met the payee", async () => {
+    const first = await assess({ payment: calm(), customer, message: "ok thanks" }, helpers(5));
+    const second = await assess(
+      { payment: calm(), customer, message: "ok thanks", questions: first.questions, answer: "I met him at the flat." },
+      helpers(5, { met_payee_in_person: "yes", payee_relationship: "landlord" }),
+    );
+    expect(second.reasons.join(" ")).not.toContain("nothing backs up");
+  });
+});

@@ -33,7 +33,7 @@ export async function assess(input: AssessInput, helpers: Helpers): Promise<Deci
     const answer = input.answer.trim() || "(the customer declined to answer)";
     const text = combine(message, input.questions ?? [], answer);
     const reading = await helpers.reader(text);
-    const outcome = decide(payment, customer, reading, helpers.scamTypes);
+    const outcome = decide(payment, customer, reading, helpers.scamTypes, true);
     outcome.round = 2;
     return outcome;
   }

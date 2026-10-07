@@ -16,9 +16,14 @@
       "note": "50 cases, run once, before the fixes"
     },
     {
-      "label": "Blind scenarios by a simulated customer",
+      "label": "Blind scenarios, simulated customer (seed 11)",
       "value": 85,
-      "note": "40 cases, a new seed, after the unexplained-payee rule"
+      "note": "40 cases"
+    },
+    {
+      "label": "Blind scenarios, simulated customer (seed 13)",
+      "value": 88,
+      "note": "40 cases, a second fresh seed"
     }
   ],
   "friction": [
@@ -31,11 +36,20 @@
       "value": 12
     },
     {
-      "label": "Blind scenarios, 14 genuine customers",
+      "label": "Blind scenarios, seed 11 (14 genuine)",
       "value": 14
+    },
+    {
+      "label": "Blind scenarios, seed 13 (14 genuine)",
+      "value": 0
     }
   ],
   "findings": [
+    {
+      "found": "Coached victims still passed after the guard asked: their replies were calm reassurance with nothing concrete ('everything is fine, push it through').",
+      "fix": "After asking, a new payee that nothing backs up now adds risk, and empty reassurance or pushing to hurry counts as evasive.",
+      "status": "Fixed, re-test pending"
+    },
     {
       "found": "Blind scenarios: every coached victim with a bland note on an ordinary payment was allowed (0 of 5).",
       "fix": "Ask when a new payee is still unexplained after reading the note. Payee reputation from other banks is the stronger defence and is not modelled.",
@@ -101,8 +115,8 @@
     "The prototype runs on the free trial's allowance, with rate limits and a cost guard, so it is not sized for heavy traffic."
   ],
   "scenarioRun": {
-    "title": "Blind scenarios, by kind (seed 11, 40 scenarios)",
-    "overall": "36 of 40 as expected. On the first run (seed 7, before the fixes) it was 19 of 24",
+    "title": "Blind scenarios, by kind (seed 13, 40 scenarios)",
+    "overall": "37 of 40 as expected. Earlier runs: 19 of 24 (seed 7, before the fixes) and 36 of 40 (seed 11)",
     "rows": [
       {
         "label": "Obvious scams",
@@ -111,7 +125,7 @@
       },
       {
         "label": "Quiet scams",
-        "value": 86,
+        "value": 100,
         "n": 7
       },
       {

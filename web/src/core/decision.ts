@@ -3,11 +3,14 @@
 // Every decision comes with plain reasons and a record of what was used.
 
 import { checkBehaviour, HOLD_AT, WARN_AT } from "./behaviour";
+import { payeeUnexplained } from "./clarify";
 import { pyRound } from "./pyround";
 import type { Action, Customer, Decision, Payment, Reading, ScamType } from "./types";
 
 // How much weight the message reading gets (a likelihood of 100 adds 70 points).
 const MESSAGE_WEIGHT = 0.7;
+// After we asked, a new payee that nothing backs up adds this many points.
+const UNCORROBORATED_AFTER_ASKING = 20;
 // A customer who clearly checked on their own, with a calm message, earns a discount.
 const VERIFIED_DISCOUNT = 25;
 const CALM_BELOW = 30;
@@ -80,6 +83,7 @@ export function decide(
   customer: Customer,
   reading: Reading | null = null,
   scamTypes: ScamType[] = [],
+  asked = false,
 ): Decision {
   const behaviour = checkBehaviour(payment, customer);
   const reasons = [...behaviour.signals]
@@ -101,6 +105,12 @@ export function decide(
     const extra = storyAdjustments(reading);
     messagePoints += extra.points;
     reasons.push(...extra.reasons);
+
+    const newPayee = behaviour.signals.some((signal) => signal.name === "new_payee");
+    if (asked && newPayee && payeeUnexplained(reading)) {
+      messagePoints += UNCORROBORATED_AFTER_ASKING;
+      reasons.push("We asked, but nothing backs up who the payee is.");
+    }
 
     if (reading.orders_found_in_message.length > 0) {
       // A real customer does not write orders to a safety checker, so a person must look.

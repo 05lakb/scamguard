@@ -24,7 +24,7 @@ def assess(payment, customer, message=None, questions=None, answer=None,
         answer = answer.strip() or "(the customer declined to answer)"
         text = clarify.combine(message, questions or [], answer)
         reading = reader(text, scam_types)
-        outcome = decide(payment, customer, reading, scam_types)
+        outcome = decide(payment, customer, reading, scam_types, asked=True)
         outcome["round"] = 2
         return outcome
 

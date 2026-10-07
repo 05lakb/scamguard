@@ -117,3 +117,26 @@ def test_the_audit_record_lists_what_was_used():
     assert audit["behaviour_signals"]
     assert audit["message_reading"]["scam_likelihood"] == 60
     assert audit["thresholds"] == {"warn": 40, "hold": 70}
+
+
+# ---------- after asking, an uncorroborated new payee adds risk ----------
+
+def test_after_asking_a_new_payee_nothing_backs_up_adds_points():
+    new_payee = payment(is_new_payee=True, payee_account_age_days=300)
+    first = decide(new_payee, CUSTOMER, story())["score"]
+    after_asking = decide(new_payee, CUSTOMER, story(), asked=True)
+    assert after_asking["score"] > first
+    assert "nothing backs up" in " ".join(after_asking["reasons"])
+
+
+def test_no_extra_points_when_the_payee_is_corroborated():
+    new_payee = payment(is_new_payee=True, payee_account_age_days=300)
+    backed = story(met_payee_in_person="yes", payee_relationship="landlord")
+    assert decide(new_payee, CUSTOMER, backed, asked=True)["score"] <= decide(new_payee, CUSTOMER, backed)["score"]
+
+
+def test_no_extra_points_for_a_known_payee_or_in_the_first_round():
+    known = payment(is_new_payee=False)
+    assert decide(known, CUSTOMER, story(), asked=True)["score"] == decide(known, CUSTOMER, story())["score"]
+    new_payee = payment(is_new_payee=True, payee_account_age_days=300)
+    assert decide(new_payee, CUSTOMER, story())["score"] == decide(new_payee, CUSTOMER, story(), asked=False)["score"]

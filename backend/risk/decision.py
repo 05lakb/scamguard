@@ -6,6 +6,7 @@ so a bank analyst can review it later.
 """
 
 from backend.risk.behaviour import check_behaviour
+from backend.risk.corroboration import payee_unexplained
 
 # At or above these scores, the action gets stricter.
 WARN_AT = 40
@@ -13,6 +14,8 @@ HOLD_AT = 70
 
 # How much weight the message reading gets (a likelihood of 100 adds 70 points).
 MESSAGE_WEIGHT = 0.7
+# After we asked, a new payee that nothing backs up adds this many points.
+UNCORROBORATED_AFTER_ASKING = 20
 # A customer who clearly checked things on their own, with a calm message, earns a discount.
 VERIFIED_DISCOUNT = 25
 CALM_BELOW = 30
@@ -71,10 +74,11 @@ def action_for(score):
     return "allow"
 
 
-def decide(payment, customer, reading=None, scam_types=None):
+def decide(payment, customer, reading=None, scam_types=None, asked=False):
     """Return the decision for one payment.
 
     `reading` is the message reading (or None if the customer wrote nothing).
+    `asked` is True on the second round, after the customer has answered our questions.
     """
     behaviour = check_behaviour(payment, customer)
     reasons = [item["reason"] for item in sorted(behaviour["signals"], key=lambda s: -s["points"])[:3]]
@@ -94,6 +98,11 @@ def decide(payment, customer, reading=None, scam_types=None):
         extra_points, extra_reasons = story_adjustments(reading)
         message_points += extra_points
         reasons.extend(extra_reasons)
+
+        new_payee = any(signal["name"] == "new_payee" for signal in behaviour["signals"])
+        if asked and new_payee and payee_unexplained(reading):
+            message_points += UNCORROBORATED_AFTER_ASKING
+            reasons.append("We asked, but nothing backs up who the payee is.")
         if reading["orders_found_in_message"]:
             # A real customer does not write orders to a safety checker, so a person must look.
             forced_hold = True

@@ -98,6 +98,7 @@ IMPORTANT RULES
 - Meeting someone in person, a signed contract, or a known landlord, contractor or supplier are reassuring. Do not call something a scam just because it is urgent or has a deadline set by the customer's own circumstances.
 - If the text has a first note followed by a reply, compare them. Set contradicts_first_note if they do not fit together, and evasive if the customer dodges or refuses to answer.
 - A reply that sounds rehearsed, repeats promises of returns, or says someone told them what to say is rehearsed_or_coached.
+- A reply that only reassures ("everything is fine", "please just push it through") with no concrete detail, or that pushes to hurry, counts as evasive.
 
 KNOWN SCAM TYPES
 {guide}

@@ -13,6 +13,7 @@ from pathlib import Path
 from pydantic import BaseModel, Field
 
 from backend import gemini_client
+from backend.risk.corroboration import payee_unexplained
 
 CACHE_DIR = Path(__file__).resolve().parents[2] / "eval" / "output" / "cache_questions"
 _memory_questions = {}  # used instead of the disk on a live server
@@ -34,22 +35,6 @@ class FollowUp(BaseModel):
 
 def note_is_thin(message):
     return not message or len(message.split()) < THIN_NOTE_WORDS
-
-
-def payee_unexplained(reading):
-    """True if nothing backs up who the payee is. A claimed relationship alone is not proof.
-
-    Corroboration means the customer met the payee in person, was introduced by someone they trust,
-    or checked the details independently.
-    """
-    if reading is None:
-        return True
-    corroborated = (
-        reading.get("customer_verified_independently")
-        or reading.get("met_payee_in_person", "unknown") == "yes"
-        or reading.get("contact_source", "unknown") in ("in_person", "referral")
-    )
-    return not corroborated
 
 
 def should_ask(message, reading, decision):

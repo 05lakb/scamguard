@@ -277,3 +277,28 @@ def test_the_prompt_keeps_names_for_people_and_makes_coaching_strict():
         prompt = convert.build_prompt("A caller asks you to move money.", kind)
         assert "always a PERSON's name" in prompt
         assert "Ordinary pressure or urgency does not count" in prompt
+
+
+def test_a_company_in_the_story_is_the_name_on_the_receiving_account():
+    scenario = make(typology="advance_fee",
+                    persona_facts="A recruiter named {contact} from {company} asks for {amount} to unlock earnings.")
+    facts = scenario["persona"]["facts"]
+    assert "{company}" not in facts and "{contact}" not in facts
+    assert scenario["payment"]["payee_type"] == "business"
+    assert scenario["payment"]["payee_name"] in facts  # the company named in the story is the payee
+
+
+def test_a_crypto_payee_has_a_company_name_not_a_persons_name():
+    scenario = make(typology="investment",
+                    persona_facts="A trainer named {contact} offers a course run by {company} for {amount}.")
+    assert scenario["payment"]["payee_type"] == "crypto_exchange"
+    assert scenario["payment"]["payee_name"] in scenario["persona"]["facts"]
+
+
+def test_a_story_with_only_a_company_placeholder_is_accepted():
+    assert make(typology="advance_fee", persona_facts="The customer pays {company} {amount} to start a job.") is not None
+
+
+def test_the_prompt_files_job_schemes_under_fees_and_gives_companies_their_own_placeholder():
+    prompt = convert.build_prompt("A job offer asks for a fee.", "advice")
+    assert "is advance_fee" in prompt and "{company}" in prompt

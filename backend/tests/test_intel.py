@@ -302,3 +302,16 @@ def test_a_story_with_only_a_company_placeholder_is_accepted():
 def test_the_prompt_files_job_schemes_under_fees_and_gives_companies_their_own_placeholder():
     prompt = convert.build_prompt("A job offer asks for a fee.", "advice")
     assert "is advance_fee" in prompt and "{company}" in prompt
+
+
+def test_one_scam_type_cannot_use_more_than_its_share():
+    counts = {"advance_fee": 4, "investment": 1}
+    assert not convert.has_room(counts, "advance_fee", 4)
+    assert convert.has_room(counts, "investment", 4)
+    assert convert.has_room(counts, "romance", 4)  # a type not seen yet always has room
+
+
+def test_the_prompt_files_training_courses_under_investment_and_authority_calls_under_impersonation():
+    prompt = convert.build_prompt("A course promises trading profits.", "advice")
+    assert 'any course, coaching or "training" that promises profits' in prompt
+    assert "posing as police, a court or a government body" in prompt

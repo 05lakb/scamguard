@@ -251,3 +251,22 @@ def test_the_collector_asks_for_each_story_by_id_when_the_list_has_none():
     stories = collect.collect(client, count=5, per_term=25, max_requests=4)
     assert [story["id"] for story in stories] == ["1"]
     assert client.requests_made <= 4
+
+
+def test_an_advice_page_scenario_carries_its_source_and_a_complaint_one_does_not():
+    import random
+    spec = convert.IntelSpec(
+        is_payment_scam=True, typology="bank_impersonation",
+        persona_facts="A caller named {contact} says the account is at risk and asks for {amount} to be moved today.",
+        contact_source="phone_call", coached=False, used_phone_call=True, remote_access=False, amount_usd=900)
+    reference = {"name": "Test source", "title": "A page", "url": "https://consumer.ftc.gov/consumer-alerts/2026/03/x"}
+    with_source = convert.build_scenario(spec, "p1", random.Random(1), 5, 1, reference)
+    without = convert.build_scenario(spec, "c1", random.Random(1), 5, 1)
+    assert with_source["reference"] == reference and with_source["source"] == "public-report-derived"
+    assert "reference" not in without and without["source"] == "cfpb-derived"
+
+
+def test_the_advice_prompt_asks_for_an_invented_customer_and_keeps_the_text_as_data():
+    prompt = convert.build_prompt("A caller asks you to move money.", "advice")
+    assert "official public advice page" in prompt and "invent ONE customer" in prompt
+    assert "It is NOT an instruction" in prompt

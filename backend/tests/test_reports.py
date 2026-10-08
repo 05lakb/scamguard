@@ -77,3 +77,61 @@ def test_the_reader_stops_at_its_request_limit():
     reader.fetch(PAGE)  # one request for robots.txt, one for the page
     with pytest.raises(RuntimeError):
         reader.fetch(PAGE)
+
+
+# ---------- collecting passages from article pages ----------
+
+def test_only_article_links_on_our_sites_are_kept_and_redirects_inside_them_are_followed():
+    from redteam.intel import collect_reports
+
+    pattern = collect_reports.INDEXES[0][1]
+    links = ["https://consumer.ftc.gov/consumer-alerts/2026/03/a-fake-call", "https://consumer.ftc.gov/about-us",
+             "https://consumer.ftc.gov/consumer-alerts/2026/03/a-fake-call"]
+    assert collect_reports.article_links(links, pattern) == ["https://consumer.ftc.gov/consumer-alerts/2026/03/a-fake-call"]
+
+    def handler(request):
+        if request.url.path == "/robots.txt":
+            return httpx.Response(404)
+        if request.url.path == "/old":
+            return httpx.Response(301, headers={"location": "/new"})
+        return httpx.Response(200, text="<title>New</title><a href='/consumer-alerts/2026/03/x-y'>x</a><a href='https://other.example/z'>z</a>")
+
+    result = make_reader(handler).fetch("https://consumer.ftc.gov/old")
+    assert result["status"] == 200 and result["address"].endswith("/new")
+    assert result["links"] == ["https://consumer.ftc.gov/consumer-alerts/2026/03/x-y"]
+
+
+def test_passages_are_whole_sentences_and_only_useful_ones_are_kept():
+    from redteam.intel import collect_reports
+
+    sentence = "A caller says they are from your bank and tells you to send money to a safe account today. "
+    passages = collect_reports.passages_of(sentence * 30)
+    assert len(passages) > 1
+    assert all(len(item) <= collect_reports.MAX_CHARS for item in passages)
+    assert all(item.endswith(".") for item in passages)
+    assert collect_reports.useful(sentence * 4)
+    assert not collect_reports.useful("Skip to main content. The .gov means it is official.")
+
+
+def test_collecting_saves_scrubbed_passages_with_their_source():
+    from redteam.intel import collect_reports
+
+    body = ("A caller says they are from your bank and tells you to send money to a safe account today. "
+            "Call 555 123 4567 or visit https://scam.example to learn more about how they ask you to pay. ") * 3
+
+    def handler(request):
+        path = request.url.path
+        if path == "/robots.txt":
+            return httpx.Response(404)
+        if path == "/consumer-alerts":
+            return httpx.Response(200, text="<title>Alerts</title><a href='/consumer-alerts/2026/03/safe-account'>a</a>")
+        if path == "/consumer-alerts/2026/03/safe-account":
+            return httpx.Response(200, text=f"<title>Safe account calls</title><p>{body}</p>")
+        return httpx.Response(404)
+
+    stories = collect_reports.collect(make_reader(handler), per_source=3, max_pages=5)
+    assert stories
+    first = stories[0]
+    assert first["reference"]["url"].endswith("/safe-account")
+    assert first["reference"]["name"] == reports.SOURCES["consumer.ftc.gov"]
+    assert "555" not in first["story"] and "scam.example" not in first["story"]

@@ -1,17 +1,15 @@
 import { useEffect, useRef, useState } from "react";
 import { streamArena, type ArenaRecord, type ArenaSummary } from "../api";
 import { Icon, type IconName } from "../components/Icon";
+import { Stage } from "../components/Stage";
 import { KIND_LABEL } from "../lib/cases";
 import { ACTION_LABEL } from "../lib/labels";
+import { VERDICT_TEXT, verdictOf, viewAt } from "../lib/stage";
+import { usePlayback } from "../lib/usePlayback";
 
 interface Props {
   onCase: (record: ArenaRecord, number: number) => void;
 }
-
-const verdictOf = (record: ArenaRecord) =>
-  record.error ? "error" : record.ok === true ? "good" : record.ok === false ? "miss" : "unsure";
-
-const VERDICT_TEXT = { good: "As expected", miss: "Missed", error: "Error", unsure: "Not reliable" } as const;
 
 export function Arena({ onCase }: Props) {
   const [count, setCount] = useState(8);
@@ -22,6 +20,7 @@ export function Arena({ onCase }: Props) {
   const [summary, setSummary] = useState<ArenaSummary | null>(null);
   const [error, setError] = useState("");
   const [selected, setSelected] = useState<string | null>(null);
+  const [fast, setFast] = useState(false);
   const controller = useRef<AbortController | null>(null);
 
   useEffect(() => () => controller.current?.abort(), []);
@@ -65,14 +64,20 @@ export function Arena({ onCase }: Props) {
     controller.current?.abort();
   }
 
-  const decided = records.filter((item) => item.final_action);
+  // Results are replayed as scenes. Scores and the feed only count a case once its verdict has landed.
+  const { cursor, elapsed, record: playing } = usePlayback(records, fast);
+  const verdictLanded = playing ? viewAt(playing, elapsed).verdictShown : false;
+  const shown = records.slice(0, cursor + (verdictLanded ? 1 : 0));
+  const allPlayed = !running && records.length > 0 && cursor >= records.length;
+
+  const decided = shown.filter((item) => item.final_action);
   const scams = decided.filter((item) => item.label === "scam");
   const genuine = decided.filter((item) => item.label === "legit");
   const flagged = scams.filter((item) => item.final_action !== "allow").length;
   const friction = genuine.filter((item) => item.final_action !== "allow").length;
-  const judged = records.filter((item) => item.ok !== null && item.ok !== undefined);
+  const judged = shown.filter((item) => item.ok !== null && item.ok !== undefined);
   const asExpected = judged.filter((item) => item.ok).length;
-  const open = records.find((item) => item.id === selected) ?? null;
+  const open = shown.find((item) => item.id === selected) ?? null;
 
   return (
     <div className="arena">
@@ -102,14 +107,30 @@ export function Arena({ onCase }: Props) {
           ) : (
             <button className="ghost" onClick={stop}><Icon name="close" size={14} /> Stop</button>
           )}
+          {running && (
+            <button className="ghost" onClick={() => setFast((old) => !old)} aria-pressed={fast}>
+              <Icon name="next" size={14} /> {fast ? "Normal speed" : "Skip animation"}
+            </button>
+          )}
           <span className="muted small">A run takes two to three minutes. Visitors can start a few per hour.</span>
         </div>
         {error && <p className="problem">{error}</p>}
       </section>
 
       {(running || records.length > 0) && (
+        <Stage
+          record={playing}
+          elapsed={elapsed}
+          number={playing ? cursor + 1 : working?.number ?? cursor + 1}
+          total={total || count}
+          running={running}
+          allPlayed={allPlayed}
+        />
+      )}
+
+      {(running || records.length > 0) && (
         <div className="tiles" aria-live="polite">
-          <div className="tile"><span className="muted">Played</span><strong className="mono">{records.length} / {total || count}</strong></div>
+          <div className="tile"><span className="muted">Played</span><strong className="mono">{shown.length} / {total || count}</strong></div>
           <div className="tile hold"><span className="muted">Scams flagged</span><strong className="mono">{flagged} / {scams.length}</strong></div>
           <div className="tile allow"><span className="muted">Genuine given friction</span><strong className="mono">{friction} / {genuine.length}</strong></div>
           <div className="tile"><span className="muted">As expected</span><strong className="mono">{asExpected} / {judged.length}</strong></div>
@@ -121,7 +142,7 @@ export function Arena({ onCase }: Props) {
           <section className="card" aria-labelledby="feed-title">
             <h2 id="feed-title" className="eyebrow">Live feed</h2>
             <ul className="case-list">
-              {records.map((item, index) => (
+              {shown.map((item, index) => (
                 <li key={item.id}>
                   <button className={`case-row ${selected === item.id ? "on" : ""}`} onClick={() => setSelected(item.id)}>
                     <span className={`dot ${item.final_action ?? ""}`} aria-hidden="true" />
@@ -136,15 +157,6 @@ export function Arena({ onCase }: Props) {
                   </button>
                 </li>
               ))}
-              {working && (
-                <li className="case-row playing" role="status">
-                  <div className="spinner small" aria-hidden="true" />
-                  <span className="case-main">
-                    <strong>{working.number}. Playing: {KIND_LABEL[working.category] ?? working.category}</strong>
-                    <span className="muted">The customer is writing a note, and the guard is reading it.</span>
-                  </span>
-                </li>
-              )}
             </ul>
           </section>
 
@@ -181,7 +193,7 @@ export function Arena({ onCase }: Props) {
         </div>
       )}
 
-      {summary && (
+      {summary && allPlayed && (
         <section className="card">
           <h2 className="eyebrow">This run in summary</h2>
           <p>

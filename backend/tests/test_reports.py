@@ -135,3 +135,36 @@ def test_collecting_saves_scrubbed_passages_with_their_source():
     assert first["reference"]["url"].endswith("/safe-account")
     assert first["reference"]["name"] == reports.SOURCES["consumer.ftc.gov"]
     assert "555" not in first["story"] and "scam.example" not in first["story"]
+
+
+def test_page_furniture_is_removed_before_passages_are_cut():
+    from redteam.intel import collect_reports
+
+    ftc = ("Skip to main content The .gov means it is official. Vea esta pagina en espanol Consumer Alert "
+           "A caller says you missed jury duty. Recent Consumer Alerts Did someone share an image?")
+    assert collect_reports.clean_page_text(ftc) == "A caller says you missed jury duty."
+    scamwatch = "Skip to content Skip to navigation Skip to search Search Menu Listen Phone scams Scammers call. Is this page useful? Yes No"
+    assert collect_reports.clean_page_text(scamwatch) == "Phone scams Scammers call."
+
+
+def test_on_topic_articles_come_first_and_off_topic_ones_are_dropped():
+    from redteam.intel import collect_reports
+
+    pattern = collect_reports.INDEXES[0][1]
+    base = "https://consumer.ftc.gov/consumer-alerts/2026/03/"
+    links = [base + "open-enrollment-health-plans", base + "ignore-jury-duty-arrest-calls", base + "gift-card-scam"]
+    kept = collect_reports.article_links(links, pattern, require_topic=True)
+    assert base + "open-enrollment-health-plans" not in kept
+    assert kept[0] == base + "ignore-jury-duty-arrest-calls" or kept[0] == base + "gift-card-scam"
+    assert len(kept) == 2
+
+
+def test_passages_that_only_give_protection_advice_are_not_useful():
+    from redteam.intel import collect_reports
+
+    advice = ("Steps you can take to protect yourself. Call the organisation back on a number you found yourself and "
+              "never send money or give bank account details to anyone who says they are from your bank. ") * 3
+    story = ("A caller says they are from your bank and tells you the account is under attack, so you must send money "
+             "to a safe account today and not tell anyone. ") * 3
+    assert not collect_reports.useful(advice)
+    assert collect_reports.useful(story)

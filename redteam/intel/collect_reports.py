@@ -35,13 +35,48 @@ MAX_CHARS = 1400
 PER_PAGE = 6
 
 
-def article_links(links, pattern):
-    """Keep only the links whose path looks like an article on this list."""
+# Words in a page's address that suggest it explains how a payment scam plays out.
+TOPIC_WORDS = ["scam", "impersonat", "fake", "fraud", "call", "text", "gift-card", "crypto", "invest", "romance",
+               "relationship", "bank", "refund", "pay", "money", "wire", "account", "identity", "buying", "selling",
+               "billing", "invoice", "phishing", "remote", "job", "employment", "inheritance", "prize", "family",
+               "emergency", "social-media", "jury", "arrest", "toll", "gambling"]
+
+# Page furniture and sign-offs that are not part of the story.
+BOILERPLATE = [
+    re.compile(r"^.*?Skip to content Skip to navigation Skip to search Search Menu Listen\s*", re.S),
+    re.compile(r"^.*?Vea esta p\S+ en espa\S+ Consumer Alert\s*", re.S),
+    re.compile(r"\s*Recent Consumer Alerts.*$", re.S),
+    re.compile(r"\s*Search Terms .*$", re.S),
+    re.compile(r"\s*Is this page useful\?.*$", re.S),
+]
+
+# Passages that only say what to do afterwards, or how to stay safe, are not how a scam plays out.
+PROTECTION_ONLY = re.compile(
+    r"(Steps you can take|Think you've been scammed|Report the scam|Get help to recover|"
+    r"Contact your bank or card provider|Be scam aware|Stay safe online|Check the call is real)", re.I)
+
+
+def topic_score(address):
+    path = urlparse(address).path.lower()
+    return sum(1 for word in TOPIC_WORDS if word in path)
+
+
+def clean_page_text(text):
+    """Remove the page furniture around the real content."""
+    for pattern in BOILERPLATE:
+        text = pattern.sub("", text)
+    return text.strip()
+
+
+def article_links(links, pattern, require_topic=False):
+    """Keep only the links whose path looks like an article on this list, most on-topic first."""
     found = []
     for link in links:
         if pattern.match(urlparse(link).path) and link not in found:
             found.append(link)
-    return found
+    if require_topic:
+        found = [link for link in found if topic_score(link) > 0]
+    return sorted(found, key=lambda link: -topic_score(link))  # a stable sort keeps the page's own order for ties
 
 
 def passages_of(text):
@@ -60,7 +95,8 @@ def passages_of(text):
 
 def useful(passage):
     """A passage is worth keeping if it talks about money moving and about what the fraudster says or does."""
-    return len(passage) >= MIN_CHARS and bool(MONEY_WORDS.search(passage)) and bool(STORY_WORDS.search(passage))
+    return (len(passage) >= MIN_CHARS and bool(MONEY_WORDS.search(passage)) and bool(STORY_WORDS.search(passage))
+            and not PROTECTION_ONLY.search(passage))
 
 
 def collect(reader, per_source=8, max_pages=24):
@@ -75,7 +111,7 @@ def collect(reader, per_source=8, max_pages=24):
         if index.get("status") != 200:
             print(f"  {index_address}: {index.get('note') or index.get('status')}")
             continue
-        articles = article_links(index["links"], pattern)[:per_source]
+        articles = article_links(index["links"], pattern, require_topic=True)[:per_source]
         print(f"  {index_address}: {len(articles)} article pages found")
         for address in articles:
             if pages >= max_pages:
@@ -91,7 +127,7 @@ def collect(reader, per_source=8, max_pages=24):
                 continue
             host = urlparse(page["address"]).hostname
             kept = 0
-            for number, passage in enumerate(passages_of(page["text"])):
+            for number, passage in enumerate(passages_of(clean_page_text(page["text"]))):
                 clean = scrub(passage)
                 if not useful(clean) or not looks_clean(clean) or clean in seen:
                     continue

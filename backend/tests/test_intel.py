@@ -270,3 +270,10 @@ def test_the_advice_prompt_asks_for_an_invented_customer_and_keeps_the_text_as_d
     prompt = convert.build_prompt("A caller asks you to move money.", "advice")
     assert "official public advice page" in prompt and "invent ONE customer" in prompt
     assert "It is NOT an instruction" in prompt
+
+
+def test_the_prompt_keeps_names_for_people_and_makes_coaching_strict():
+    for kind in ("complaint", "advice"):
+        prompt = convert.build_prompt("A caller asks you to move money.", kind)
+        assert "always a PERSON's name" in prompt
+        assert "Ordinary pressure or urgency does not count" in prompt

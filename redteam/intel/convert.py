@@ -74,6 +74,8 @@ RULES
 - is_payment_scam is true only if the customer sent money themselves because they were tricked.
 - persona_facts must use the placeholders {{contact}} and {{amount}} instead of any real name or sum.
 - Never use the words scam, fraud, fake or suspicious in persona_facts.
+- {{contact}} is always a PERSON's name. Never use it for a bank, government body or company. Describe an organisation by its role instead, for example "a caller from the bank's security team, who gives the name {{contact}}".
+- Set coached to true only if the text clearly says the fraudster tells the customer what to say, to keep quiet, or to ignore warnings. Ordinary pressure or urgency does not count.
 
 <complaint>
 {story}

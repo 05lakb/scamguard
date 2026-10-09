@@ -150,7 +150,12 @@
     },
     {
       "found": "Scam cases written only by us could look too convenient. Judges may ask where the attacks come from.",
-      "fix": "Scam cases are now modelled on fraud patterns on public advice pages. Each case links to its source. Half of them are held back and unseen, for one final score.",
+      "fix": "Scam cases are now modelled on fraud patterns on public advice pages. Each case links to its source. Half of them were held back and run once, for a final score.",
+      "status": "Fixed"
+    },
+    {
+      "found": "On the held-back test, 2 of 11 genuine customers were held: small businesses paying a new supplier after phoning to check. The reader treated 'our supplier' as a claimed history.",
+      "fix": "We told the reader that a new agreement or a first order is not prior dealings. Afterwards, on a fresh seed, 19 of 19 scams were flagged and 1 of 11 genuine customers got friction (a warning). The held-back result stays as recorded, before the fix.",
       "status": "Fixed"
     }
   ],
@@ -245,9 +250,34 @@
         "label": "Fresh seed 37: genuine customers left alone",
         "value": 89,
         "n": 9
+      },
+      {
+        "label": "Held-back test, before the fix: scams flagged",
+        "value": 100,
+        "n": 10
+      },
+      {
+        "label": "Held-back test, before the fix: genuine customers left alone (2 were held)",
+        "value": 73,
+        "n": 11
+      },
+      {
+        "label": "Fresh seed 43, after the fix: scams flagged",
+        "value": 100,
+        "n": 19
+      },
+      {
+        "label": "Fresh seed 43, after the fix: genuine customers left alone",
+        "value": 91,
+        "n": 11
+      },
+      {
+        "label": "Dev cases re-run after the fix: scams flagged",
+        "value": 100,
+        "n": 10
       }
     ],
-    "pending": "The held-back half of the public-page cases (10 cases) has not been run yet. It will be run once, at the end, and reported as it comes out.",
+    "pending": "The held-back half was run once, before the fix, and that result stays as recorded. The two genuine customers it wrongly held were replayed after the fix and both passed. That is a check on cases we had already studied, not a fresh test. Seed 43 played 30 of its 40 scenarios.",
     "sources": [
       {
         "name": "US Federal Trade Commission, consumer alerts",

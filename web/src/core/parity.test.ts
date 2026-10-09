@@ -47,6 +47,7 @@ describe("message safety helpers", () => {
     expect(prompt).toContain("NOT independent checking");
     expect(prompt).toContain("is a claim, not independent checking");
     expect(prompt).toContain("Knowing a family member or a friend is not prior dealings");
+    expect(prompt).toContain("A new agreement, a first order or a first payment is not prior dealings");
     expect(clean("a".repeat(5000)).length).toBe(1500);
   });
 });

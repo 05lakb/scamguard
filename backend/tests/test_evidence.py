@@ -71,3 +71,9 @@ def test_older_readings_without_the_new_field_still_load():
 def test_the_reader_is_told_that_family_and_friends_are_not_prior_dealings():
     prompt = build_prompt("paying my brother", load_scam_types())
     assert "Knowing a family member or a friend is not prior dealings" in prompt
+
+
+def test_a_new_agreement_or_first_order_is_not_prior_dealings():
+    prompt = build_prompt("paying our supplier for the first order", load_scam_types())
+    assert "A new agreement, a first order or a first payment is not prior dealings" in prompt
+    assert "only when the customer says they have already paid or dealt with this payee before" in prompt

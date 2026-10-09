@@ -4,8 +4,10 @@ A simulated customer plays made-up scenarios against the guard, inside our own s
 never sees the answer key. Each result is sent to the page the moment it is decided.
 """
 
+import json
 import random
 from collections import namedtuple
+from pathlib import Path
 
 from backend.service import assess
 from redteam import customer_agent, factory
@@ -31,19 +33,54 @@ class LocalSite:
         return Reply(200, outcome, "")
 
 
+INTEL_FILE = Path(__file__).resolve().parents[1] / "data" / "intel_scenarios_dev.json"
+
+# Where the scam cases built from public advice pages go in a short run, among our own kinds.
+# "real" stands for the next one of those cases. Only the dev half is ever kept here.
+REAL_SLOTS = ["real", "mixed_signal_legit", "real", "obvious_legit", "real", "injection", "real", "coached_victim",
+              "split_payments", "refusal", "contradiction"]
+
+
+def load_public_report_scenarios():
+    """Made-up scam cases shaped by public advice pages. Returns an empty list if the file is missing."""
+    try:
+        data = json.loads(INTEL_FILE.read_text(encoding="utf-8"))
+    except (OSError, ValueError):
+        return []
+    return [item for item in data.get("scenarios", []) if item.get("split") == "dev" and item.get("reference")]
+
+
 def pick_scenarios(count, seed):
-    """Choose a balanced handful from a freshly made pool."""
+    """Choose a balanced handful: scam cases from public advice pages, plus our own genuine and trick cases."""
     pool = factory.build(90, seed)["scenarios"]
     by_kind = {kind: [item for item in pool if item["category"] == kind] for kind in KIND_ORDER}
+    real = load_public_report_scenarios()
+    random.Random(seed).shuffle(real)
     chosen = []
-    round_number = 0
-    while len(chosen) < count and round_number < 3:
-        for kind in KIND_ORDER:
-            if len(chosen) < count and len(by_kind[kind]) > round_number:
-                if kind == "coached_victim" and round_number > 0:
-                    continue  # at most one of the hardest kind in a short live run
-                chosen.append(by_kind[kind][round_number])
-        round_number += 1
+    if real:
+        used = {kind: 0 for kind in KIND_ORDER}
+        for slot in REAL_SLOTS:
+            if len(chosen) >= count:
+                break
+            if slot == "real":
+                if real:
+                    chosen.append(real.pop())
+            elif len(by_kind[slot]) > used[slot]:
+                chosen.append(by_kind[slot][used[slot]])
+                used[slot] += 1
+        # If the count is bigger than the slots above, fill up from our own kinds.
+        leftovers = [item for kind in KIND_ORDER for item in by_kind[kind][used[kind]:] if kind != "coached_victim"]
+        random.Random(seed + 1).shuffle(leftovers)
+        chosen.extend(leftovers[:max(0, count - len(chosen))])
+    else:
+        round_number = 0
+        while len(chosen) < count and round_number < 3:
+            for kind in KIND_ORDER:
+                if len(chosen) < count and len(by_kind[kind]) > round_number:
+                    if kind == "coached_victim" and round_number > 0:
+                        continue  # at most one of the hardest kind in a short live run
+                    chosen.append(by_kind[kind][round_number])
+            round_number += 1
     random.Random(seed).shuffle(chosen)
     return chosen[:count]
 
@@ -56,6 +93,9 @@ def public(record, scenario):
         "final_action", "score", "reasons", "ok", "expected_actions", "error", "degraded")}
     shown.update(amount=payment["amount"], currency=payment["currency"], payee=payment["payee_name"],
                  segment=scenario["customer"]["segment"])
+    reference = scenario.get("reference")
+    if reference:  # which public page this made-up case was modelled on, so it can be credited
+        shown["reference"] = {key: reference.get(key) for key in ("name", "title", "url")}
     return shown
 
 

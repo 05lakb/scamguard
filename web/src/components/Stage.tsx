@@ -4,7 +4,7 @@
 import type { ArenaRecord } from "../api";
 import { KIND_LABEL } from "../lib/cases";
 import { ACTION_LABEL, SEGMENT_LABEL } from "../lib/labels";
-import { CHECKS, PREP_LINES, VERDICT_TEXT, outcomeSentence, verdictOf, viewAt, type Step } from "../lib/stage";
+import { CHECKS, PREP_LINES, VERDICT_TEXT, outcomeSentence, sourceLink, verdictOf, viewAt, type Step } from "../lib/stage";
 import { GuardAgent, RedAgent, type GuardMood, type RedMood } from "./Agents";
 import { Icon, type IconName } from "./Icon";
 
@@ -118,6 +118,17 @@ export function Stage({ record, elapsed, number, total, running, allPlayed }: Pr
               <div className="skeleton" aria-hidden="true">
                 {Array.from({ length: PREP_LINES }, (_, index) => <span key={index} className={running ? "shimmer" : ""} />)}
               </div>
+            )}
+            {record?.reference && lines >= PREP_LINES && (
+              <p className="source">
+                Modelled on a public page:{" "}
+                {sourceLink(record.reference) ? (
+                  <a href={sourceLink(record.reference)!} target="_blank" rel="noopener noreferrer">{record.reference.title}</a>
+                ) : (
+                  record.reference.title
+                )}
+                <span className="muted"> · {record.reference.name}</span>
+              </p>
             )}
           </div>
           {record && view?.noteShown && (

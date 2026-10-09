@@ -1,0 +1,536 @@
+{
+ "meta": {
+  "credit": "Scenarios are made up, shaped by fraud patterns described on public advice pages (see each scenario's reference). No original text is stored.",
+  "note": "All made up. Only the dev half is kept here; the locked test half is kept out of the repo for the final score."
+ },
+ "scenarios": [
+  {
+   "id": "R5-018",
+   "label": "scam",
+   "category": "real_quiet",
+   "difficulty": "hard",
+   "typology": "romance",
+   "story": "romance",
+   "customer": {
+    "segment": "family",
+    "typical_amount": 561,
+    "typical_spend_15d": 5049
+   },
+   "payment": {
+    "amount": 2000,
+    "currency": "USD",
+    "timestamp": "2026-09-19T10:53:00",
+    "payee_name": "Priya Mendes",
+    "payee_type": "individual",
+    "is_new_payee": true,
+    "payee_account_age_days": 298,
+    "channel": "mobile",
+    "device_known": true,
+    "payments_last_24h": 0,
+    "on_live_call": false,
+    "remote_access_tool_running": false,
+    "payments_last_15d": 8,
+    "spend_last_15d": 4077,
+    "payee_count_15d": 0,
+    "payee_total_15d": 0
+   },
+   "persona": {
+    "role": "victim",
+    "voice": "chatty and friendly",
+    "coached": false,
+    "refuses": false,
+    "contradicts": false,
+    "injection": null,
+    "writes_note": true,
+    "facts": "The customer believes they are in a committed online relationship with Priya Mendes. They think that transferring 2000 USD to Zentora Exchange will help Priya Mendes overcome an emergency and finally allow them to meet in person."
+   },
+   "expected_actions": [
+    "warn",
+    "hold"
+   ],
+   "source": "public-report-derived",
+   "complaint_id": "6dcce43deada",
+   "split": "dev",
+   "reference": {
+    "name": "Australian Scamwatch (ACCC), types of scams",
+    "title": "Relationship scams | Scamwatch",
+    "url": "https://www.scamwatch.gov.au/types-of-scams/relationship-scams"
+   }
+  },
+  {
+   "id": "R5-008",
+   "label": "scam",
+   "category": "real_quiet",
+   "difficulty": "hard",
+   "typology": "purchase",
+   "story": "purchase",
+   "customer": {
+    "segment": "small_business_owner",
+    "typical_amount": 1911,
+    "typical_spend_15d": 23888
+   },
+   "payment": {
+    "amount": 2200,
+    "currency": "USD",
+    "timestamp": "2026-09-21T18:52:00",
+    "payee_name": "Rosa Mendes",
+    "payee_type": "individual",
+    "is_new_payee": true,
+    "payee_account_age_days": 439,
+    "channel": "web",
+    "device_known": true,
+    "payments_last_24h": 0,
+    "on_live_call": false,
+    "remote_access_tool_running": false,
+    "payments_last_15d": 9,
+    "spend_last_15d": 20440,
+    "payee_count_15d": 0,
+    "payee_total_15d": 0
+   },
+   "persona": {
+    "role": "victim",
+    "voice": "polite and a little formal",
+    "coached": false,
+    "refuses": false,
+    "contradicts": false,
+    "injection": null,
+    "writes_note": true,
+    "facts": "The customer believes they are purchasing a reliable vehicle from Veldora Lettings after discussing the deal with Rosa Mendes. They trust that transferring 2200 USD via wire will secure the car for delivery without any issues."
+   },
+   "expected_actions": [
+    "warn",
+    "hold"
+   ],
+   "source": "public-report-derived",
+   "complaint_id": "a041cb478890",
+   "split": "dev",
+   "reference": {
+    "name": "US Federal Trade Commission, consumer alerts",
+    "title": "Scammers are spoofing car dealership websites: What you need to know | Consumer Advice",
+    "url": "https://consumer.ftc.gov/consumer-alerts/2026/09/scammers-are-spoofing-car-dealership-websites-what-you-need-know"
+   }
+  },
+  {
+   "id": "R5-010",
+   "label": "scam",
+   "category": "real_quiet",
+   "difficulty": "hard",
+   "typology": "purchase",
+   "story": "purchase",
+   "customer": {
+    "segment": "young_professional",
+    "typical_amount": 42,
+    "typical_spend_15d": 462
+   },
+   "payment": {
+    "amount": 150,
+    "currency": "USD",
+    "timestamp": "2026-09-25T13:25:00",
+    "payee_name": "Omar Patel",
+    "payee_type": "individual",
+    "is_new_payee": true,
+    "payee_account_age_days": 200,
+    "channel": "mobile",
+    "device_known": true,
+    "payments_last_24h": 0,
+    "on_live_call": false,
+    "remote_access_tool_running": false,
+    "payments_last_15d": 3,
+    "spend_last_15d": 307,
+    "payee_count_15d": 0,
+    "payee_total_15d": 0
+   },
+   "persona": {
+    "role": "victim",
+    "voice": "calm and matter-of-fact",
+    "coached": false,
+    "refuses": false,
+    "contradicts": false,
+    "injection": null,
+    "writes_note": true,
+    "facts": "The customer believes they are buying prescription medicine safely online from Primaro Works. They think that transferring 150 USD via a secure link sent by Omar Patel will ensure speedy delivery of their required treatment."
+   },
+   "expected_actions": [
+    "warn",
+    "hold"
+   ],
+   "source": "public-report-derived",
+   "complaint_id": "201a38ebb568",
+   "split": "dev",
+   "reference": {
+    "name": "Australian Scamwatch (ACCC), types of scams",
+    "title": "Buying and selling scams | Scamwatch",
+    "url": "https://www.scamwatch.gov.au/types-of-scams/buying-and-selling-scams"
+   }
+  },
+  {
+   "id": "R5-006",
+   "label": "scam",
+   "category": "real_quiet",
+   "difficulty": "hard",
+   "typology": "advance_fee",
+   "story": "advance_fee",
+   "customer": {
+    "segment": "family",
+    "typical_amount": 608,
+    "typical_spend_15d": 6080
+   },
+   "payment": {
+    "amount": 2300,
+    "currency": "USD",
+    "timestamp": "2026-09-13T16:37:00",
+    "payee_name": "Primaro Exchange",
+    "payee_type": "business",
+    "is_new_payee": true,
+    "payee_account_age_days": 457,
+    "channel": "web",
+    "device_known": true,
+    "payments_last_24h": 0,
+    "on_live_call": false,
+    "remote_access_tool_running": false,
+    "payments_last_15d": 6,
+    "spend_last_15d": 2588,
+    "payee_count_15d": 0,
+    "payee_total_15d": 0
+   },
+   "persona": {
+    "role": "victim",
+    "voice": "short and a bit rushed, like a text message",
+    "coached": false,
+    "refuses": false,
+    "contradicts": false,
+    "injection": null,
+    "writes_note": true,
+    "facts": "The customer believes they are paying an official online billing portal managed by Primaro Exchange to settle a monthly invoice. They think Lena Reyes is the customer support representative assisting them with the payment process and transferring 2300 USD securely to the correct utility provider."
+   },
+   "expected_actions": [
+    "warn",
+    "hold"
+   ],
+   "source": "public-report-derived",
+   "complaint_id": "0687de0f0520",
+   "split": "dev",
+   "reference": {
+    "name": "US Federal Trade Commission, consumer alerts",
+    "title": "Searching online: bill pay impersonators | Consumer Advice",
+    "url": "https://consumer.ftc.gov/consumer-alerts/2026/08/searching-online-bill-pay-impersonators"
+   }
+  },
+  {
+   "id": "R5-003",
+   "label": "scam",
+   "category": "real_quiet",
+   "difficulty": "hard",
+   "typology": "investment",
+   "story": "investment",
+   "customer": {
+    "segment": "young_professional",
+    "typical_amount": 1387,
+    "typical_spend_15d": 10402
+   },
+   "payment": {
+    "amount": 5000,
+    "currency": "USD",
+    "timestamp": "2026-09-16T20:57:00",
+    "payee_name": "Tavara Lettings",
+    "payee_type": "crypto_exchange",
+    "is_new_payee": true,
+    "payee_account_age_days": 153,
+    "channel": "web",
+    "device_known": true,
+    "payments_last_24h": 0,
+    "on_live_call": false,
+    "remote_access_tool_running": false,
+    "payments_last_15d": 6,
+    "spend_last_15d": 4318,
+    "payee_count_15d": 0,
+    "payee_total_15d": 0
+   },
+   "persona": {
+    "role": "victim",
+    "voice": "worried and apologetic",
+    "coached": false,
+    "refuses": false,
+    "contradicts": false,
+    "injection": null,
+    "writes_note": true,
+    "facts": "The customer believes that Kofi Garcia at Tavara Lettings is a professional trading mentor who will teach them proven strategies for financial freedom. They are confident that transferring 5000 USD will enroll them in an exclusive coaching program with guaranteed daily market returns."
+   },
+   "expected_actions": [
+    "warn",
+    "hold"
+   ],
+   "source": "public-report-derived",
+   "complaint_id": "36c767701acd",
+   "split": "dev",
+   "reference": {
+    "name": "US Federal Trade Commission, consumer alerts",
+    "title": "How to spot investment training scams on social media | Consumer Advice",
+    "url": "https://consumer.ftc.gov/consumer-alerts/2026/08/how-spot-investment-training-scams-social-media"
+   }
+  },
+  {
+   "id": "R5-019",
+   "label": "scam",
+   "category": "real_quiet",
+   "difficulty": "hard",
+   "typology": "investment",
+   "story": "investment",
+   "customer": {
+    "segment": "student",
+    "typical_amount": 203,
+    "typical_spend_15d": 2132
+   },
+   "payment": {
+    "amount": 620,
+    "currency": "USD",
+    "timestamp": "2026-09-11T17:04:00",
+    "payee_name": "Lumaris Solutions",
+    "payee_type": "crypto_exchange",
+    "is_new_payee": true,
+    "payee_account_age_days": 359,
+    "channel": "mobile",
+    "device_known": true,
+    "payments_last_24h": 0,
+    "on_live_call": false,
+    "remote_access_tool_running": false,
+    "payments_last_15d": 6,
+    "spend_last_15d": 2076,
+    "payee_count_15d": 0,
+    "payee_total_15d": 0
+   },
+   "persona": {
+    "role": "victim",
+    "voice": "short and a bit rushed, like a text message",
+    "coached": false,
+    "refuses": false,
+    "contradicts": false,
+    "injection": null,
+    "writes_note": true,
+    "facts": "The customer believes that Kofi Silva at Lumaris Solutions is helping them invest in a highly profitable online trading platform with guaranteed returns. The customer is confident that the initial 620 USD transfer is safe and will quickly multiply because they were able to see small earnings grow on the dashboard."
+   },
+   "expected_actions": [
+    "warn",
+    "hold"
+   ],
+   "source": "public-report-derived",
+   "complaint_id": "86d61bead2c4",
+   "split": "dev",
+   "reference": {
+    "name": "Australian Scamwatch (ACCC), types of scams",
+    "title": "Investment scams | Scamwatch",
+    "url": "https://www.scamwatch.gov.au/types-of-scams/investment-scams"
+   }
+  },
+  {
+   "id": "R5-007",
+   "label": "scam",
+   "category": "real_obvious",
+   "difficulty": "easy",
+   "typology": "advance_fee",
+   "story": "advance_fee",
+   "customer": {
+    "segment": "young_professional",
+    "typical_amount": 125,
+    "typical_spend_15d": 625
+   },
+   "payment": {
+    "amount": 350,
+    "currency": "USD",
+    "timestamp": "2026-09-20T19:19:00",
+    "payee_name": "Tavara Trade Ltd",
+    "payee_type": "business",
+    "is_new_payee": true,
+    "payee_account_age_days": 9,
+    "channel": "mobile",
+    "device_known": true,
+    "payments_last_24h": 0,
+    "on_live_call": true,
+    "remote_access_tool_running": false,
+    "payments_last_15d": 3,
+    "spend_last_15d": 524,
+    "payee_count_15d": 0,
+    "payee_total_15d": 0
+   },
+   "persona": {
+    "role": "victim",
+    "voice": "chatty and friendly",
+    "coached": false,
+    "refuses": false,
+    "contradicts": false,
+    "injection": null,
+    "writes_note": true,
+    "facts": "The customer believes they are purchasing a valid health insurance policy through Tavara Trade Ltd after speaking with Kofi Ito. They think the payment of 350 USD will secure their official coverage for the upcoming year."
+   },
+   "expected_actions": [
+    "hold"
+   ],
+   "source": "public-report-derived",
+   "complaint_id": "fa40978e2287",
+   "split": "dev",
+   "reference": {
+    "name": "US Federal Trade Commission, consumer alerts",
+    "title": "What to know ahead of Open Enrollment to avoid health insurance scams | Consumer Advice",
+    "url": "https://consumer.ftc.gov/consumer-alerts/2026/09/what-know-ahead-open-enrollment-avoid-health-insurance-scams"
+   }
+  },
+  {
+   "id": "R5-009",
+   "label": "scam",
+   "category": "real_quiet",
+   "difficulty": "hard",
+   "typology": "purchase",
+   "story": "purchase",
+   "customer": {
+    "segment": "retiree",
+    "typical_amount": 620,
+    "typical_spend_15d": 3720
+   },
+   "payment": {
+    "amount": 1200,
+    "currency": "USD",
+    "timestamp": "2026-09-23T11:23:00",
+    "payee_name": "Elena Tanaka",
+    "payee_type": "individual",
+    "is_new_payee": true,
+    "payee_account_age_days": 114,
+    "channel": "mobile",
+    "device_known": true,
+    "payments_last_24h": 0,
+    "on_live_call": false,
+    "remote_access_tool_running": false,
+    "payments_last_15d": 2,
+    "spend_last_15d": 3688,
+    "payee_count_15d": 0,
+    "payee_total_15d": 0
+   },
+   "persona": {
+    "role": "victim",
+    "voice": "casual, all lowercase, with a couple of small typos",
+    "coached": false,
+    "refuses": false,
+    "contradicts": false,
+    "injection": null,
+    "writes_note": true,
+    "facts": "The customer believes they are securing a lovely holiday apartment by paying 1200 USD in advance to Lumaris Solutions. They trust that Elena Tanaka, who claims to be the landlord, will send the keys once the transfer goes through."
+   },
+   "expected_actions": [
+    "warn",
+    "hold"
+   ],
+   "source": "public-report-derived",
+   "complaint_id": "d2ed11ffc996",
+   "split": "dev",
+   "reference": {
+    "name": "Australian Scamwatch (ACCC), types of scams",
+    "title": "Buying and selling scams | Scamwatch",
+    "url": "https://www.scamwatch.gov.au/types-of-scams/buying-and-selling-scams"
+   }
+  },
+  {
+   "id": "R5-020",
+   "label": "scam",
+   "category": "real_quiet",
+   "difficulty": "hard",
+   "typology": "investment",
+   "story": "investment",
+   "customer": {
+    "segment": "retiree",
+    "typical_amount": 3813,
+    "typical_spend_15d": 34317
+   },
+   "payment": {
+    "amount": 15000,
+    "currency": "USD",
+    "timestamp": "2026-09-17T10:39:00",
+    "payee_name": "Veldora Trade Ltd",
+    "payee_type": "crypto_exchange",
+    "is_new_payee": true,
+    "payee_account_age_days": 491,
+    "channel": "mobile",
+    "device_known": true,
+    "payments_last_24h": 0,
+    "on_live_call": false,
+    "remote_access_tool_running": false,
+    "payments_last_15d": 4,
+    "spend_last_15d": 37606,
+    "payee_count_15d": 0,
+    "payee_total_15d": 0
+   },
+   "persona": {
+    "role": "victim",
+    "voice": "chatty and friendly",
+    "coached": false,
+    "refuses": false,
+    "contradicts": false,
+    "injection": null,
+    "writes_note": true,
+    "facts": "The customer believes Wen Patel at Veldora Trade Ltd is a licensed financial expert managing a low-risk portfolio. They are transferring 15000 USD to fund an online trading account that has already shown steady daily profits on the dashboard."
+   },
+   "expected_actions": [
+    "warn",
+    "hold"
+   ],
+   "source": "public-report-derived",
+   "complaint_id": "5c931a5fc784",
+   "split": "dev",
+   "reference": {
+    "name": "Australian Scamwatch (ACCC), types of scams",
+    "title": "Investment scams | Scamwatch",
+    "url": "https://www.scamwatch.gov.au/types-of-scams/investment-scams"
+   }
+  },
+  {
+   "id": "R5-015",
+   "label": "scam",
+   "category": "real_obvious",
+   "difficulty": "easy",
+   "typology": "bank_impersonation",
+   "story": "bank_impersonation",
+   "customer": {
+    "segment": "family",
+    "typical_amount": 1233,
+    "typical_spend_15d": 8631
+   },
+   "payment": {
+    "amount": 2260,
+    "currency": "USD",
+    "timestamp": "2026-09-14T13:30:00",
+    "payee_name": "Nia Adler",
+    "payee_type": "individual",
+    "is_new_payee": true,
+    "payee_account_age_days": 15,
+    "channel": "mobile",
+    "device_known": true,
+    "payments_last_24h": 0,
+    "on_live_call": true,
+    "remote_access_tool_running": false,
+    "payments_last_15d": 3,
+    "spend_last_15d": 7440,
+    "payee_count_15d": 0,
+    "payee_total_15d": 0
+   },
+   "persona": {
+    "role": "victim",
+    "voice": "worried and apologetic",
+    "coached": false,
+    "refuses": false,
+    "contradicts": false,
+    "injection": null,
+    "writes_note": true,
+    "facts": "The customer receives an urgent notification from a caller claiming to be Nia Adler from the bank's fraud prevention department. The customer believes that their account has been compromised by unauthorized actors and willingly transfers 2260 USD to Primaro Exchange to secure their funds."
+   },
+   "expected_actions": [
+    "hold"
+   ],
+   "source": "public-report-derived",
+   "complaint_id": "1175996e54cd",
+   "split": "dev",
+   "reference": {
+    "name": "Australian Scamwatch (ACCC), types of scams",
+    "title": "Phishing scams | Scamwatch",
+    "url": "https://www.scamwatch.gov.au/types-of-scams/phishing-scams"
+   }
+  }
+ ]
+}

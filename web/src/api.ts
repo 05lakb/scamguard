@@ -50,6 +50,8 @@ export interface ArenaRecord {
   currency: string;
   payee: string;
   segment: string;
+  // The public advice page this made-up case was modelled on, when it has one.
+  reference?: { name: string; title: string; url: string };
 }
 
 export interface ArenaSummary {

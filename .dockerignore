@@ -11,6 +11,7 @@ redteam/output
 docs
 data/*.json
 !data/typologies.json
+!data/intel_scenarios_dev.json
 data/randomdummy*
 __pycache__
 *.pyc

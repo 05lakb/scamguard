@@ -138,3 +138,42 @@ def test_a_finished_run_gives_its_slot_back(monkeypatch):
     # The visitor limit would stop an instant repeat, so check the slot through a second fresh app instead.
     c2 = TestClient(app_module.create_app(reader=fake_reader, asker=fake_asker, arena_writer=fake_writer))
     assert c2.post("/api/arena", json={"count": 3}).status_code == 200
+
+
+# ---------- scam cases modelled on public advice pages ----------
+
+def test_a_short_run_includes_credited_scam_cases_from_public_pages():
+    chosen = arena.pick_scenarios(8, seed=5)
+    real = [item for item in chosen if item.get("reference")]
+    assert len(real) >= 3
+    assert all(item["label"] == "scam" and item["split"] == "dev" for item in real)
+    assert all(item["reference"]["url"].startswith("https://") and item["reference"]["name"] for item in real)
+
+
+def test_the_locked_test_half_is_never_shown(tmp_path, monkeypatch):
+    base = arena.load_public_report_scenarios()[0]
+    locked = {**base, "id": "LOCKED-1", "split": "test"}
+    file = tmp_path / "scenarios.json"
+    file.write_text(json.dumps({"scenarios": [base, locked]}), encoding="utf-8")
+    monkeypatch.setattr(arena, "INTEL_FILE", file)
+    ids = {item["id"] for item in arena.load_public_report_scenarios()}
+    assert ids == {base["id"]}
+    for seed in range(1, 8):
+        assert "LOCKED-1" not in {item["id"] for item in arena.pick_scenarios(9, seed)}
+
+
+def test_a_missing_public_cases_file_falls_back_to_our_own_scenarios(tmp_path, monkeypatch):
+    monkeypatch.setattr(arena, "INTEL_FILE", tmp_path / "nothing.json")
+    chosen = arena.pick_scenarios(8, seed=5)
+    assert len(chosen) == 8 and not any(item.get("reference") for item in chosen)
+
+
+def test_the_page_gets_the_source_of_a_public_case_but_not_for_our_own():
+    chosen = arena.pick_scenarios(9, seed=5)
+    real = next(item for item in chosen if item.get("reference"))
+    own = next(item for item in chosen if not item.get("reference"))
+    shown_real = arena.public({"id": real["id"], "category": real["category"], "label": real["label"]}, real)
+    shown_own = arena.public({"id": own["id"], "category": own["category"], "label": own["label"]}, own)
+    assert set(shown_real["reference"]) == {"name", "title", "url"}
+    assert "reference" not in shown_own
+    assert "persona" not in shown_real and "typology" not in shown_real

@@ -1707,3 +1707,16 @@ thead th {
 .primary {
   box-shadow: 0 4px 14px rgba(15, 118, 110, 0.28);
 }
+
+.stage-card .source {
+  margin: 10px 0 0;
+  padding-top: 8px;
+  border-top: 1px dashed var(--line);
+  font-size: 0.82rem;
+  color: var(--muted);
+}
+
+.stage-card .source a {
+  color: var(--accent);
+  overflow-wrap: anywhere;
+}

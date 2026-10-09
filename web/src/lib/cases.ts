@@ -74,6 +74,9 @@ export const KIND_LABEL: Record<string, string> = {
   injection: "Hidden order to the checker",
   obvious_legit: "Everyday genuine payment",
   mixed_signal_legit: "Genuine but scary-sounding",
+  real_obvious: "Public-report scam (obvious)",
+  real_quiet: "Public-report scam (quiet)",
+  real_coached: "Public-report scam (coached)",
 };
 
 export const sourceLabel = (source: CaseItem["source"]) =>

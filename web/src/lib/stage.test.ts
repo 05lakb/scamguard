@@ -2,7 +2,7 @@
 
 import { describe, expect, it } from "vitest";
 import type { ArenaRecord } from "../api";
-import { CHECKS, PREP_LINES, scheduleOf, viewAt } from "./stage";
+import { CHECKS, PREP_LINES, scheduleOf, sourceLink, viewAt } from "./stage";
 
 function record(changes: Partial<ArenaRecord> = {}): ArenaRecord {
   return {
@@ -51,5 +51,16 @@ describe("the stage timing", () => {
     expect(viewAt(withQuestion, plan.questionAt!).answerShown).toBe(false);
     expect(viewAt(withQuestion, plan.answerAt!).answerShown).toBe(true);
     expect(viewAt(withQuestion, plan.answerAt!).verdictShown).toBe(false);
+  });
+});
+
+describe("the source link", () => {
+  it("links only the two named websites", () => {
+    expect(sourceLink({ url: "https://www.scamwatch.gov.au/types-of-scams/phishing-scams" })).toContain("scamwatch.gov.au");
+    expect(sourceLink({ url: "https://consumer.ftc.gov/consumer-alerts/2026/03/x" })).toContain("consumer.ftc.gov");
+    expect(sourceLink({ url: "https://evil.example/https://consumer.ftc.gov/" })).toBeNull();
+    expect(sourceLink({ url: "http://consumer.ftc.gov/x" })).toBeNull();
+    expect(sourceLink({ url: "javascript:alert(1)" })).toBeNull();
+    expect(sourceLink(undefined)).toBeNull();
   });
 });

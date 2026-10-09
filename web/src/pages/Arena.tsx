@@ -87,9 +87,11 @@ export function Arena({ onCase }: Props) {
           <span className="muted small">All data is made up</span>
         </div>
         <p>
-          A simulated customer, played by Gemini, acts out made-up scenarios: obvious scams, quiet ones, customers
-          coached to stay calm, and genuine people whose story merely sounds suspicious. <strong>The guard never sees
-          the answer key.</strong> Each result appears here the moment the guard decides.
+          A simulated customer, played by Gemini, acts out made-up scenarios. Most scam cases are modelled on fraud patterns
+          described on public advice pages from the US Federal Trade Commission and Australia's Scamwatch, and each one
+          links to its source. Genuine people whose story merely sounds suspicious, and tricks aimed at the checker, come
+          from our own generator. <strong>The guard never sees the answer key.</strong> Each result appears here the moment
+          the guard decides. Scamwatch content is used under its Creative Commons Attribution licence.
         </p>
         <div className="row">
           <label className="inline-field">

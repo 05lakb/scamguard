@@ -18,6 +18,7 @@ RUN pip install --no-cache-dir -r backend/requirements.txt
 COPY backend/ backend/
 COPY redteam/__init__.py redteam/factory.py redteam/attacks.py redteam/customer_agent.py redteam/report.py redteam/
 COPY data/typologies.json data/typologies.json
+COPY data/intel_scenarios_dev.json data/intel_scenarios_dev.json
 COPY --from=web /web/dist web/dist
 
 # Run as a normal user, not as the administrator.

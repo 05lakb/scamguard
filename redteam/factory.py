@@ -58,6 +58,9 @@ DIFFICULTY = {
 
 ALWAYS_HIGH = {"bank_impersonation", "remote_access"}
 
+# Share of "tops up their own exchange account every month" customers whose payee the bank already knows.
+OWN_CRYPTO_KNOWN_PAYEE = 0.75
+
 SCAM_FACTS = {
     "investment": [
         "A person called {contact} in an online trading group says the customer's crypto account has grown 40% and that {amount} USD must be deposited today to unlock withdrawals.",
@@ -213,6 +216,14 @@ def make_scenario(rng, category, typologies, index, seed):
         facts = template.format(contact=contact, amount=payment["amount"])
         if story == "own crypto":
             payment["payee_type"], payment["payee_name"] = "crypto_exchange", business(rng).replace("Supply", "Exchange")
+            if rng.random() < OWN_CRYPTO_KNOWN_PAYEE:
+                # The usual case: a payee the customer tops up every month is already on the bank's records.
+                payment["is_new_payee"] = False
+                payment["payee_account_age_days"] = rng.randint(1000, 4000)
+            else:
+                # The hard case, kept on purpose: the account is long-standing, but this is the first transfer
+                # to it from this bank, so the bank's records show a new payee.
+                facts += " This is the first time they are sending to it from this bank."
     else:
         facts = rng.choice(SCAM_FACTS[typology]).format(contact=contact, amount=payment["amount"])
         story = typology

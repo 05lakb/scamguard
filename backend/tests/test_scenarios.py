@@ -150,3 +150,18 @@ def test_scoring_counts_by_kind_and_lists_the_misses():
     assert summary["errors"] == 1
     assert [r["id"] for r in summary["failures"]] == ["a"]
     assert "quiet_scam: 1/2 (50%)" in render_scenarios(summary, [])
+
+
+def test_a_monthly_exchange_top_up_never_contradicts_the_banks_records():
+    seen_known = seen_first_time = 0
+    for seed in range(20, 30):
+        for item in factory.build(90, seed)["scenarios"]:
+            facts = item["persona"]["facts"]
+            if item["label"] != "legit" or "exchange account" not in facts or "every month" not in facts:
+                continue
+            if not item["payment"]["is_new_payee"]:
+                seen_known += 1  # the bank already knows this monthly payee
+            else:
+                assert "first time they are sending to it from this bank" in facts, item["id"]
+                seen_first_time += 1  # the hard case is kept, and the story says so
+    assert seen_known > seen_first_time > 0

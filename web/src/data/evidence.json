@@ -140,8 +140,18 @@
     },
     {
       "found": "We tried to learn from real complaint stories published by a US regulator. Its public API returns no story text.",
-      "fix": "Dropped. We use regulator statistics for realism and our own scenario factory for testing.",
-      "status": "Not used"
+      "fix": "Dropped that source. We now read public advice pages (FTC consumer alerts, Scamwatch), turn the patterns into made-up cases, and credit each page.",
+      "status": "Fixed"
+    },
+    {
+      "found": "Our own test generator told a contradictory story: a customer who tops up the same exchange account every month, yet the bank had never seen that payee. On seed 31 the guard held 5 of 10 genuine customers, because it correctly noticed the clash.",
+      "fix": "We corrected the generator so a monthly payee is on the bank's records in most cases, and kept 'first transfer from this bank' as a labelled hard case. The guard was not changed. On a fresh seed, 1 of 9 genuine customers got friction, and it was a warning.",
+      "status": "Fixed, test data (guard unchanged)"
+    },
+    {
+      "found": "Scam cases written only by us could look too convenient. Judges may ask where the attacks come from.",
+      "fix": "Scam cases are now modelled on fraud patterns on public advice pages. Each case links to its source. Half of them are held back and unseen, for one final score.",
+      "status": "Fixed"
     }
   ],
   "limits": [
@@ -151,7 +161,10 @@
     "Our own 99% is a ceiling, because we wrote the cases. The blind test is the fairer guide.",
     "Some quiet scams show nothing unusual in the payment itself. Only the customer's words can reveal them, and a coached customer can hide them.",
     "Payee reputation (for example accounts reported by other banks) is not modelled. A real bank would add it.",
-    "The prototype runs on the free trial's allowance, with rate limits and a cost guard, so it is not sized for heavy traffic."
+    "The prototype runs on the free trial's allowance, with rate limits and a cost guard, so it is not sized for heavy traffic.",
+    "The public pages are advice, not victims' diaries. Gemini invents each customer on top of a published pattern, so the stories are made up and the simulated victims are unrehearsed. That is an easier case than a victim coached to stay calm.",
+    "The public-report results come from small samples (10 and 30 cases). They show a direction, not a precise rate.",
+    "The public pages we could read had no remote-access scam and no changed-bank-details invoice, so those two types are tested only with our own generator."
   ],
   "scenarioRun": {
     "title": "Blind scenarios, by kind (seed 23, 40 scenarios)",
@@ -201,6 +214,55 @@
         "label": "Coached victims",
         "value": 60,
         "n": 5
+      }
+    ]
+  },
+  "publicReports": {
+    "title": "Scam cases modelled on public advice pages",
+    "intro": "Gemini turned fraud patterns from public advice pages into made-up customers, with invented names and amounts. No page text is stored, and each case is credited to its source. The guard never saw the answer key.",
+    "rows": [
+      {
+        "label": "Run 1: scams flagged",
+        "value": 100,
+        "n": 10
+      },
+      {
+        "label": "Run 2: scams flagged",
+        "value": 100,
+        "n": 10
+      },
+      {
+        "label": "Run 2: genuine customers left alone (test-data fault, now fixed)",
+        "value": 50,
+        "n": 10
+      },
+      {
+        "label": "Fresh seed 37: scams flagged",
+        "value": 90,
+        "n": 21
+      },
+      {
+        "label": "Fresh seed 37: genuine customers left alone",
+        "value": 89,
+        "n": 9
+      }
+    ],
+    "pending": "The held-back half of the public-page cases (10 cases) has not been run yet. It will be run once, at the end, and reported as it comes out.",
+    "sources": [
+      {
+        "name": "US Federal Trade Commission, consumer alerts",
+        "note": "A US government publication. Credited by page.",
+        "url": "https://consumer.ftc.gov/consumer-alerts"
+      },
+      {
+        "name": "Australian Scamwatch (ACCC), types of scams",
+        "note": "Creative Commons Attribution licence. Credited by page, text not stored.",
+        "url": "https://www.scamwatch.gov.au/types-of-scams"
+      },
+      {
+        "name": "UK Action Fraud",
+        "note": "Not used: its robots.txt asks automated readers to stay away.",
+        "url": null
       }
     ]
   }

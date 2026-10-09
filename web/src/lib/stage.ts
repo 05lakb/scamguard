@@ -97,7 +97,7 @@ export function outcomeSentence(record: ArenaRecord): string {
 // A link to the public page a case was modelled on. Only the two named websites are ever linked.
 const LINKABLE = ["https://consumer.ftc.gov/", "https://www.scamwatch.gov.au/"];
 
-export function sourceLink(reference?: { url?: string } | null): string | null {
+export function sourceLink(reference?: { url?: string | null } | null): string | null {
   const url = reference?.url ?? "";
   return LINKABLE.some((start) => url.startsWith(start)) ? url : null;
 }

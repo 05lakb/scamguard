@@ -1,4 +1,5 @@
 import evidence from "../data/evidence.json";
+import { sourceLink } from "../lib/stage";
 
 function BarRow({ label, value, note, tone }: { label: string; value: number; note?: string; tone: "good" | "warn" | "plain" }) {
   return (
@@ -46,6 +47,28 @@ export function Evidence() {
           {evidence.scenarioRun.rows.map((row) => (
             <BarRow key={row.label} label={`${row.label} (${row.n})`} value={row.value} tone={row.value >= 80 ? "good" : "warn"} />
           ))}
+        </ul>
+      </section>
+
+      <section className="card wide-card">
+        <h2 className="eyebrow">{evidence.publicReports.title}</h2>
+        <p className="muted">{evidence.publicReports.intro}</p>
+        <ul className="chart">
+          {evidence.publicReports.rows.map((row) => (
+            <BarRow key={row.label} label={`${row.label} (${row.n})`} value={row.value} tone={row.value >= 80 ? "good" : "warn"} />
+          ))}
+        </ul>
+        <p className="honest">{evidence.publicReports.pending}</p>
+        <h3 className="mini">Where the cases come from</h3>
+        <ul className="reasons">
+          {evidence.publicReports.sources.map((source) => {
+            const link = sourceLink(source);
+            return (
+              <li key={source.name}>
+                {link ? <a href={link} target="_blank" rel="noopener noreferrer">{source.name}</a> : source.name}. {source.note}
+              </li>
+            );
+          })}
         </ul>
       </section>
 

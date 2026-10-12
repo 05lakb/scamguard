@@ -9,9 +9,16 @@ export interface AssessRequest {
   message?: string | null;
   questions?: string[];
   answer?: string | null;
+  language?: string; // the customer's language, for the warning only
 }
 
-export type ServerDecision = Decision & { degraded?: boolean; notice?: string };
+// When a language was asked for, the warning also comes back translated. The English warning stays as the record.
+export type ServerDecision = Decision & {
+  degraded?: boolean;
+  notice?: string;
+  customer_warning_translated?: string;
+  warning_language?: string;
+};
 
 export async function assessPayment(request: AssessRequest): Promise<ServerDecision> {
   const response = await fetch("/api/assess", {

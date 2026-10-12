@@ -5,6 +5,7 @@ import { Gauge } from "../components/Gauge";
 import { Icon, type IconName } from "../components/Icon";
 import type { Customer, Payment } from "../core/types";
 import { contributions } from "../lib/contrib";
+import { LANGUAGES, isRightToLeft } from "../lib/languages";
 import { ACTION_LABEL, ACTION_NOTE, SEGMENT_LABEL } from "../lib/labels";
 
 export interface Scenario {
@@ -62,11 +63,12 @@ function chipsFor(p: Payment): { text: string; level: "risk" | "plain" }[] {
   return chips;
 }
 
-function requestFor(sc: Scenario, note: string, questions?: string[], answer?: string): AssessRequest {
+function requestFor(sc: Scenario, note: string, language: string, questions?: string[], answer?: string): AssessRequest {
   return {
     payment: sc.payment,
     customer: sc.customer,
     message: note.trim() || null,
+    ...(language !== "en" ? { language } : {}),
     ...(answer !== undefined ? { questions, answer } : {}),
   };
 }
@@ -75,6 +77,7 @@ export function Console({ scenarios, onCase, autoplay, onFinished }: Props) {
   const [selectedId, setSelectedId] = useState(scenarios[0].id);
   const scenario = scenarios.find((item) => item.id === selectedId) ?? scenarios[0];
   const [note, setNote] = useState(scenario.message);
+  const [language, setLanguage] = useState("en"); // the language the customer's warning is shown in
   const [answer, setAnswer] = useState("");
   const [stage, setStage] = useState<Stage>("idle");
   const [first, setFirst] = useState<ServerDecision | null>(null);
@@ -122,7 +125,7 @@ export function Console({ scenarios, onCase, autoplay, onFinished }: Props) {
     setFirst(null);
     setSentAnswer(null);
     try {
-      const r1 = await assessPayment(requestFor(sc, text));
+      const r1 = await assessPayment(requestFor(sc, text, language));
       if (id !== runId.current) return;
       if (r1.action !== "ask") {
         finish(sc, text, null, null, r1);
@@ -150,7 +153,7 @@ export function Console({ scenarios, onCase, autoplay, onFinished }: Props) {
   async function answerQuestions(id: number, sc: Scenario, text: string, asked: ServerDecision, reply: string) {
     setStage("busy");
     try {
-      const r2 = await assessPayment(requestFor(sc, text, asked.questions, reply));
+      const r2 = await assessPayment(requestFor(sc, text, language, asked.questions, reply));
       if (id !== runId.current) return;
       setSentAnswer(reply);
       finish(sc, text, asked, reply, r2);
@@ -296,6 +299,10 @@ export function Console({ scenarios, onCase, autoplay, onFinished }: Props) {
 
           {stage !== "asked" && (
             <>
+              <label className="field" htmlFor="language">Customer's language, for the warning</label>
+              <select id="language" value={language} onChange={(event) => setLanguage(event.target.value)} disabled={stage === "busy"}>
+                {LANGUAGES.map((item) => <option key={item.code} value={item.code}>{item.label}</option>)}
+              </select>
               <label className="field" htmlFor="note">What the customer types (you can edit it)</label>
               <textarea id="note" rows={3} maxLength={2000} value={note} onChange={(event) => { setNote(event.target.value); if (stage !== "idle") reset(); }} />
               <button className="primary" disabled={stage === "busy"} onClick={startManual}>
@@ -358,7 +365,26 @@ export function Console({ scenarios, onCase, autoplay, onFinished }: Props) {
             <h3 className="mini">Why, ranked by weight</h3>
             <EvidenceBars items={items} />
 
-            {result?.customer_warning && <p className="warning">{result.customer_warning}</p>}
+            {result?.customer_warning && (
+              result.customer_warning_translated ? (
+                <>
+                  <p className="warning" lang={result.warning_language} dir={isRightToLeft(result.warning_language) ? "rtl" : "ltr"}>
+                    {result.customer_warning_translated}
+                  </p>
+                  <details>
+                    <summary>Show the English original (the record)</summary>
+                    <p className="warning">{result.customer_warning}</p>
+                  </details>
+                </>
+              ) : (
+                <>
+                  <p className="warning">{result.customer_warning}</p>
+                  {language !== "en" && result.warning_language === "en" && (
+                    <p className="muted small">The translation was not available, so this is the English warning.</p>
+                  )}
+                </>
+              )
+            )}
 
             {result && (
               <details>

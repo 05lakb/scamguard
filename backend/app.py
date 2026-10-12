@@ -33,6 +33,7 @@ from backend import gemini_client
 from backend.risk import clarify
 from backend.risk.decision import decide
 from backend.risk.evidence import load_scam_types, read_message
+from backend.risk.translate import translate_warning
 from backend.service import assess
 
 log = logging.getLogger("lmg")
@@ -87,6 +88,8 @@ class AssessIn(BaseModel):
     message: Optional[str] = Field(default=None, max_length=2000)
     questions: Optional[list[str]] = Field(default=None, max_length=2)
     answer: Optional[str] = Field(default=None, max_length=1000)
+    # The customer's language, for the warning only. English or nothing means no translation.
+    language: Optional[Literal["en", "hi", "es", "fr", "pt", "ar"]] = None
 
 
 class ArenaIn(BaseModel):
@@ -144,7 +147,7 @@ def visitor_key(request: Request):
     return request.client.host if request.client else "unknown"
 
 
-def create_app(reader=read_message, asker=clarify.ask_questions, arena_writer=None):
+def create_app(reader=read_message, asker=clarify.ask_questions, arena_writer=None, translator=translate_warning):
     app = FastAPI(title="Last Mile Guard", docs_url=None, redoc_url=None, openapi_url=None)
     visitors = SlidingWindow(PER_VISITOR_PER_MINUTE, PER_VISITOR_PER_HOUR)
     gemini_budget = SlidingWindow(10**9, GEMINI_CALLS_PER_HOUR)  # one shared counter
@@ -204,6 +207,20 @@ def create_app(reader=read_message, asker=clarify.ask_questions, arena_writer=No
             outcome["round"] = 2 if body.answer is not None else 1
             outcome["degraded"] = True
             outcome["notice"] = degraded
+
+        # Put the warning in the customer's language, if asked. The English warning stays as the record.
+        if body.language and body.language != "en" and outcome.get("customer_warning"):
+            translated = None
+            if gemini_budget.allow("gemini"):
+                try:
+                    translated = translator(outcome["customer_warning"], body.language)
+                except Exception as error:  # a failed translation must never break the decision
+                    log.warning("translate failed: %s", type(error).__name__)
+            if translated:
+                outcome["customer_warning_translated"] = translated
+                outcome["warning_language"] = body.language
+            else:
+                outcome["warning_language"] = "en"  # tell the page we fell back to English
 
         log.info("assess action=%s score=%s round=%s degraded=%s ms=%d", outcome["action"], outcome["score"],
                  outcome.get("round"), bool(degraded), (time.monotonic() - started) * 1000)

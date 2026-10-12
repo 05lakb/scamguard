@@ -23,40 +23,72 @@ const STEPS = [
   { icon: "shield" as const, title: "Decide and explain", text: "Allow, warn or hold, with ranked reasons and an audit trail. A person confirms every hold." },
 ];
 
+const CHECKS = [
+  { number: "01", name: "FraudShield", tag: "Transaction behaviour", text: "Spot unusual amounts, new payees, unfamiliar devices, and changes in payment history." },
+  { number: "02", name: "ScamStop", tag: "Customer context", text: "Read the customer's explanation for signs of pressure or coaching, then ask when the evidence is thin." },
+  { number: "03", name: "MuleNet", tag: "Account connections", text: "Look for flagged links and fast movement through receiving accounts in the synthetic demo graph." },
+];
+
 export function Overview({ tryLive, playStory, goTo }: Props) {
   return (
     <div className="overview">
-      <section className="hero hero-grid">
-        <div>
-          <p className="eyebrow">Fraud prevention for banks · Google Cloud AI Builder Cup 2026</p>
-          <h1>Fraud, scams, and mule networks meet at the payment.</h1>
+      <section className="hero">
+        <div className="hero-copy">
+          <p className="eyebrow">FinGuard AI · Financial crime prevention</p>
+          <h1>Understand the risk <span>before money moves.</span></h1>
           <p className="hero-sub">
-            FinGuard AI combines transaction behaviour, the customer's story, and connected-account evidence before
-            settlement. This prototype uses made-up data and keeps a person in charge of every hold.
+            One view of payment behaviour, the customer's story, and receiving-account connections.
+            Get an explainable recommendation before a transfer settles.
           </p>
-          <div className="row">
+          <div className="row hero-actions">
             <button className="primary big" onClick={tryLive}>
-              Try a live case <Icon name="arrow" size={18} />
+              Explore a live case <Icon name="arrow" size={18} />
             </button>
             <button className="ghost big" onClick={playStory}>
-              <Icon name="play" size={16} /> Play the 90-second story
+              <Icon name="play" size={16} /> Watch the 90-second story
             </button>
           </div>
+          <p className="hero-disclaimer">A synthetic prototype. A bank analyst would decide whether to hold a real payment.</p>
         </div>
-        <div className="hero-card" aria-label="A sample decision, with made-up data">
-          <div className="card-head">
-            <span className="eyebrow">Sample decision</span>
-            <span className="muted small">Made-up case</span>
+        <div className="hero-card" aria-label="A sample risk decision using made-up data">
+          <div className="hero-card-intro">
+            <span className="eyebrow">One payment. Three perspectives.</span>
+            <h2>Every signal has a reason.</h2>
+            <p>FinGuard AI brings the strongest evidence together so a reviewer can understand the recommendation quickly.</p>
           </div>
-          <div className="verdict-row">
-            <Gauge score={88} action="hold" />
-            <div>
-              <div className="status hold"><Icon name="hold" size={18} /> Hold recommended</div>
-              <p className="muted verdict-note">In a real bank, an analyst would decide whether to hold the payment.</p>
+          <div className="hero-decision">
+            <div className="card-head">
+              <span className="eyebrow">Sample decision</span>
+              <span className="small">Made-up case</span>
             </div>
+            <div className="verdict-row">
+              <Gauge score={74} action="hold" />
+              <div>
+                <div className="status hold"><Icon name="hold" size={18} /> Hold recommended</div>
+                <p className="verdict-note">A specialist reviews the evidence before any real action.</p>
+              </div>
+            </div>
+            <h3 className="mini">Why this payment stood out</h3>
+            <EvidenceBars items={SAMPLE} />
           </div>
-          <h3 className="mini">Why, ranked by weight</h3>
-          <EvidenceBars items={SAMPLE} />
+        </div>
+      </section>
+
+      <section className="checks-section" aria-labelledby="checks-title">
+        <div className="section-heading">
+          <p className="eyebrow">The solution</p>
+          <h2 id="checks-title">Three investigations. One clear decision.</h2>
+          <p className="muted">Each check contributes evidence to the same explainable risk assessment.</p>
+        </div>
+        <div className="checks-grid">
+          {CHECKS.map((check) => (
+            <article className="check-card" key={check.name}>
+              <div className="check-top"><span className="mono">{check.number}</span><span aria-hidden="true">↗</span></div>
+              <p className="eyebrow">{check.tag}</p>
+              <h3>{check.name}</h3>
+              <p>{check.text}</p>
+            </article>
+          ))}
         </div>
       </section>
 

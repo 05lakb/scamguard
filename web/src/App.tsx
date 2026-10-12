@@ -123,12 +123,15 @@ export function App() {
 
   return (
     <div className={`shell ${story ? "with-story" : ""}`}>
+      <p className="banner">
+        <Icon name="flask" size={14} /> Prototype preview · Made-up data · No real payment is made
+      </p>
       <header className="top">
         <button className="brand" onClick={() => setPage("overview")} aria-label="FinGuard AI, go to the overview">
           <Logo size={38} />
           <span>
             <strong>FinGuard AI</strong>
-            <small>Investigate before the money moves</small>
+            <small>Financial crime prevention</small>
           </span>
         </button>
         <nav aria-label="Sections">
@@ -146,10 +149,6 @@ export function App() {
           </button>
         </div>
       </header>
-
-      <p className="banner">
-        <Icon name="flask" size={14} /> Prototype. Made-up data only. No real payment is ever made.
-      </p>
 
       <main>
         {page === "overview" && <Overview tryLive={() => setPage("console")} playStory={startStory} goTo={setPage} />}

@@ -15,11 +15,11 @@ For example, a customer may be about to transfer money to a new account after a 
 ScamGuard checks a payment at that last step:
 
 1. **Read the payment context.** Evaluate the amount, payee, device, timing, recent payments, and optional 15-day spending and payee history supplied with the request.
-2. **Read the customer's words.** If a short note is supplied, Gemini produces a structured reading of scam signals and the customer's relationship with the payee. A local scam-pattern guide supplies relevant advice.
+2. **Read the customer's words.** If a short note is supplied, Gemini produces a structured reading of scam signals and the customer's relationship with the payee. A local scam-pattern guide supplies relevant advice. Links in the note are checked as text only: shortened links, look-alike addresses and payment-request links add risk points. A link is never opened or fetched.
 3. **Ask once when evidence is thin.** Gemini can write one or two neutral follow-up questions. The answer is assessed together with the first note.
 4. **Recommend and explain.** Testable rules combine behavioural signals and message reading into **allow**, **warn**, or **hold for human review**. The response includes a score, ranked reasons, a customer warning where relevant, and an audit breakdown. The application only recommends an action; a bank would remain responsible for payment control and analyst review.
 
-The web demo includes a live assessment console, a simulated analyst queue, a red-team run, an evidence page, and an architecture view. The analyst queue lives in browser state and is not a persistent bank case-management system.
+The web demo includes a live assessment console (try one case, watch the red team, or describe your own scenario), a simulated analyst queue, an evidence page, and an architecture view. A customer's warning can be shown in Hindi, Spanish, French, Portuguese or Arabic. The analyst queue lives in browser state and is not a persistent bank case-management system.
 
 ## Assessment and agent flow
 
@@ -56,7 +56,13 @@ flowchart LR
     A --> E
 ```
 
-The website's live arena uses the scenario factory and simulated customer agent in `backend/arena.py`. The adaptive attacker in `redteam/attacker.py` is run separately by the red-team tools; it is not a live production agent.
+The website's live arena (`backend/arena.py`) plays scam cases modelled on public advice pages, plus genuine and trick cases from the scenario factory, using the simulated customer agent. A visitor can also describe their own scenario (`POST /api/custom`), which the same agent plays. The adaptive attacker in `redteam/attacker.py` is run separately by the red-team tools; it is not a live production agent.
+
+## Testing against public fraud patterns
+
+The scam cases in the live arena and the evaluation are modelled on fraud patterns described on public advice pages: the US Federal Trade Commission's consumer alerts and Australia's Scamwatch (ACCC). A careful reader (`redteam/intel/reports.py`) contacts only those named sites over https, follows each site's `robots.txt`, refuses redirects off the list, paces itself, and stops at a hard limit. It runs in Cloud Shell only and never saves page text. Gemini then writes an invented customer for each pattern, with made-up names and amounts, and each case records the page it was modelled on. The site shows that source and a link. UK Action Fraud is not used because its `robots.txt` asks automated readers to stay away. Scamwatch content is used under its Creative Commons Attribution licence.
+
+Half of those cases are held back in a locked test set and run once. The results, including the weak ones and the faults we found and fixed in our own test data and in the message reader, are on the Evidence page. They are small samples and do not establish performance on bank data.
 
 ## Google Cloud architecture
 
@@ -76,6 +82,7 @@ The proposed next architecture connects a bank's payment event stream to **Pub/S
 | **Cloud Run** | Run the FastAPI service and serve the React build in one container, with instance and request limits. | Container and deployment script included. |
 | **Cloud Build** | Build the container on Google Cloud from source for the Cloud Run deployment. | Used by the source-deploy workflow in `infra/deploy.sh`; no automatic GitHub CI pipeline is included. |
 | **Google Cloud service account** | Let the Cloud Run service call Vertex AI using its runtime identity rather than a key file. | Supported by the client and deploy script; the account and permissions must be set up in the target project. |
+| **Cloud Text-to-Speech** | Narrate the explainer video (`video/`), a synthetic voice generated in Cloud Shell. | Used for the video only, not in the payment path. |
 | **Pub/Sub** | Carry payment events from a bank payment workflow to the assessment flow. | Proposed integration; not used by the prototype. |
 | **BigQuery** | Supply governed transaction and payee history for behavioural checks and evaluation. | Proposed integration; the prototype receives history in each request instead. |
 
@@ -95,6 +102,8 @@ Local development can call Gemini with a `GEMINI_API_KEY` from an ignored `.env`
 - The demo uses synthetic data. The Gemini client blocks text that resembles an email address or payment-card number before sending it to the model.
 - Customer text is treated as untrusted input. Model output is constrained to a schema; scoring and action thresholds remain in testable code.
 - The API validates input size and fields, limits requests and Gemini calls, and falls back to payment-only rules if the model is unavailable or the call budget is exhausted.
+- A visitor's own scenario has its own limits (one a minute and a few an hour for each visitor), checks input ranges and lengths in the browser and on the server, refuses email addresses and card numbers, and never logs or returns the story text.
+- The link check reads link text only. Translation is applied to the warning our rules wrote, never to the customer's words, and never changes the decision; the English warning stays as the record.
 - The analyst queue and its actions are a browser simulation. There is no persistent audit store, bank identity integration, or live payment hold mechanism.
 - Results on synthetic and red-team cases are shown in the app's Evidence page. They do not establish performance on bank data or production readiness.
 
@@ -115,7 +124,7 @@ npm run dev
 
 Vite forwards `/api` requests to the local API on port 8080. Without Gemini credentials, the API can still return a payment-only recommendation when the model call fails.
 
-Run the test suites with `python -m pytest backend/tests` and, from `web/`, `npm test`.
+Run the test suites with `python -m pytest backend/tests` and, from `web/`, `npm test`. Our own team runs installs, cloud commands and server tests in Cloud Shell, not on laptops.
 
 ## Deploy the prototype
 
@@ -136,7 +145,8 @@ Before running it, configure the Google Cloud project, required APIs, and the `l
 | `data/` | Synthetic scenarios and the scam-pattern guide |
 | `eval/` | Behaviour, message, flow, blind, and parity evaluations |
 | `redteam/` | Synthetic attacker, customer, and reporting tools |
-| `infra/` | Cloud Run deployment and result-export scripts |
+| `infra/` | Cloud Run deployment and result-export scripts (`save_results.sh` checks files for secrets before saving) |
 | `docs/` | Pitch and design assets |
+| `video/` | The explainer video: narration, a Text-to-Speech script and animated scenes, built in Cloud Shell |
 
 `frontend/` is a placeholder directory; the active interface is in `web/`.

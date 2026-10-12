@@ -2,6 +2,7 @@ import { useState } from "react";
 import type { ArenaRecord } from "../api";
 import { Arena } from "./Arena";
 import { Console, type Autoplay, type FinishedCase, type Scenario } from "./Console";
+import { Custom } from "./Custom";
 
 interface Props {
   scenarios: Scenario[];
@@ -11,26 +12,37 @@ interface Props {
   onFinished: () => void;
 }
 
-// The Live console has two modes: try one case by hand, or watch the red team attack the guard.
+type Mode = "single" | "arena" | "custom";
+
+const MODES: { id: Mode; label: string }[] = [
+  { id: "single", label: "Try one case" },
+  { id: "arena", label: "Watch the red team" },
+  { id: "custom", label: "Your own scenario" },
+];
+
+// The Live console has three modes: try one case by hand, watch the red team attack the guard,
+// or describe your own made-up scenario and watch the red agent play it.
 export function ConsoleArea({ scenarios, onCase, onArenaCase, autoplay, onFinished }: Props) {
-  const [mode, setMode] = useState<"single" | "arena">("single");
+  const [mode, setMode] = useState<Mode>("single");
   const shown = autoplay ? "single" : mode; // the guided story always uses the single-case view
 
   return (
     <div>
       <div className="seg" role="tablist" aria-label="Live console mode">
-        <button role="tab" aria-selected={shown === "single"} className={shown === "single" ? "on" : ""} onClick={() => setMode("single")}>
-          Try one case
-        </button>
-        <button role="tab" aria-selected={shown === "arena"} className={shown === "arena" ? "on" : ""} onClick={() => setMode("arena")}>
-          Watch the red team
-        </button>
+        {MODES.map((item) => (
+          <button key={item.id} role="tab" aria-selected={shown === item.id} className={shown === item.id ? "on" : ""} onClick={() => setMode(item.id)}>
+            {item.label}
+          </button>
+        ))}
       </div>
       <div hidden={shown !== "single"}>
         <Console scenarios={scenarios} onCase={onCase} autoplay={autoplay} onFinished={onFinished} />
       </div>
       <div hidden={shown !== "arena"}>
         <Arena onCase={onArenaCase} />
+      </div>
+      <div hidden={shown !== "custom"}>
+        <Custom />
       </div>
     </div>
   );

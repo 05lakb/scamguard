@@ -16,6 +16,7 @@ import json
 import logging
 import os
 import random
+import re
 import threading
 import time
 from collections import defaultdict, deque
@@ -49,6 +50,9 @@ ARENA_ENABLED = os.getenv("LMG_ARENA", "1") == "1"
 ARENA_PER_VISITOR_PER_HOUR = int(os.getenv("LMG_ARENA_PER_VISITOR_HOUR", "5"))
 ARENA_RUNS_PER_HOUR = int(os.getenv("LMG_ARENA_PER_HOUR", "10"))
 ARENA_AT_ONCE = int(os.getenv("LMG_ARENA_AT_ONCE", "2"))
+# A visitor's own scenario: one a minute and a few an hour for each visitor, and a lower total than the live run.
+CUSTOM_PER_VISITOR_PER_HOUR = int(os.getenv("LMG_CUSTOM_PER_VISITOR_HOUR", "8"))
+CUSTOM_PER_HOUR = int(os.getenv("LMG_CUSTOM_PER_HOUR", "40"))
 
 
 class PaymentIn(BaseModel):
@@ -87,6 +91,23 @@ class AssessIn(BaseModel):
 
 class ArenaIn(BaseModel):
     count: int = Field(default=8, ge=3, le=9)
+
+
+class CustomIn(BaseModel):
+    """A visitor's own made-up scenario: a story, and the payment details around it."""
+    story: str = Field(min_length=20, max_length=400)
+    role: Literal["victim", "genuine"]
+    coached: bool = False
+    customer: CustomerIn
+    amount: float = Field(gt=0, le=1_000_000)
+    payee_name: str = Field(min_length=1, max_length=60)
+    payee_type: Literal["individual", "business", "crypto_exchange"]
+    is_new_payee: bool
+    payee_account_age_days: int = Field(ge=0, le=20_000)
+    device_known: bool
+    payments_last_24h: int = Field(ge=0, le=50)
+    on_live_call: bool
+    remote_access_tool_running: bool
 
 
 class SlidingWindow:
@@ -130,7 +151,9 @@ def create_app(reader=read_message, asker=clarify.ask_questions, arena_writer=No
     scam_types = load_scam_types()
     arena_visitors = SlidingWindow(1, ARENA_PER_VISITOR_PER_HOUR)  # one a minute, a few an hour
     arena_total = SlidingWindow(10**9, ARENA_RUNS_PER_HOUR)
-    arena_slots = threading.BoundedSemaphore(ARENA_AT_ONCE)
+    arena_slots = threading.BoundedSemaphore(ARENA_AT_ONCE)  # live runs and own scenarios share these places
+    custom_visitors = SlidingWindow(1, CUSTOM_PER_VISITOR_PER_HOUR)
+    custom_total = SlidingWindow(10**9, CUSTOM_PER_HOUR)
     write_for_arena = arena_writer or (lambda prompt: gemini_client.ask(prompt, model=gemini_client.FAST_MODEL))
 
     @app.middleware("http")
@@ -209,6 +232,46 @@ def create_app(reader=read_message, asker=clarify.ask_questions, arena_writer=No
                 arena_slots.release()
 
         log.info("arena run started count=%d", body.count)
+        return StreamingResponse(lines(), media_type="application/x-ndjson",
+                                 headers={"Cache-Control": "no-store", "X-Accel-Buffering": "no"})
+
+    @app.post("/api/custom")
+    def custom_run(body: CustomIn, request: Request):
+        """Play one scenario a visitor described, and stream the result like a live run."""
+        if not ARENA_ENABLED:
+            return JSONResponse({"detail": "Own scenarios are switched off."}, status_code=403)
+        text = re.sub(r"[\x00-\x08\x0b-\x1f]", " ", f"{body.story} {body.payee_name}")
+        try:
+            gemini_client.safe_to_send(text)
+        except ValueError:
+            return JSONResponse({"detail": "Please leave out email addresses and card numbers. Everything here should be made up."},
+                                status_code=422)
+        if not custom_visitors.allow(visitor_key(request)):
+            return JSONResponse({"detail": "Please wait a minute between your own scenarios."}, status_code=429)
+        if not custom_total.allow("custom") or not gemini_budget.allow("gemini"):
+            return JSONResponse({"detail": "Own scenarios are paused for now to keep costs low. Try again later."},
+                                status_code=429)
+        if not arena_slots.acquire(blocking=False):
+            return JSONResponse({"detail": "The guard is busy with other runs. Please try again in a minute."},
+                                status_code=429)
+
+        payment = {
+            "amount": body.amount, "payee_name": " ".join(body.payee_name.split()), "payee_type": body.payee_type,
+            "is_new_payee": body.is_new_payee, "payee_account_age_days": body.payee_account_age_days,
+            "device_known": body.device_known, "payments_last_24h": body.payments_last_24h,
+            "on_live_call": body.on_live_call, "remote_access_tool_running": body.remote_access_tool_running,
+        }
+        scenario = arena_module.custom_scenario(" ".join(body.story.split()), body.role, body.coached,
+                                                body.customer.model_dump(), payment)
+
+        def lines():
+            try:
+                for event in arena_module.stream_scenarios([scenario], write_for_arena, reader, asker, scam_types):
+                    yield json.dumps(event) + "\n"
+            finally:
+                arena_slots.release()
+
+        log.info("custom scenario started role=%s", body.role)  # the visitor's text is never logged
         return StreamingResponse(lines(), media_type="application/x-ndjson",
                                  headers={"Cache-Control": "no-store", "X-Accel-Buffering": "no"})
 

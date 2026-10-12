@@ -77,17 +77,48 @@ export function splitLines(buffer: string, chunk: string): { lines: string[]; re
 }
 
 export async function streamArena(count: number, onEvent: (event: ArenaEvent) => void, signal?: AbortSignal): Promise<void> {
-  const response = await fetch("/api/arena", {
+  await streamFrom("/api/arena", { count }, onEvent, signal, "The live run could not start. Please try again.");
+}
+
+// A visitor's own made-up scenario. The server plays it and sends back the same kind of events as a live run.
+export interface CustomRequest {
+  story: string;
+  role: "victim" | "genuine";
+  coached: boolean;
+  customer: { segment: string; typical_amount: number };
+  amount: number;
+  payee_name: string;
+  payee_type: "individual" | "business" | "crypto_exchange";
+  is_new_payee: boolean;
+  payee_account_age_days: number;
+  device_known: boolean;
+  payments_last_24h: number;
+  on_live_call: boolean;
+  remote_access_tool_running: boolean;
+}
+
+export async function streamCustom(request: CustomRequest, onEvent: (event: ArenaEvent) => void, signal?: AbortSignal): Promise<void> {
+  await streamFrom("/api/custom", request, onEvent, signal, "Your scenario could not be played. Please check the form and try again.");
+}
+
+async function streamFrom(
+  address: string,
+  payload: unknown,
+  onEvent: (event: ArenaEvent) => void,
+  signal: AbortSignal | undefined,
+  failure: string,
+): Promise<void> {
+  const response = await fetch(address, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ count }),
+    body: JSON.stringify(payload),
     signal,
   });
   if (!response.ok) {
-    let detail = "The live run could not start. Please try again.";
+    let detail = failure;
     try {
-      const body = (await response.json()) as { detail?: string };
-      if (typeof body.detail === "string") detail = body.detail;
+      const body = (await response.json()) as { detail?: unknown };
+      if (typeof body.detail === "string") detail = body.detail; // a checking error from the form is a list, so keep the general message
     } catch {
       /* keep the general message */
     }

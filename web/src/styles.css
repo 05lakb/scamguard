@@ -1720,3 +1720,54 @@ thead th {
   color: var(--accent);
   overflow-wrap: anywhere;
 }
+
+/* ---------- your own scenario ---------- */
+
+.custom {
+  display: grid;
+  gap: 16px;
+}
+
+.custom textarea,
+.custom input[type="text"],
+.custom input[type="number"],
+.custom select {
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.custom .examples {
+  flex-wrap: wrap;
+  margin: 8px 0 12px;
+}
+
+.form-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(210px, 1fr));
+  gap: 12px 16px;
+  margin-bottom: 8px;
+}
+
+.checks,
+.who {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px 20px;
+  margin: 8px 0 14px;
+}
+
+.who {
+  border: 0;
+  padding: 0;
+}
+
+.who legend {
+  margin-bottom: 4px;
+}
+
+.check {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 0.92rem;
+}

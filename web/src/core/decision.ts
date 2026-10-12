@@ -11,6 +11,8 @@ import type { Action, Customer, Decision, Payment, Reading, ScamType } from "./t
 const MESSAGE_WEIGHT = 0.7;
 // After we asked, a new payee that nothing backs up adds this many points.
 const UNCORROBORATED_AFTER_ASKING = 20;
+// A risky-looking link in the message adds this many points.
+const LINK_RISK_POINTS = 25;
 // A customer who says they already know a payee we have never seen them pay adds this many points.
 const CLAIMED_HISTORY_MISMATCH = 15;
 // A customer who clearly checked on their own, with a calm message, earns a discount.
@@ -119,6 +121,11 @@ export function decide(
       reasons.push("We asked, but nothing backs up who the payee is.");
     }
 
+    const riskyLinks = reading.suspicious_links_found ?? []; // older readings may lack this field
+    if (riskyLinks.length > 0) {
+      messagePoints += LINK_RISK_POINTS;
+      reasons.unshift(`The message contains a link that looks risky: ${riskyLinks[0].why}.`);
+    }
     if (reading.orders_found_in_message.length > 0) {
       // A real customer does not write orders to a safety checker, so a person must look.
       forcedHold = true;

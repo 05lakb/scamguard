@@ -18,6 +18,8 @@ MESSAGE_WEIGHT = 0.7
 UNCORROBORATED_AFTER_ASKING = 20
 # A customer who says they already know a payee we have never seen them pay adds this many points.
 CLAIMED_HISTORY_MISMATCH = 15
+# A risky-looking link in the message adds this many points.
+LINK_RISK_POINTS = 25
 # A customer who clearly checked things on their own, with a calm message, earns a discount.
 VERIFIED_DISCOUNT = 25
 CALM_BELOW = 30
@@ -109,6 +111,10 @@ def decide(payment, customer, reading=None, scam_types=None, asked=False):
         if asked and new_payee and payee_unexplained(reading):
             message_points += UNCORROBORATED_AFTER_ASKING
             reasons.append("We asked, but nothing backs up who the payee is.")
+        risky_links = reading.get("suspicious_links_found") or []  # older readings may lack this field
+        if risky_links:
+            message_points += LINK_RISK_POINTS
+            reasons.insert(0, f"The message contains a link that looks risky: {risky_links[0]['why']}.")
         if reading["orders_found_in_message"]:
             # A real customer does not write orders to a safety checker, so a person must look.
             forced_hold = True

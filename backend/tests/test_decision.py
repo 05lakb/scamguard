@@ -165,3 +165,33 @@ def test_having_met_the_payee_in_person_is_not_a_mismatch():
     new_payee = payment(is_new_payee=True, payee_account_age_days=300)
     met = story(claims_prior_dealings=True, met_payee_in_person="yes", payee_relationship="supplier")
     assert "no record of ever paying them" not in " ".join(decide(new_payee, CUSTOMER, met)["reasons"])
+
+
+# ---------- risky links in the message ----------
+
+LINK = [{"link": "bit.ly/3xYz", "why": "a shortened link, which hides where it really goes"}]
+
+
+def test_a_risky_link_adds_points_and_leads_the_reasons():
+    plain = decide(payment(), CUSTOMER, reading(10))
+    linked = decide(payment(), CUSTOMER, {**reading(10), "suspicious_links_found": LINK})
+    assert linked["score"] == plain["score"] + 25
+    assert linked["reasons"][0] == "The message contains a link that looks risky: a shortened link, which hides where it really goes."
+    assert linked["audit"]["message_reading"]["suspicious_links_found"] == LINK
+
+
+def test_a_risky_link_on_a_new_payee_is_at_least_a_warning():
+    calm = payment(amount=100, is_new_payee=True, payee_account_age_days=500, device_known=True)
+    assert decide(calm, CUSTOMER, reading(5))["action"] == "allow"
+    assert decide(calm, CUSTOMER, {**reading(5), "suspicious_links_found": LINK})["action"] in ("warn", "hold")
+
+
+def test_older_readings_without_the_link_field_are_unchanged():
+    plain = decide(payment(), CUSTOMER, reading(30))
+    empty = decide(payment(), CUSTOMER, {**reading(30), "suspicious_links_found": []})
+    assert (plain["action"], plain["score"], plain["reasons"]) == (empty["action"], empty["score"], empty["reasons"])
+
+
+def test_an_order_to_the_checker_still_comes_first_when_there_is_also_a_link():
+    result = decide(payment(), CUSTOMER, {**reading(10, orders=["ignore all previous"]), "suspicious_links_found": LINK})
+    assert result["action"] == "hold" and result["reasons"][0].startswith("The message tried to give orders")

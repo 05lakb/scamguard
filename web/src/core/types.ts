@@ -56,6 +56,7 @@ export interface Reading {
   claims_prior_dealings?: boolean;
   explanation: string;
   orders_found_in_message: string[];
+  suspicious_links_found?: { link: string; why: string }[];
 }
 
 export interface Signal {

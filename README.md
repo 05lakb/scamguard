@@ -4,9 +4,13 @@
 
 The prototype uses made-up payments and customer stories. It does not connect to a bank, stop a real payment, or use real customer data. See [the pitch idea](docs/PITCH_IDEA.md) for the short product story.
 
+**In one sentence:** before a customer sends money, we check the payment and their explanation for signs that someone is manipulating them, then recommend whether to proceed, warn them, or ask a human analyst to review it.
+
 ## Problem and solution
 
 An authorised payment can look legitimate to a bank even when a scammer has coached the customer into sending it. Transaction anomalies alone may miss the pressure, secrecy, or false story behind the payment.
+
+For example, a customer may be about to transfer money to a new account after a caller claiming to be from the bank tells them to act immediately. The payment is authorised by the customer, but the note, new payee, unusual timing, and live call together give the bank a reason to pause and ask more. ScamGuard aims to catch that situation before the transfer is released while letting ordinary payments through.
 
 ScamGuard checks a payment at that last step:
 
@@ -17,21 +21,48 @@ ScamGuard checks a payment at that last step:
 
 The web demo includes a live assessment console, a simulated analyst queue, a red-team run, an evidence page, and an architecture view. The analyst queue lives in browser state and is not a persistent bank case-management system.
 
-## Architecture
+## Assessment and agent flow
 
-### Implemented prototype
+The payment assessment is **one service with two Gemini-assisted tasks**, not a set of agents voting on a payment. The **message reader** extracts structured facts from the customer's note or answer. The **question writer** produces one or two short questions only when the rules say more context is needed. Deterministic behaviour and decision rules combine the evidence and choose the recommendation; Gemini does not directly approve or hold a payment.
 
 ```mermaid
 flowchart LR
-    A[Browser demo: synthetic payment and optional note] --> B[FastAPI on Cloud Run]
-    B --> C[Behaviour and scam-pattern rules]
-    B --> D[Gemini on Vertex AI]
-    C --> E[Explainable recommendation]
-    D --> E
-    E --> F[Browser analyst demo]
+    P["Customer starts a payment"] --> API["Assessment API"]
+    API --> B["Behaviour and history rules"]
+    API -->|optional note| R["Gemini message reader"]
+    B --> D["Decision and explanation rules"]
+    R --> D
+    D -->|evidence is thin| Q["Gemini question writer"]
+    Q --> A["Customer answers once"]
+    A --> API
+    D -->|result and warning when needed| C["Customer sees result"]
+    D -->|hold recommendation| H["Analyst demo shows the case"]
 ```
 
-The browser sends one payment at a time to `POST /api/assess`. It sends the original note and question back with an answer for a second round; the API keeps no conversation database. `POST /api/arena` streams a live synthetic red-team run, and `GET /api/health` provides a health response. Cloud Run serves both the API and the built web app from one container.
+The browser sends one payment at a time to `POST /api/assess`. If the service asks questions, the browser sends the original note, questions, and answer back for a second assessment. The API keeps no conversation database. A real bank would make the actual payment and hold decisions; the current analyst screen only simulates that review.
+
+### Agents used to test the guard
+
+These agents are **test actors**, not part of a customer's payment decision. The scenario factory builds made-up scam and genuine cases. A simulated customer agent writes the note and, when asked, an answer. A separate adaptive attacker agent tries alternative scam wording against the deployed demo. The evaluator compares the guard's responses with the hidden scenario labels and reports missed scams and false alarms. The guard does not receive those labels.
+
+```mermaid
+flowchart LR
+    F["Synthetic scenario factory"] --> C["Simulated customer agent"]
+    C --> G["Same assessment service"]
+    A["Adaptive attacker agent"] --> G
+    G --> C
+    G --> A
+    C --> E["Evaluation and report"]
+    A --> E
+```
+
+The website's live arena uses the scenario factory and simulated customer agent in `backend/arena.py`. The adaptive attacker in `redteam/attacker.py` is run separately by the red-team tools; it is not a live production agent.
+
+## Google Cloud architecture
+
+### Implemented prototype
+
+The React browser demo calls the FastAPI service on Cloud Run. The service applies local rules and calls Gemini through Vertex AI for the two text tasks shown above. Cloud Run serves both the API and built web app from one container. `POST /api/arena` streams a live synthetic red-team run, and `GET /api/health` provides a health response. Cloud Build builds the container during source deployment.
 
 ### Recommended bank integration
 

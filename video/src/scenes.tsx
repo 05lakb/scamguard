@@ -1,23 +1,27 @@
-import type { ReactNode } from "react";
+import { createContext, useContext, type ReactNode } from "react";
 import { AbsoluteFill, Audio, Sequence, interpolate, spring, staticFile, useCurrentFrame, useVideoConfig } from "remotion";
 import durations from "../public/audio/durations.json";
 import narration from "../narration.json";
 import { AFTER_FIX, BEFORE_FIX, LOSS_FIGURES, type BarData } from "./data";
-import { LEAD_IN_SECONDS, colors, font } from "./theme";
+import { LEAD_IN_SECONDS, TAIL_SECONDS, colors, font } from "./theme";
 
-type SceneId = keyof typeof durations;
+export type SceneId = keyof typeof durations;
+
+// How long the scene is, in frames. Inside a combined video a scene cannot ask the composition, so it is passed down.
+const SceneLength = createContext(1);
+export const framesFor = (id: SceneId, fps: number) => Math.ceil((durations[id].seconds + LEAD_IN_SECONDS + TAIL_SECONDS) * fps);
 
 // How far through the scene we are, from 0 to 1.
-function useProgress() {
+export function useProgress() {
   const frame = useCurrentFrame();
-  const { durationInFrames } = useVideoConfig();
+  const durationInFrames = useContext(SceneLength);
   return frame / durationInFrames;
 }
 
 // Fades and slides something in once the scene reaches a point, given as a share of the scene.
-function Reveal({ at, children, style }: { at: number; children: ReactNode; style?: React.CSSProperties }) {
+export function Reveal({ at, children, style }: { at: number; children: ReactNode; style?: React.CSSProperties }) {
   const frame = useCurrentFrame();
-  const { durationInFrames } = useVideoConfig();
+  const durationInFrames = useContext(SceneLength);
   const start = at * durationInFrames;
   const opacity = interpolate(frame, [start, start + 18], [0, 1], { extrapolateLeft: "clamp", extrapolateRight: "clamp" });
   const y = interpolate(frame, [start, start + 18], [24, 0], { extrapolateLeft: "clamp", extrapolateRight: "clamp" });
@@ -63,24 +67,26 @@ function Captions({ id }: { id: SceneId }) {
 }
 
 // The frame around every scene: background, the voice, and the captions.
-function SceneFrame({ id, children }: { id: SceneId; children: ReactNode }) {
+export function SceneFrame({ id, children }: { id: SceneId; children: ReactNode }) {
   const { fps } = useVideoConfig();
   return (
-    <AbsoluteFill style={{ backgroundColor: colors.bg, fontFamily: font, color: colors.ink }}>
-      {children}
-      <Sequence from={Math.round(LEAD_IN_SECONDS * fps)}>
-        <Audio src={staticFile(`audio/${id}.wav`)} />
-      </Sequence>
-      <Captions id={id} />
-    </AbsoluteFill>
+    <SceneLength.Provider value={framesFor(id, fps)}>
+      <AbsoluteFill style={{ backgroundColor: colors.bg, fontFamily: font, color: colors.ink }}>
+        {children}
+        <Sequence from={Math.round(LEAD_IN_SECONDS * fps)}>
+          <Audio src={staticFile(`audio/${id}.wav`)} />
+        </Sequence>
+        <Captions id={id} />
+      </AbsoluteFill>
+    </SceneLength.Provider>
   );
 }
 
-function Title({ children, color }: { children: ReactNode; color?: string }) {
+export function Title({ children, color }: { children: ReactNode; color?: string }) {
   return <div style={{ fontSize: 58, fontWeight: 700, letterSpacing: -1, color: color ?? colors.ink }}>{children}</div>;
 }
 
-function RedFigure({ size }: { size: number }) {
+export function RedFigure({ size }: { size: number }) {
   return (
     <svg width={size} height={size} viewBox="0 0 76 76" aria-hidden="true">
       <polygon points="38,6 66,22 66,54 38,70 10,54 10,22" fill={colors.redDark} stroke={colors.red} strokeWidth="2.5" strokeLinejoin="round" />
@@ -94,7 +100,7 @@ function RedFigure({ size }: { size: number }) {
   );
 }
 
-function Shield({ size }: { size: number }) {
+export function Shield({ size }: { size: number }) {
   return (
     <svg width={size} height={size} viewBox="0 0 76 76" aria-hidden="true">
       <circle cx="38" cy="38" r="34" fill="none" stroke={colors.green} strokeWidth="1.5" strokeDasharray="3 5" />
@@ -110,9 +116,9 @@ function Shield({ size }: { size: number }) {
 // ---------- Scene 1: the problem ----------
 
 export function Problem() {
-  const progress = useProgress();
   const frame = useCurrentFrame();
   const { fps } = useVideoConfig();
+  const progress = frame / framesFor("scene1", fps); // this runs above the frame, so it works the length out itself
   const pop = spring({ frame, fps, config: { damping: 12, stiffness: 90 } });
   return (
     <SceneFrame id="scene1">
@@ -194,7 +200,7 @@ export function HowItWorks() {
 
 function Bar({ bar, at }: { bar: BarData; at: number }) {
   const frame = useCurrentFrame();
-  const { durationInFrames } = useVideoConfig();
+  const durationInFrames = useContext(SceneLength);
   const start = at * durationInFrames;
   const width = interpolate(frame, [start, start + 36], [0, bar.value], { extrapolateLeft: "clamp", extrapolateRight: "clamp" });
   const good = bar.value >= 80;
@@ -299,3 +305,6 @@ export function Close() {
     </SceneFrame>
   );
 }
+
+// The scene length in frames, for parts that need to time things against it.
+export const useSceneFrames = () => useContext(SceneLength);

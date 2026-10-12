@@ -1,18 +1,47 @@
-import { Composition } from "remotion";
-import durations from "../public/audio/durations.json";
-import { Architecture, Close, Evidence, HowItWorks, Problem } from "./scenes";
-import { FPS, HEIGHT, LEAD_IN_SECONDS, TAIL_SECONDS, WIDTH } from "./theme";
+import { Composition, Series } from "remotion";
+import { LiveDemo, RedTeam } from "./demo-scenes";
+import { Architecture, Close, Evidence, HowItWorks, Problem, framesFor, type SceneId } from "./scenes";
+import { FPS, HEIGHT, WIDTH } from "./theme";
 
-// Each scene is as long as its narration, plus a short pause before and after.
-const framesFor = (id: keyof typeof durations) =>
-  Math.ceil((durations[id].seconds + LEAD_IN_SECONDS + TAIL_SECONDS) * FPS);
+// The seven scenes in the order they are shown, each as long as its narration plus a short pause either side.
+const ORDER: { id: SceneId; component: () => JSX.Element }[] = [
+  { id: "scene1", component: Problem },
+  { id: "scene2", component: HowItWorks },
+  { id: "scene3", component: LiveDemo },
+  { id: "scene4", component: RedTeam },
+  { id: "scene5", component: Evidence },
+  { id: "scene6", component: Architecture },
+  { id: "scene7", component: Close },
+];
+
+const lengthOf = (id: SceneId) => framesFor(id, FPS);
+
+// All seven scenes, one after the other, as a single video.
+const FullVideo = () => (
+  <Series>
+    {ORDER.map(({ id, component: Scene }) => (
+      <Series.Sequence key={id} durationInFrames={lengthOf(id)}>
+        <Scene />
+      </Series.Sequence>
+    ))}
+  </Series>
+);
+
+const fullLength = ORDER.reduce((sum, { id }) => sum + lengthOf(id), 0);
 
 export const Root = () => (
   <>
-    <Composition id="Scene1" component={Problem} durationInFrames={framesFor("scene1")} fps={FPS} width={WIDTH} height={HEIGHT} />
-    <Composition id="Scene2" component={HowItWorks} durationInFrames={framesFor("scene2")} fps={FPS} width={WIDTH} height={HEIGHT} />
-    <Composition id="Scene5" component={Evidence} durationInFrames={framesFor("scene5")} fps={FPS} width={WIDTH} height={HEIGHT} />
-    <Composition id="Scene6" component={Architecture} durationInFrames={framesFor("scene6")} fps={FPS} width={WIDTH} height={HEIGHT} />
-    <Composition id="Scene7" component={Close} durationInFrames={framesFor("scene7")} fps={FPS} width={WIDTH} height={HEIGHT} />
+    {ORDER.map(({ id, component }) => (
+      <Composition
+        key={id}
+        id={`Scene${id.replace("scene", "")}`}
+        component={component}
+        durationInFrames={lengthOf(id)}
+        fps={FPS}
+        width={WIDTH}
+        height={HEIGHT}
+      />
+    ))}
+    <Composition id="Full" component={FullVideo} durationInFrames={fullLength} fps={FPS} width={WIDTH} height={HEIGHT} />
   </>
 );

@@ -29,6 +29,19 @@ export interface Customer {
   typical_spend_15d?: number | null;
 }
 
+export interface NetworkTransfer {
+  from_account_id: string;
+  to_account_id: string;
+  amount: number;
+  hours_ago: number;
+}
+
+export interface AccountNetwork {
+  payee_account_id: string;
+  flagged_account_ids: string[];
+  transfers: NetworkTransfer[];
+}
+
 export interface ScamType {
   id: string;
   name: string;
@@ -78,6 +91,9 @@ export interface Decision {
   audit: {
     behaviour_score: number;
     behaviour_signals: Signal[];
+    network_score?: number;
+    network_signals?: Signal[];
+    network_available?: boolean;
     message_points: number;
     verified_discount: number;
     message_reading: Reading | null;

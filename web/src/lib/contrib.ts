@@ -7,7 +7,7 @@ export interface Contribution {
   label: string;
   points: number;
   why: string;
-  kind: "payment" | "message" | "credit";
+  kind: "payment" | "message" | "network" | "credit";
 }
 
 export function contributions(decision: Pick<Decision, "audit">): Contribution[] {
@@ -18,6 +18,15 @@ export function contributions(decision: Pick<Decision, "audit">): Contribution[]
     why: signal.reason,
     kind: "payment" as const,
   }));
+
+  for (const signal of audit.network_signals ?? []) {
+    list.push({
+      label: `MuleNet: ${signal.name.replaceAll("_", " ")}`,
+      points: signal.points,
+      why: signal.reason,
+      kind: "network",
+    });
+  }
 
   const reading = audit.message_reading;
   if (reading && audit.message_points !== 0) {

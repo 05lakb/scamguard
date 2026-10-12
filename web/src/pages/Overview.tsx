@@ -18,7 +18,7 @@ interface Props {
 
 const STEPS = [
   { icon: "list" as const, title: "A payment arrives", text: "The customer is about to send money, with a note if they wrote one." },
-  { icon: "chart" as const, title: "Three checks", text: "Behaviour over 15 days, the customer's own words read by Gemini, and a guide to known scam patterns." },
+  { icon: "chart" as const, title: "Three investigations", text: "FraudShield checks the payment, ScamStop reads the customer's story, and MuleNet checks synthetic account links when supplied." },
   { icon: "ask" as const, title: "Ask when unsure", text: "A short, friendly question, then a second look at the answer. Never more than one round." },
   { icon: "shield" as const, title: "Decide and explain", text: "Allow, warn or hold, with ranked reasons and an audit trail. A person confirms every hold." },
 ];
@@ -29,10 +29,10 @@ export function Overview({ tryLive, playStory, goTo }: Props) {
       <section className="hero hero-grid">
         <div>
           <p className="eyebrow">Fraud prevention for banks · Google Cloud AI Builder Cup 2026</p>
-          <h1>Scams don't hack accounts. They talk customers into paying.</h1>
+          <h1>Fraud, scams, and mule networks meet at the payment.</h1>
           <p className="hero-sub">
-            Last Mile Guard is the second look at the final step. It reads the customer's story, checks fifteen days of
-            behaviour, asks a question when it is unsure, and keeps a person in charge of every hold.
+            FinGuard AI combines transaction behaviour, the customer's story, and connected-account evidence before
+            settlement. This prototype uses made-up data and keeps a person in charge of every hold.
           </p>
           <div className="row">
             <button className="primary big" onClick={tryLive}>
@@ -51,8 +51,8 @@ export function Overview({ tryLive, playStory, goTo }: Props) {
           <div className="verdict-row">
             <Gauge score={88} action="hold" />
             <div>
-              <div className="status hold"><Icon name="hold" size={18} /> Held for review</div>
-              <p className="muted verdict-note">A specialist confirms before any money moves.</p>
+              <div className="status hold"><Icon name="hold" size={18} /> Hold recommended</div>
+              <p className="muted verdict-note">In a real bank, an analyst would decide whether to hold the payment.</p>
             </div>
           </div>
           <h3 className="mini">Why, ranked by weight</h3>

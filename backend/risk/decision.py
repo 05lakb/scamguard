@@ -7,6 +7,7 @@ so a bank analyst can review it later.
 
 from backend.risk.behaviour import check_behaviour
 from backend.risk.corroboration import claims_history_only, payee_unexplained
+from backend.risk.network import investigate_network
 
 # At or above these scores, the action gets stricter.
 WARN_AT = 40
@@ -76,14 +77,16 @@ def action_for(score):
     return "allow"
 
 
-def decide(payment, customer, reading=None, scam_types=None, asked=False):
+def decide(payment, customer, reading=None, scam_types=None, asked=False, network=None):
     """Return the decision for one payment.
 
     `reading` is the message reading (or None if the customer wrote nothing).
     `asked` is True on the second round, after the customer has answered our questions.
     """
     behaviour = check_behaviour(payment, customer)
-    reasons = [item["reason"] for item in sorted(behaviour["signals"], key=lambda s: -s["points"])[:3]]
+    network_result = investigate_network(network)
+    signals = behaviour["signals"] + network_result["signals"]
+    reasons = [item["reason"] for item in sorted(signals, key=lambda s: -s["points"])[:3]]
 
     message_points = 0
     discount = 0
@@ -114,7 +117,9 @@ def decide(payment, customer, reading=None, scam_types=None, asked=False):
             forced_hold = True
             reasons.insert(0, "The message tried to give orders to the safety check, which is a manipulation attempt.")
 
-    score = max(0, min(100, behaviour["score"] + message_points - discount))
+    score = max(0, min(100, behaviour["score"] + network_result["score"] + message_points - discount))
+    if any(signal["name"] == "flagged_payee" for signal in network_result["signals"]):
+        score = max(score, HOLD_AT)  # a reassuring story cannot clear a flagged destination
     action = "hold" if forced_hold else action_for(score)
 
     matched = reading["matched_typology"] if reading else "none"
@@ -126,6 +131,9 @@ def decide(payment, customer, reading=None, scam_types=None, asked=False):
         "audit": {
             "behaviour_score": behaviour["score"],
             "behaviour_signals": behaviour["signals"],
+            "network_score": network_result["score"],
+            "network_signals": network_result["signals"],
+            "network_available": network_result["available"],
             "message_points": message_points,
             "verified_discount": discount,
             "message_reading": reading,

@@ -22,10 +22,10 @@ function Arrow({ x1, y1, x2, y2, label }: { x1: number; y1: number; x2: number; 
 }
 
 const GUARDRAILS = [
-  { icon: "lock" as const, title: "No keys anywhere", text: "The app runs as its own service identity with one permission: call Gemini. No password or key file exists." },
+  { icon: "lock" as const, title: "Cloud identity", text: "On Cloud Run, the service uses its runtime identity to call Vertex AI without a key file." },
   { icon: "shield" as const, title: "Customer text is untrusted", text: "Notes are screened for hidden orders, fenced off from the instructions, and answered in a fixed shape." },
   { icon: "server" as const, title: "Serverless and capped", text: "Scales to zero when idle. At most 2 copies, a per-visitor rate limit, and a cost guard on Gemini calls." },
-  { icon: "flag" as const, title: "A person decides", text: "The guard only recommends. Every hold needs a person, and every decision keeps an audit record." },
+  { icon: "flag" as const, title: "A person decides", text: "The service only recommends. Each response includes audit details; the analyst queue is a browser demo." },
 ];
 
 export function Architecture() {
@@ -40,10 +40,10 @@ export function Architecture() {
             </marker>
           </defs>
           <Box x={10} y={20} w={190} h={92} tone="plain" title="Customer's screen" lines={["Payment and a short note", "Answers one question"]} />
-          <Box x={290} y={10} w={300} h={170} tone="accent" title="Cloud Run: Last Mile Guard" lines={["1  Behaviour and 15-day history", "2  Scam pattern guide", "3  Read the customer's words", "4  Decide: allow, warn or hold", "Rate limits, input checks, cost guard"]} />
+          <Box x={290} y={10} w={300} h={170} tone="accent" title="Cloud Run: FinGuard AI" lines={["1  FraudShield: payment behaviour", "2  ScamStop: customer story", "3  MuleNet: account links", "4  Decide: allow, warn or hold", "Rate limits, input checks, cost guard"]} />
           <Box x={690} y={20} w={200} h={92} tone="google" title="Vertex AI: Gemini" lines={["Reads the note and answer", "Writes the follow-up question"]} />
           <Box x={290} y={228} w={300} h={80} tone="plain" title="Analyst queue" lines={["Ranked reasons and audit trail", "A person confirms every hold"]} />
-          <Box x={10} y={228} w={200} h={80} tone="plain" title="Cloud Build" lines={["Builds the container", "from the code on GitHub"]} />
+          <Box x={10} y={228} w={200} h={80} tone="plain" title="Cloud Build" lines={["Builds the container", "during source deployment"]} />
           <Box x={690} y={228} w={200} h={80} tone="google" title="Service identity" lines={["One permission: call Gemini", "No keys"]} />
           <Arrow x1={200} y1={66} x2={290} y2={66} label="note" />
           <Arrow x1={590} y1={66} x2={690} y2={66} label="reads" />
@@ -52,8 +52,8 @@ export function Architecture() {
           <Arrow x1={690} y1={268} x2={590} y2={150} />
         </svg>
         <p className="muted small">
-          In a production bank, payments would stream in through Pub/Sub and history would live in BigQuery. The prototype
-          sends one payment at a time to keep it simple, and the 15-day history is supplied with each request.
+          In a production bank, payments would stream in through Pub/Sub and history and account links would come from
+          governed data sources. This prototype receives one payment and optional synthetic graph in each request.
         </p>
       </section>
 

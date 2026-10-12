@@ -1,6 +1,6 @@
 export function Logo({ size = 40 }: { size?: number }) {
   return (
-    <svg width={size} height={size} viewBox="0 0 512 512" role="img" aria-label="Last Mile Guard logo">
+    <svg width={size} height={size} viewBox="0 0 512 512" role="img" aria-label="FinGuard AI logo">
       <defs>
         <linearGradient id="lmgShield" x1="0" y1="0" x2="0" y2="1">
           <stop offset="0" stopColor="#14396B" />

@@ -1,6 +1,6 @@
-"""The web server for Last Mile Guard.
+"""The web server for the FinGuard AI prototype.
 
-It serves the web pages and one endpoint, /api/assess, that checks a payment.
+It serves the web pages and an assessment endpoint that checks a payment.
 It keeps no memory between requests: for the second round of a conversation, the
 browser sends the first note and the questions back with the customer's answer.
 
@@ -20,7 +20,7 @@ import threading
 import time
 from collections import defaultdict, deque
 from pathlib import Path
-from typing import Literal, Optional
+from typing import Annotated, Literal, Optional
 
 from fastapi import FastAPI, Request
 from fastapi.responses import JSONResponse, StreamingResponse
@@ -77,9 +77,27 @@ class CustomerIn(BaseModel):
     typical_spend_15d: Optional[int] = Field(default=None, ge=1, le=10_000_000)
 
 
+AccountId = Annotated[str, Field(min_length=1, max_length=64)]
+
+
+class TransferIn(BaseModel):
+    from_account_id: AccountId
+    to_account_id: AccountId
+    amount: float = Field(gt=0, le=10_000_000, allow_inf_nan=False)
+    hours_ago: float = Field(ge=0, le=720, allow_inf_nan=False)
+
+
+class NetworkIn(BaseModel):
+    """Small synthetic graph for the MuleNet prototype, never customer-supplied bank evidence."""
+    payee_account_id: AccountId
+    flagged_account_ids: list[AccountId] = Field(default_factory=list, max_length=50)
+    transfers: list[TransferIn] = Field(default_factory=list, max_length=100)
+
+
 class AssessIn(BaseModel):
     payment: PaymentIn
     customer: CustomerIn
+    network: Optional[NetworkIn] = None
     message: Optional[str] = Field(default=None, max_length=2000)
     questions: Optional[list[str]] = Field(default=None, max_length=2)
     answer: Optional[str] = Field(default=None, max_length=1000)
@@ -124,7 +142,7 @@ def visitor_key(request: Request):
 
 
 def create_app(reader=read_message, asker=clarify.ask_questions, arena_writer=None):
-    app = FastAPI(title="Last Mile Guard", docs_url=None, redoc_url=None, openapi_url=None)
+    app = FastAPI(title="FinGuard AI", docs_url=None, redoc_url=None, openapi_url=None)
     visitors = SlidingWindow(PER_VISITOR_PER_MINUTE, PER_VISITOR_PER_HOUR)
     gemini_budget = SlidingWindow(10**9, GEMINI_CALLS_PER_HOUR)  # one shared counter
     scam_types = load_scam_types()
@@ -163,6 +181,7 @@ def create_app(reader=read_message, asker=clarify.ask_questions, arena_writer=No
 
         payment = body.payment.model_dump()
         customer = {"id": "web", **body.customer.model_dump()}
+        network = body.network.model_dump() if body.network else None
         started = time.monotonic()
         degraded = None
 
@@ -171,13 +190,14 @@ def create_app(reader=read_message, asker=clarify.ask_questions, arena_writer=No
         else:
             try:
                 outcome = assess(payment, customer, body.message, questions=body.questions,
-                                 answer=body.answer, reader=reader, asker=asker, scam_types=scam_types)
+                                 answer=body.answer, reader=reader, asker=asker, scam_types=scam_types,
+                                 network=network)
             except Exception as error:  # never show internal details to the visitor
                 log.warning("assess failed: %s", type(error).__name__)
                 degraded = "The message reader is busy right now, so this result uses the payment details only."
 
         if degraded:
-            outcome = decide(payment, customer, None, scam_types)
+            outcome = decide(payment, customer, None, scam_types, network=network)
             outcome["round"] = 2 if body.answer is not None else 1
             outcome["degraded"] = True
             outcome["notice"] = degraded

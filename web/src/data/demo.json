@@ -66,13 +66,23 @@
   },
   {
     "id": "d6", "title": "Same payee, paid again and again", "group": "scam", "kind": "Repeated payments", "difficulty": "Medium",
-    "blurb": "Seven earlier payments to a payee that is still new. Fifteen days of history shows the pattern.",
+    "blurb": "Seven earlier payments to a new payee. MuleNet also sees money from several accounts flow onward to a flagged account.",
     "customer": { "segment": "family", "typical_amount": 200, "typical_spend_15d": 1600 },
     "payment": {
       "amount": 450, "currency": "USD", "timestamp": "2026-09-19T13:10:00", "payee_name": "Voxelia Lettings",
       "payee_type": "business", "is_new_payee": true, "payee_account_age_days": 45, "channel": "web",
       "device_known": true, "payments_last_24h": 3, "on_live_call": false, "remote_access_tool_running": false,
       "payments_last_15d": 9, "spend_last_15d": 3600, "payee_count_15d": 7, "payee_total_15d": 3150
+    },
+    "network": {
+      "payee_account_id": "voxelia-demo",
+      "flagged_account_ids": ["flagged-demo"],
+      "transfers": [
+        { "from_account_id": "source-a", "to_account_id": "voxelia-demo", "amount": 100, "hours_ago": 3 },
+        { "from_account_id": "source-b", "to_account_id": "voxelia-demo", "amount": 100, "hours_ago": 2 },
+        { "from_account_id": "source-c", "to_account_id": "voxelia-demo", "amount": 100, "hours_ago": 1 },
+        { "from_account_id": "voxelia-demo", "to_account_id": "flagged-demo", "amount": 250, "hours_ago": 1 }
+      ]
     },
     "message": "another instalment as agreed",
     "sample_reply": ""

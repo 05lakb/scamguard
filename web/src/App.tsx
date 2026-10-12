@@ -124,11 +124,11 @@ export function App() {
   return (
     <div className={`shell ${story ? "with-story" : ""}`}>
       <header className="top">
-        <button className="brand" onClick={() => setPage("overview")} aria-label="Last Mile Guard, go to the overview">
+        <button className="brand" onClick={() => setPage("overview")} aria-label="FinGuard AI, go to the overview">
           <Logo size={38} />
           <span>
-            <strong>Last Mile Guard</strong>
-            <small>A second look before the money moves</small>
+            <strong>FinGuard AI</strong>
+            <small>Investigate before the money moves</small>
           </span>
         </button>
         <nav aria-label="Sections">
@@ -159,7 +159,7 @@ export function App() {
         {page === "architecture" && <Architecture />}
       </main>
 
-      <footer className="foot">Last Mile Guard · built for the Google Cloud AI Builder Cup 2026 · BFSI track</footer>
+      <footer className="foot">FinGuard AI · built for the Google Cloud AI Builder Cup 2026 · BFSI track</footer>
 
       {story && (
         <aside className="story" role="region" aria-label="Guided story" aria-live="polite">
@@ -185,8 +185,8 @@ export function App() {
             <>
               <div className="story-text">
                 <span className="eyebrow">The end</span>
-                <strong>That is Last Mile Guard</strong>
-                <p>Scams stopped before the money moved, genuine customers let through, and a person in charge of every hold. The Evidence page shows what we tested and fixed.</p>
+                <strong>That is FinGuard AI</strong>
+                <p>Payment behaviour, scam signals, and synthetic account links inform a recommendation before money moves. A person stays in charge of every hold. The Evidence page shows what we tested and fixed.</p>
               </div>
               <div className="story-controls">
                 <button className="ghost small-btn" onClick={() => { setStory(null); setPage("evidence"); }}>See the evidence</button>

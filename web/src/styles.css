@@ -807,6 +807,7 @@ h3.mini {
 }
 
 .bar-fill.message { background: var(--hold); }
+.bar-fill.network { background: var(--ask); }
 .bar-fill.credit.negative { background: var(--allow); }
 .bar-fill.big { height: 100%; }
 .bar-fill.good { background: var(--allow); }

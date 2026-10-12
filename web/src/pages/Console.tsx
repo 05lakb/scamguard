@@ -3,7 +3,7 @@ import { assessPayment, type AssessRequest, type ServerDecision } from "../api";
 import { EvidenceBars } from "../components/EvidenceBars";
 import { Gauge } from "../components/Gauge";
 import { Icon, type IconName } from "../components/Icon";
-import type { Customer, Payment } from "../core/types";
+import type { AccountNetwork, Customer, Payment } from "../core/types";
 import { contributions } from "../lib/contrib";
 import { ACTION_LABEL, ACTION_NOTE, SEGMENT_LABEL } from "../lib/labels";
 
@@ -16,6 +16,7 @@ export interface Scenario {
   blurb: string;
   customer: Pick<Customer, "segment" | "typical_amount" | "typical_spend_15d">;
   payment: Payment;
+  network?: AccountNetwork;
   message: string;
   sample_reply: string;
 }
@@ -65,6 +66,7 @@ function chipsFor(p: Payment): { text: string; level: "risk" | "plain" }[] {
 function requestFor(sc: Scenario, note: string, questions?: string[], answer?: string): AssessRequest {
   return {
     payment: sc.payment,
+    ...(sc.network ? { network: sc.network } : {}),
     customer: sc.customer,
     message: note.trim() || null,
     ...(answer !== undefined ? { questions, answer } : {}),

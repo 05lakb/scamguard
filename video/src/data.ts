@@ -15,10 +15,10 @@ export interface BarData {
 
 export const BEFORE_FIX: BarData[] = [
   { label: "Scams flagged", value: 100, n: 10, note: null },
-  { label: "Genuine customers left alone", value: 73, n: 11, note: "2 wrongly held" },
+  { label: "Genuine left alone", value: 73, n: 11, note: "2 genuine customers wrongly held" },
 ];
 
 export const AFTER_FIX: BarData[] = [
   { label: "Scams flagged", value: 100, n: 19, note: null },
-  { label: "Genuine customers left alone", value: 91, n: 11, note: "1 warning" },
+  { label: "Genuine left alone", value: 91, n: 11, note: "1 genuine customer got a warning" },
 ];

@@ -105,10 +105,10 @@ export function problemWith(form: CustomForm): string {
   if (!(Number(form.amount) > 0)) return "The amount must be more than zero.";
   if (!(Number(form.typicalAmount) >= 1)) return "The usual payment size must be at least 1.";
   if (/[\w.+-]+@[\w-]+\.[\w.-]+/.test(`${form.story} ${form.payeeName}`)) {
-    return "Please leave out email addresses. Everything here should be made up.";
+    return "Email addresses are blocked for safety. Please leave them out.";
   }
   if (/\b(?:\d[ -]?){13,19}\b/.test(`${form.story} ${form.payeeName}`)) {
-    return "Please leave out card numbers. Everything here should be made up.";
+    return "Card numbers are blocked for safety. Please leave them out.";
   }
   return "";
 }

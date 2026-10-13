@@ -64,3 +64,15 @@ describe("the source link", () => {
     expect(sourceLink(undefined)).toBeNull();
   });
 });
+
+describe("shortening a story for the card", () => {
+  it("keeps short text and cuts long text at a word", async () => {
+    const { shorten } = await import("../components/Stage");
+    expect(shorten("A short story.", 150)).toBe("A short story.");
+    const long = "someone I met online asked me to send money for an urgent hospital bill and to keep it private from my family ".repeat(3);
+    const cut = shorten(long, 60);
+    expect(cut.length).toBeLessThanOrEqual(63);
+    expect(cut.endsWith("...")).toBe(true);
+    expect(cut.slice(0, -3)).not.toMatch(/\s$/);
+  });
+});

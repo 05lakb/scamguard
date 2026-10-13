@@ -83,7 +83,7 @@ export function SceneFrame({ id, children }: { id: SceneId; children: ReactNode 
 }
 
 export function Title({ children, color }: { children: ReactNode; color?: string }) {
-  return <div style={{ fontSize: 58, fontWeight: 700, letterSpacing: -1, color: color ?? colors.ink }}>{children}</div>;
+  return <div style={{ fontSize: 44, fontWeight: 700, letterSpacing: -1, color: color ?? colors.ink }}>{children}</div>;
 }
 
 export function RedFigure({ size }: { size: number }) {
@@ -122,15 +122,15 @@ export function Problem() {
   const pop = spring({ frame, fps, config: { damping: 12, stiffness: 90 } });
   return (
     <SceneFrame id="scene1">
-      <div style={{ position: "absolute", left: 90, top: 80, width: 640 }}>
+      <div style={{ position: "absolute", left: 90, top: 70, width: 680 }}>
         <Reveal at={0.02}><Title>You approve it.</Title></Reveal>
         <Reveal at={0.3} style={{ marginTop: 10 }}><Title color={colors.red}>The scammer tricked you.</Title></Reveal>
-        <div style={{ marginTop: 40, display: "grid", gap: 18 }}>
+        <div style={{ marginTop: 26, display: "grid", gap: 14 }}>
           {LOSS_FIGURES.map((figure, index) => (
             <Reveal key={figure.big} at={0.55 + index * 0.14}>
-              <div style={{ background: colors.panel, border: `1px solid ${colors.line}`, borderRadius: 14, padding: "16px 22px" }}>
-                <div style={{ fontSize: 40, fontWeight: 700, color: colors.amber }}>{figure.big}</div>
-                <div style={{ fontSize: 22, color: colors.muted }}>{figure.small}</div>
+              <div style={{ background: colors.panel, border: `1px solid ${colors.line}`, borderRadius: 14, padding: "12px 20px" }}>
+                <div style={{ fontSize: 34, fontWeight: 700, color: colors.amber }}>{figure.big}</div>
+                <div style={{ fontSize: 19, color: colors.muted }}>{figure.small}</div>
               </div>
             </Reveal>
           ))}
@@ -167,18 +167,18 @@ export function HowItWorks() {
       <div style={{ position: "absolute", left: 80, top: 54 }}>
         <Reveal at={0.0}><Title>A second look before the money moves</Title></Reveal>
       </div>
-      <div style={{ position: "absolute", left: 80, right: 80, top: 170, display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: 20 }}>
+      <div style={{ position: "absolute", left: 80, right: 80, top: 135, display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: 20 }}>
         {STEPS.map((step, index) => (
           <Reveal key={step.title} at={0.14 + index * 0.16}>
-            <div style={{ background: colors.panel, border: `1px solid ${colors.line}`, borderRadius: 16, padding: 22, height: 210 }}>
+            <div style={{ background: colors.panel, border: `1px solid ${colors.line}`, borderRadius: 16, padding: 20, height: 260 }}>
               <div style={{ fontSize: 34, fontWeight: 700, color: colors.teal }}>{index + 1}</div>
-              <div style={{ fontSize: 28, fontWeight: 700, margin: "8px 0" }}>{step.title}</div>
-              <div style={{ fontSize: 21, color: colors.muted, lineHeight: 1.3 }}>{step.detail}</div>
+              <div style={{ fontSize: 25, fontWeight: 700, margin: "8px 0" }}>{step.title}</div>
+              <div style={{ fontSize: 19, color: colors.muted, lineHeight: 1.3 }}>{step.detail}</div>
             </div>
           </Reveal>
         ))}
       </div>
-      <div style={{ position: "absolute", left: 80, right: 80, top: 430, display: "flex", gap: 20, justifyContent: "center" }}>
+      <div style={{ position: "absolute", left: 80, right: 80, top: 425, display: "flex", gap: 20, justifyContent: "center" }}>
         {[
           { label: "Allow", back: colors.greenDark, front: colors.green },
           { label: "Warn", back: colors.amberDark, front: colors.amber },
@@ -189,7 +189,7 @@ export function HowItWorks() {
           </Reveal>
         ))}
       </div>
-      <div style={{ position: "absolute", left: 80, right: 80, top: 520, textAlign: "center" }}>
+      <div style={{ position: "absolute", left: 80, right: 80, top: 505, textAlign: "center" }}>
         <Reveal at={0.86}><div style={{ fontSize: 26, color: colors.muted }}>A person confirms every hold. The system never moves money.</div></Reveal>
       </div>
     </SceneFrame>
@@ -206,15 +206,16 @@ function Bar({ bar, at }: { bar: BarData; at: number }) {
   const good = bar.value >= 80;
   return (
     <Reveal at={at}>
-      <div style={{ display: "flex", justifyContent: "space-between", fontSize: 24, marginBottom: 6 }}>
-        <span>{bar.label} <span style={{ color: colors.muted }}>({bar.n} cases)</span></span>
+      <div style={{ display: "flex", justifyContent: "space-between", fontSize: 21, marginBottom: 6 }}>
+        <span>{bar.label} <span style={{ color: colors.muted }}>({bar.n})</span></span>
         <span style={{ fontWeight: 700, color: good ? colors.green : colors.amber }}>
-          {Math.round(width)}%{bar.note ? ` - ${bar.note}` : ""}
+          {Math.round(width)}%
         </span>
       </div>
-      <div style={{ height: 22, background: colors.line, borderRadius: 11, overflow: "hidden", marginBottom: 20 }}>
+      <div style={{ height: 22, background: colors.line, borderRadius: 11, overflow: "hidden", marginBottom: bar.note ? 6 : 20 }}>
         <div style={{ width: `${width}%`, height: "100%", background: good ? colors.green : colors.amber }} />
       </div>
+      {bar.note ? <div style={{ fontSize: 18, color: good ? colors.green : colors.amber, marginBottom: 14 }}>{bar.note}</div> : null}
     </Reveal>
   );
 }

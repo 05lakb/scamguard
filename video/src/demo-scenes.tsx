@@ -90,6 +90,7 @@ export function LiveDemo() {
         <Pill label="Your own scenario" on={second} />
       </div>
 
+      <div style={{ position: "absolute", left: 140, top: 22, width: 1280, height: 720, transform: "scale(0.78)", transformOrigin: "top left" }}>
       <div style={{ position: "absolute", left: 60, top: 84, width: 560 }}>
         <Card title="Case file">
           <div style={{ fontSize: 22, lineHeight: 1.5 }}>
@@ -147,6 +148,7 @@ export function LiveDemo() {
           </Card>
         </Reveal>
       </Reveal>
+      </div>
     </SceneFrame>
   );
 }
@@ -170,6 +172,7 @@ export function RedTeam() {
         {STAGES.map((name, index) => <Pill key={name} label={`${index + 1} ${name}`} on={index === stage} />)}
       </div>
 
+      <div style={{ position: "absolute", left: 140, top: 22, width: 1280, height: 720, transform: "scale(0.78)", transformOrigin: "top left" }}>
       <div style={{ position: "absolute", left: 60, right: 60, top: 78, display: "flex", alignItems: "center", justifyContent: "space-between" }}>
         <div style={{ textAlign: "center", width: 300 }}>
           <RedFigure size={130} />
@@ -228,6 +231,7 @@ export function RedTeam() {
             Some slip through. We show those too.
           </div>
         </Reveal>
+      </div>
       </div>
     </SceneFrame>
   );

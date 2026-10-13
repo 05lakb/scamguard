@@ -15,6 +15,7 @@ interface Props {
   total: number;
   running: boolean; // the live run is still going
   allPlayed: boolean; // every scene of a finished run has been shown
+  plan?: string | null; // the visitor's own story, when they wrote one, shown as the red agent's plan
 }
 
 const STEPS: { id: Step; label: string }[] = [
@@ -39,6 +40,14 @@ function guardMood(record: ArenaRecord | null, step: Step): GuardMood {
   return record.ok === false ? "alert" : "relief";
 }
 
+// Cuts long text for the card, at a word where it can.
+export function shorten(text: string, limit: number): string {
+  if (text.length <= limit) return text;
+  const cut = text.slice(0, limit);
+  const space = cut.lastIndexOf(" ");
+  return `${(space > limit * 0.6 ? cut.slice(0, space) : cut).trimEnd()}...`;
+}
+
 function caption(record: ArenaRecord | null, step: Step, running: boolean, allPlayed: boolean, number: number): string {
   if (!record) {
     if (allPlayed) return "Run complete. The guard has seen every call.";
@@ -50,7 +59,7 @@ function caption(record: ArenaRecord | null, step: Step, running: boolean, allPl
   return "The guard has decided.";
 }
 
-export function Stage({ record, elapsed, number, total, running, allPlayed }: Props) {
+export function Stage({ record, elapsed, number, total, running, allPlayed, plan }: Props) {
   const view = record ? viewAt(record, elapsed) : null;
   const step: Step = view?.step ?? "prepare";
   const lines = view?.lines ?? 0;
@@ -61,7 +70,7 @@ export function Stage({ record, elapsed, number, total, running, allPlayed }: Pr
     ? [
         { name: "Customer", value: SEGMENT_LABEL(record.segment) },
         { name: "Payment", value: `${record.amount.toLocaleString()} ${record.currency} to ${record.payee}` },
-        { name: "Plan", value: `Play: ${KIND_LABEL[record.category] ?? record.category}` },
+        { name: "Plan", value: plan ? `"${shorten(plan, 150)}"` : `Play: ${KIND_LABEL[record.category] ?? record.category}` },
         { name: "Goal", value: record.label === "scam" ? "Slip the payment past the guard" : "Make an honest payment that sounds odd" },
       ]
     : [];

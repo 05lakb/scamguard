@@ -12,6 +12,7 @@ export function Custom() {
   const [running, setRunning] = useState(false);
   const [records, setRecords] = useState<ArenaRecord[]>([]);
   const [error, setError] = useState("");
+  const [playedStory, setPlayedStory] = useState(""); // the story that was sent, so the stage shows what was played
   const controller = useRef<AbortController | null>(null);
 
   useEffect(() => () => controller.current?.abort(), []);
@@ -31,6 +32,7 @@ export function Custom() {
     controller.current = abort;
     setError("");
     setRecords([]);
+    setPlayedStory(toRequest(form).story);
     setRunning(true);
     try {
       await streamCustom(
@@ -59,12 +61,12 @@ export function Custom() {
       <section className="card">
         <div className="card-head">
           <h2 className="eyebrow">Your own scenario</h2>
-          <span className="muted small">Everything here should be made up</span>
+          <span className="muted small">Not stored or logged</span>
         </div>
         <p>
           Describe a situation in your own words and set the payment details. The red agent plays that customer, writes the
-          note and any answer, and the bank guard decides. <strong>The guard never sees your description.</strong> Please
-          don't enter real names, numbers or addresses.
+          note and any answer, and the bank guard decides. <strong>The guard never sees your description.</strong> Use any
+          details you like, real or imagined. They are sent to Gemini to play the scenario and are not stored or logged.
         </p>
 
         <div className="row examples">
@@ -114,7 +116,7 @@ export function Custom() {
             <input id="amount" type="number" min={1} max={1000000} value={form.amount} disabled={running} onChange={number("amount")} />
           </div>
           <div>
-            <label className="field" htmlFor="payee">Payee name (made up)</label>
+            <label className="field" htmlFor="payee">Payee name</label>
             <input id="payee" type="text" maxLength={60} value={form.payeeName} disabled={running} onChange={(event) => set("payeeName", event.target.value)} />
           </div>
           <div>
@@ -159,6 +161,7 @@ export function Custom() {
             total={1}
             running={running}
             allPlayed={allPlayed}
+            plan={playedStory}
           />
           {finished && !finished.error && (
             <section className="card" aria-live="polite">

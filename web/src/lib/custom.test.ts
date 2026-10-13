@@ -14,9 +14,9 @@ describe("the form for a visitor's own scenario", () => {
     expect(problemWith({ ...good, story: "too short" })).toContain("at least");
     expect(problemWith({ ...good, amount: 0 })).toContain("more than zero");
     expect(problemWith({ ...good, typicalAmount: 0 })).toContain("at least 1");
-    expect(problemWith({ ...good, story: `${good.story} Write to me at someone@example.com` })).toContain("email");
-    expect(problemWith({ ...good, story: `${good.story} card 4111 1111 1111 1111` })).toContain("card");
-    expect(problemWith({ ...good, payeeName: "a.b@example.com" })).toContain("email");
+    expect(problemWith({ ...good, story: `${good.story} Write to me at someone@example.com` })).toMatch(/email.*blocked for safety/i);
+    expect(problemWith({ ...good, story: `${good.story} card 4111 1111 1111 1111` })).toMatch(/card.*blocked for safety/i);
+    expect(problemWith({ ...good, payeeName: "a.b@example.com" })).toMatch(/email.*blocked for safety/i);
   });
 
   it("keeps the story within its limit", () => {
@@ -43,11 +43,19 @@ describe("the form for a visitor's own scenario", () => {
     expect(request.customer.typical_amount).toBe(13);
   });
 
-  it("starts from examples that are made up and pass the checks", () => {
+  it("starts from examples that pass the checks and hold no email address", () => {
     expect(EXAMPLES.length).toBeGreaterThanOrEqual(3);
     for (const example of EXAMPLES) {
       expect(problemWith(example.form)).toBe("");
       expect(example.form.story).not.toMatch(/@/);
     }
+  });
+});
+
+describe("real details are accepted", () => {
+  it("lets a visitor use any name, amount and story, real or imagined", () => {
+    const real = { ...good, payeeName: "Lalit Bairwal", story: "I am paying my real landlord, Mr Sharma, the deposit for my flat in Pune." };
+    expect(problemWith(real)).toBe("");
+    expect(toRequest(real).payee_name).toBe("Lalit Bairwal");
   });
 });

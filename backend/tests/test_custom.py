@@ -88,7 +88,7 @@ def test_emails_and_card_numbers_are_refused_with_a_friendly_message():
     for text in (STORY + " Write to me at someone@example.com", STORY + " card 4111 1111 1111 1111"):
         response = app_client.post("/api/custom", json=body(story=text))
         assert response.status_code == 422
-        assert "made up" in response.json()["detail"]
+        assert "blocked for safety" in response.json()["detail"]
     response = app_client.post("/api/custom", json=body(payee_name="a.b@example.com"))
     assert response.status_code == 422
 

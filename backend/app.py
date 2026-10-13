@@ -281,7 +281,7 @@ def create_app(reader=read_message, asker=clarify.ask_questions, arena_writer=No
         try:
             gemini_client.safe_to_send(text)
         except ValueError:
-            return JSONResponse({"detail": "Please leave out email addresses and card numbers. Everything here should be made up."},
+            return JSONResponse({"detail": "Email addresses and card numbers are blocked for safety. Please leave them out."},
                                 status_code=422)
         if not custom_visitors.allow(visitor_key(request)):
             return JSONResponse({"detail": "Please wait a minute between your own scenarios."}, status_code=429)

@@ -12,7 +12,7 @@ from backend.risk.evidence import load_scam_types, read_message
 
 
 def assess(payment, customer, message=None, questions=None, answer=None,
-           reader=read_message, asker=clarify.ask_questions, scam_types=None):
+           reader=read_message, asker=clarify.ask_questions, scam_types=None, network=None):
     """Assess one payment. Pass `questions` and `answer` for the second round.
 
     `reader` and `asker` can be swapped out in tests so no internet is needed.
@@ -24,12 +24,12 @@ def assess(payment, customer, message=None, questions=None, answer=None,
         answer = answer.strip() or "(the customer declined to answer)"
         text = clarify.combine(message, questions or [], answer)
         reading = reader(text, scam_types)
-        outcome = decide(payment, customer, reading, scam_types, asked=True)
+        outcome = decide(payment, customer, reading, scam_types, asked=True, network=network)
         outcome["round"] = 2
         return outcome
 
     reading = reader(message, scam_types) if message else None
-    outcome = decide(payment, customer, reading, scam_types)
+    outcome = decide(payment, customer, reading, scam_types, network=network)
     outcome["round"] = 1
 
     if clarify.should_ask(message, reading, outcome):

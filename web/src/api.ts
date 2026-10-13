@@ -1,11 +1,12 @@
 // Talks to the server. The server keeps no memory between requests, so for the second round
 // the first note and the questions are sent back along with the customer's answer.
 
-import type { Customer, Decision, Payment } from "./core/types";
+import type { AccountNetwork, Customer, Decision, Payment } from "./core/types";
 
 export interface AssessRequest {
   payment: Payment;
   customer: Pick<Customer, "segment" | "typical_amount" | "typical_spend_15d">;
+  network?: AccountNetwork;
   message?: string | null;
   questions?: string[];
   answer?: string | null;

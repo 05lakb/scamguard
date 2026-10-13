@@ -18,45 +18,77 @@ interface Props {
 
 const STEPS = [
   { icon: "list" as const, title: "A payment arrives", text: "The customer is about to send money, with a note if they wrote one." },
-  { icon: "chart" as const, title: "Three checks", text: "Behaviour over 15 days, the customer's own words read by Gemini, and a guide to known scam patterns." },
+  { icon: "chart" as const, title: "Three investigations", text: "FraudShield checks the payment, ScamStop reads the customer's story, and MuleNet checks synthetic account links when supplied." },
   { icon: "ask" as const, title: "Ask when unsure", text: "A short, friendly question, then a second look at the answer. Never more than one round." },
   { icon: "shield" as const, title: "Decide and explain", text: "Allow, warn or hold, with ranked reasons and an audit trail. A person confirms every hold." },
+];
+
+const CHECKS = [
+  { number: "01", name: "FraudShield", tag: "Transaction behaviour", text: "Spot unusual amounts, new payees, unfamiliar devices, and changes in payment history." },
+  { number: "02", name: "ScamStop", tag: "Customer context", text: "Read the customer's explanation for signs of pressure or coaching, then ask when the evidence is thin." },
+  { number: "03", name: "MuleNet", tag: "Account connections", text: "Look for flagged links and fast movement through receiving accounts in the synthetic demo graph." },
 ];
 
 export function Overview({ tryLive, playStory, goTo }: Props) {
   return (
     <div className="overview">
-      <section className="hero hero-grid">
-        <div>
-          <p className="eyebrow">Fraud prevention for banks · Google Cloud AI Builder Cup 2026</p>
-          <h1>Scams don't hack accounts. They talk customers into paying.</h1>
+      <section className="hero">
+        <div className="hero-copy">
+          <p className="eyebrow">Last Mile Guard · A second look before the money moves</p>
+          <h1>Understand the risk <span>before money moves.</span></h1>
           <p className="hero-sub">
-            Last Mile Guard is the second look at the final step. It reads the customer's story, checks fifteen days of
-            behaviour, asks a question when it is unsure, and keeps a person in charge of every hold.
+            One view of payment behaviour, the customer's story, and receiving-account connections.
+            Get an explainable recommendation before a transfer settles.
           </p>
-          <div className="row">
+          <div className="row hero-actions">
             <button className="primary big" onClick={tryLive}>
-              Try a live case <Icon name="arrow" size={18} />
+              Explore a live case <Icon name="arrow" size={18} />
             </button>
             <button className="ghost big" onClick={playStory}>
-              <Icon name="play" size={16} /> Play the 90-second story
+              <Icon name="play" size={16} /> Watch the 90-second story
             </button>
           </div>
+          <p className="hero-disclaimer">A synthetic prototype. A bank analyst would decide whether to hold a real payment.</p>
         </div>
-        <div className="hero-card" aria-label="A sample decision, with made-up data">
-          <div className="card-head">
-            <span className="eyebrow">Sample decision</span>
-            <span className="muted small">Made-up case</span>
+        <div className="hero-card" aria-label="A sample risk decision using made-up data">
+          <div className="hero-card-intro">
+            <span className="eyebrow">One payment. Three perspectives.</span>
+            <h2>Every signal has a reason.</h2>
+            <p>Last Mile Guard brings the strongest evidence together so a reviewer can understand the recommendation quickly.</p>
           </div>
-          <div className="verdict-row">
-            <Gauge score={88} action="hold" />
-            <div>
-              <div className="status hold"><Icon name="hold" size={18} /> Held for review</div>
-              <p className="muted verdict-note">A specialist confirms before any money moves.</p>
+          <div className="hero-decision">
+            <div className="card-head">
+              <span className="eyebrow">Sample decision</span>
+              <span className="small">Made-up case</span>
             </div>
+            <div className="verdict-row">
+              <Gauge score={74} action="hold" />
+              <div>
+                <div className="status hold"><Icon name="hold" size={18} /> Hold recommended</div>
+                <p className="verdict-note">A specialist reviews the evidence before any real action.</p>
+              </div>
+            </div>
+            <h3 className="mini">Why this payment stood out</h3>
+            <EvidenceBars items={SAMPLE} />
           </div>
-          <h3 className="mini">Why, ranked by weight</h3>
-          <EvidenceBars items={SAMPLE} />
+        </div>
+      </section>
+
+      <section className="checks-section" aria-labelledby="checks-title">
+        <div className="section-heading">
+          <p className="eyebrow">The solution</p>
+          <h2 id="checks-title">Three investigations. One clear decision.</h2>
+          <p className="muted">Each check contributes evidence to the same explainable risk assessment.</p>
+        </div>
+        <div className="checks-grid">
+          {CHECKS.map((check) => (
+            <article className="check-card" key={check.name}>
+              <div className="check-top"><span className="mono">{check.number}</span><span aria-hidden="true">↗</span></div>
+              <p className="eyebrow">{check.tag}</p>
+              <h3>{check.name}</h3>
+              <p>{check.text}</p>
+            </article>
+          ))}
         </div>
       </section>
 

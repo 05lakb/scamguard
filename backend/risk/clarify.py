@@ -44,6 +44,8 @@ def should_ask(message, reading, decision):
         return False  # the message tried to give orders to the checker, a person must look
     if audit["behaviour_score"] >= STRONG_BEHAVIOUR_SCORE:
         return False  # the payment alone is alarming enough, no need to ask
+    if audit.get("network_score", 0) >= STRONG_BEHAVIOUR_SCORE:
+        return False  # a strong account-network link already warrants review
     if reading and reading["scam_likelihood"] >= STRONG_MESSAGE_LIKELIHOOD:
         return False  # the message alone is clearly a scam
     new_payee = any(signal["name"] == "new_payee" for signal in audit["behaviour_signals"])

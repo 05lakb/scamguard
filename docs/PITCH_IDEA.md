@@ -1,38 +1,33 @@
-# ScamGuard: the last check before a scam payment
+# Last Mile Guard: a second look before the money moves
 
-**Product name:** Last Mile Guard  
-**Track:** Banking, financial services and insurance  
-**Stage:** Prototype using synthetic scenarios and data
+**Product:** Last Mile Guard, a pre-payment check for scams and financial crime
+
+**Three parts:** FraudShield + ScamStop + MuleNet
+**Track:** Banking, financial services and insurance
+**Stage:** Synthetic-data prototype
 
 ## The problem
 
-Many scams persuade a customer to approve a payment themselves. The bank sees an authenticated transaction, while the pressure, false story, or instruction to keep the transfer secret may be invisible to ordinary fraud checks. A useful intervention has to happen before the money leaves, without holding every unusual but legitimate payment.
+A payment can be authorised by its customer and still be part of a scam. Transaction anomalies, a coached customer, and a suspicious receiving-account network may each be visible in different places. Looking at only one of them can miss the risk or create unnecessary friction.
 
-## The idea
+## The combined idea
 
-ScamGuard adds a second look at the final step of a bank payment. It combines payment and recent-behaviour signals with an optional customer note. Gemini reads the note for scam tactics; testable rules weigh that reading alongside the transaction context and known scam patterns. When the evidence is unclear, the system can ask one short follow-up question and reassess the answer.
+Last Mile Guard investigates a payment before it settles through three complementary checks:
 
-The outcome is **allow**, **warn**, or **hold for human review**, with ranked reasons that an analyst can inspect. ScamGuard recommends an action; it does not move money or make a final hold decision on its own.
+1. **FraudShield** scores transaction anomalies: amount, timing, device, payee, payment frequency, and recent behaviour.
+2. **ScamStop** looks for social-engineering signs in the customer's note and, when useful, asks one round of short follow-up questions. Gemini extracts structured facts; rules retain control of the recommendation. Links in the note are checked as text only, never opened.
+3. **MuleNet** investigates the destination account's connections and movement of money to identify possible mule-network evidence.
 
-## A 90-second demo story
+A risk decision and explanation layer combines the available evidence, shows what raised or lowered risk, and recommends **proceed**, **warn or ask**, or **hold for human review**. The customer's warning can be shown in their own language. The bank remains responsible for any real payment action.
 
-1. A customer starts a payment to a new payee and shares the message that prompted it.
-2. ScamGuard checks recent payment behaviour and reads the message for pressure, secrecy, and the claimed reason for payment.
-3. If the signal is uncertain, it asks one relevant question. The customer's answer gets one more assessment.
-4. The customer sees a plain-language warning or proceeds. A high-risk case is presented to an analyst with the evidence and reasons behind the recommendation.
-5. The demo can replay made-up scam and legitimate cases, then show evaluation results and known limits.
+## Target demo story
 
-## Why this approach
+A customer starts a payment through a simulated banking screen. FraudShield checks the transaction, ScamStop reads the customer's explanation, and MuleNet inspects synthetic links around the receiving account. The decision layer displays the risk level, the strongest evidence from each check, and a recommended action. An analyst can review a high-risk case before a simulated payment is released. A visitor can also describe their own made-up scenario and watch a red agent play it against the guard.
 
-- It looks for *the story behind an authorised payment*, not just anomalies in the transaction.
-- It asks for more context only when needed, reducing unnecessary friction for legitimate customers.
-- It keeps the decision explainable through ranked contributions and an analyst view.
-- It tests both missed scams and false alarms with synthetic scenarios and red-team runs.
+## What the repository currently demonstrates
 
-## What exists in this prototype
+A live web console with three modes, a FastAPI assessment service, explainable transaction rules, Gemini-assisted scam-message reading and follow-up, a link check, translated warnings, an analyst-view simulation, and red-team tests built on scam cases modelled on public advice pages (each credited to its source), with half of the cases held back for one final score. A first MuleNet slice accepts a small synthetic transfer graph and scores flagged links, multiple inbound senders, and rapid onward transfers. No bank-owned account graph, real payment rail, persistent case store, or final human-hold workflow is connected.
 
-The repository includes a web demo, a payment-assessment API, risk and message-reading logic, a Gemini client, synthetic scenarios, evaluation scripts, red-team tooling, tests, and Cloud Run deployment scripts. The demo and its results are prototype evidence, not proof of bank production readiness. No real customer data or live payment rails are part of this project.
+## What must follow
 
-## What would come next
-
-Validate with a bank partner using governed data and a defined consent, privacy, and review process. Measure scam detection, false-positive friction, explanation quality, latency, and analyst workload on representative cases. Integrate with a bank's payment workflow only after operational and security review.
+Source payment and network evidence from trusted bank systems; validate the three modules on representative held-back cases; calibrate combined risk and customer friction; add authenticated analyst review and a durable audit record; and integrate with a payment workflow only after security, privacy, and operational review.

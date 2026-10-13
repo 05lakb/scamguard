@@ -123,6 +123,9 @@ export function App() {
 
   return (
     <div className={`shell ${story ? "with-story" : ""}`}>
+      <p className="banner">
+        <Icon name="flask" size={14} /> Prototype preview · Made-up data · No real payment is made
+      </p>
       <header className="top">
         <button className="brand" onClick={() => setPage("overview")} aria-label="Last Mile Guard, go to the overview">
           <Logo size={38} />
@@ -146,10 +149,6 @@ export function App() {
           </button>
         </div>
       </header>
-
-      <p className="banner">
-        <Icon name="flask" size={14} /> Prototype. Made-up data only. No real payment is ever made.
-      </p>
 
       <main>
         {page === "overview" && <Overview tryLive={() => setPage("console")} playStory={startStory} goTo={setPage} />}
@@ -186,7 +185,7 @@ export function App() {
               <div className="story-text">
                 <span className="eyebrow">The end</span>
                 <strong>That is Last Mile Guard</strong>
-                <p>Scams stopped before the money moved, genuine customers let through, and a person in charge of every hold. The Evidence page shows what we tested and fixed.</p>
+                <p>Payment behaviour, scam signals, and synthetic account links inform a recommendation before money moves. A person stays in charge of every hold. The Evidence page shows what we tested and fixed.</p>
               </div>
               <div className="story-controls">
                 <button className="ghost small-btn" onClick={() => { setStory(null); setPage("evidence"); }}>See the evidence</button>

@@ -72,6 +72,17 @@ def test_bad_input_is_refused():
     assert make_client().post("/api/assess", json=too_long).status_code in (413, 422)
 
 
+def test_mulenet_evidence_is_validated_and_changes_the_recommendation():
+    network = {"payee_account_id": "payee", "flagged_account_ids": ["payee"], "transfers": []}
+    body = {**BODY, "message": None, "network": network}
+    result = make_client().post("/api/assess", json=body).json()
+    assert result["action"] == "hold"
+    assert result["audit"]["network_score"] == 70
+    oversized = {**network, "transfers": [{"from_account_id": "a", "to_account_id": "payee",
+                                               "amount": 1, "hours_ago": 1}] * 101}
+    assert make_client().post("/api/assess", json={**body, "network": oversized}).status_code == 422
+
+
 def test_a_visitor_who_sends_too_much_is_slowed_down():
     client = make_client()
     codes = [client.post("/api/assess", json=BODY).status_code for _ in range(app_module.PER_VISITOR_PER_MINUTE + 3)]

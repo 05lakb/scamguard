@@ -9,29 +9,18 @@ interface Props {
   onArenaCase: (record: ArenaRecord, number: number) => void;
   autoplay: Autoplay | null;
   onFinished: () => void;
+  onReview: () => void;
 }
 
-// The Live console has two modes: try one case by hand, or watch the red team attack the guard.
-export function ConsoleArea({ scenarios, onCase, onArenaCase, autoplay, onFinished }: Props) {
+export function ConsoleArea({ scenarios, onCase, onArenaCase, autoplay, onFinished, onReview }: Props) {
   const [mode, setMode] = useState<"single" | "arena">("single");
-  const shown = autoplay ? "single" : mode; // the guided story always uses the single-case view
-
-  return (
-    <div>
-      <div className="seg" role="tablist" aria-label="Live console mode">
-        <button role="tab" aria-selected={shown === "single"} className={shown === "single" ? "on" : ""} onClick={() => setMode("single")}>
-          Try one case
-        </button>
-        <button role="tab" aria-selected={shown === "arena"} className={shown === "arena" ? "on" : ""} onClick={() => setMode("arena")}>
-          Watch the red team
-        </button>
-      </div>
-      <div hidden={shown !== "single"}>
-        <Console scenarios={scenarios} onCase={onCase} autoplay={autoplay} onFinished={onFinished} />
-      </div>
-      <div hidden={shown !== "arena"}>
-        <Arena onCase={onArenaCase} />
-      </div>
-    </div>
-  );
+  const shown = autoplay ? "single" : mode;
+  return <div>
+    <header className="simple-demo-heading"><div><h1>{shown === "single" ? "See a payment check, from start to finish." : "Test FinGuard against generated cases."}</h1>
+      <p className="muted">{shown === "single" ? "Choose a case, watch the checks, then review the recommendation." : "Advanced testing with synthetic scam and genuine-payment scenarios."}</p></div>
+      <button className="ghost small-btn" onClick={() => setMode(shown === "single" ? "arena" : "single")} disabled={Boolean(autoplay)}>{shown === "single" ? "Advanced: red-team tests" : "Back to payment demo"}</button>
+    </header>
+    <div hidden={shown !== "single"}><Console scenarios={scenarios} onCase={onCase} autoplay={autoplay} onFinished={onFinished} onReview={onReview} /></div>
+    <div hidden={shown !== "arena"}><Arena onCase={onArenaCase} /></div>
+  </div>;
 }

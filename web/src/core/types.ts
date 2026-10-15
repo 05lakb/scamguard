@@ -68,6 +68,7 @@ export interface Reading {
   contradicts_first_note: boolean;
   claims_prior_dealings?: boolean;
   explanation: string;
+  from_cache?: boolean;
   orders_found_in_message: string[];
 }
 

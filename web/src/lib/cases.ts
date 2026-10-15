@@ -21,6 +21,7 @@ export interface CaseItem {
   score: number;
   reasons: string[];
   audit?: ServerDecision["audit"];
+  execution?: ServerDecision["execution"];
   parts?: { payment: number; message: number };
   status: CaseStatus;
   trail: { when: string; text: string }[];

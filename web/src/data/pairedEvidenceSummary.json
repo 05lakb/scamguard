@@ -1,0 +1,344 @@
+{
+  "schema_version": 1,
+  "run_id": "paired-20261015T165130Z",
+  "generated_at": "2026-10-15T17:04:12+00:00",
+  "started_at": "2026-10-15T16:51:30+00:00",
+  "dataset": "data/blind_test_v1.json",
+  "model": "gemini-3.5-flash-lite",
+  "provider": "Gemini Developer API",
+  "prompt_version": "v3",
+  "minimum_case_interval_seconds": 15.0,
+  "scope": "Paired first-round development benchmark on existing synthetic cases. Not an independent holdout or a real-world accuracy estimate.",
+  "method": "Same inputs for both arms. Payment rules versus complete first-round API (Gemini, message safeguards and decision rules). No network supplied in the default dataset. No labels, expected actions or rationales sent to the API. No answers fabricated for follow-up questions. Fresh model calls; caches isolated and cleared per case. All failures retained. No tuning during this run.",
+  "latency_scope": "Backend assessment time, including follow-up generation where used. Serial in-process FastAPI requests with real external Gemini calls. Excludes browser, internet delivery to the app and Cloud Run cold starts; not a load test.",
+  "metric_definitions": {
+    "scams_flagged": "Scams receiving warn or hold; ask is pending, not counted as caught.",
+    "genuine_friction": "Genuine payments receiving warn, hold or ask. API errors reported separately.",
+    "expected_matches": "Actions in the dataset's acceptable actions. Pending ask and API errors count as nonmatches unless ask was explicitly expected."
+  },
+  "command": ".venv/Scripts/python.exe eval/run_paired_eval.py --live --data data/blind_test_v1.json --interval-seconds 15",
+  "source_sha256": {
+    "data/blind_test_v1.json": "914360789322d7ffdd01850c471b220da68a92130cfd3b25aab50971cfd501be",
+    "data/typologies.json": "f894fa48a80866863dda618a489ff40442d91e5553cdbd05b595aa6332c7cc8f",
+    "backend/app.py": "3e969cbebb59ca5b2dbb4e27899a8c031db98563105f679c44510f76c5000bd0",
+    "backend/service.py": "e35667adcd63ed3b20546708ec6dc141f1be16b6ca290123a61a37a625a3ee02",
+    "backend/gemini_client.py": "ef33b4dff1224b98f41aed2ad1dedcb68b93d4d9293eee48a1de763a88c3c0bd",
+    "backend/risk/behaviour.py": "672d3c9dd9a4e3bff179713361f137de2dc3ea2b973a3ae9234ad8de79ab7c94",
+    "backend/risk/decision.py": "672f81c785e6da3eca4a45567417cfc017a8d355cde46e9a1fcedf0480031a20",
+    "backend/risk/evidence.py": "ccf57e916c6441cc765360da0bbceb045f99b016e6484b24ce685b2c5810f5d0",
+    "backend/risk/clarify.py": "ac7a27cdda1d15a189b34abb9e0d690dff6d8bf644197d13238da1dcd2d14501",
+    "backend/risk/network.py": "f547c5fb15a2fa8a771b7d4c15c1696d3d0c8d86702605a1a275f793938a203b",
+    "backend/risk/corroboration.py": "e9937dff7fa88b5929baf2d3ccd9bef5866454aabdaa066e783418b25836333b",
+    "eval/run_paired_eval.py": "2036225545d74bb3083ee992186488ecb862638fd11477d835420623afd525d0"
+  },
+  "total_cases": 50,
+  "included_cases": 50,
+  "excluded_cases": 0,
+  "rules": {
+    "scams_flagged": {
+      "numerator": 11,
+      "denominator": 25,
+      "percent": 44.0
+    },
+    "genuine_friction": {
+      "numerator": 1,
+      "denominator": 25,
+      "percent": 4.0
+    },
+    "expected_matches": {
+      "numerator": 27,
+      "denominator": 50,
+      "percent": 54.0
+    },
+    "questions": {
+      "numerator": 0,
+      "denominator": 50,
+      "percent": 0.0
+    },
+    "no_decision": {
+      "numerator": 0,
+      "denominator": 50,
+      "percent": 0.0
+    }
+  },
+  "combined": {
+    "scams_flagged": {
+      "numerator": 13,
+      "denominator": 25,
+      "percent": 52.0
+    },
+    "genuine_friction": {
+      "numerator": 16,
+      "denominator": 25,
+      "percent": 64.0
+    },
+    "expected_matches": {
+      "numerator": 22,
+      "denominator": 50,
+      "percent": 44.0
+    },
+    "questions": {
+      "numerator": 28,
+      "denominator": 50,
+      "percent": 56.0
+    },
+    "no_decision": {
+      "numerator": 0,
+      "denominator": 50,
+      "percent": 0.0
+    }
+  },
+  "execution_modes": {
+    "gemini_live": 48,
+    "not_requested": 2
+  },
+  "fallbacks": 0,
+  "errors": 0,
+  "backend_latency": {
+    "n": 50,
+    "median_ms": 7109,
+    "p95_ms": 16781,
+    "max_ms": 22015
+  },
+  "fresh_backend_latency": {
+    "n": 48,
+    "median_ms": 7109,
+    "p95_ms": 16781,
+    "max_ms": 22015
+  },
+  "changed_actions": 38,
+  "pending_by_label": {
+    "scam": 12,
+    "legit": 16
+  },
+  "changed_cases": [
+    {
+      "id": "B001",
+      "label": "scam",
+      "rules": "warn",
+      "combined": "ask"
+    },
+    {
+      "id": "B002",
+      "label": "legit",
+      "rules": "allow",
+      "combined": "ask"
+    },
+    {
+      "id": "B004",
+      "label": "legit",
+      "rules": "allow",
+      "combined": "ask"
+    },
+    {
+      "id": "B005",
+      "label": "scam",
+      "rules": "warn",
+      "combined": "ask"
+    },
+    {
+      "id": "B006",
+      "label": "legit",
+      "rules": "allow",
+      "combined": "ask"
+    },
+    {
+      "id": "B008",
+      "label": "legit",
+      "rules": "warn",
+      "combined": "ask"
+    },
+    {
+      "id": "B009",
+      "label": "scam",
+      "rules": "warn",
+      "combined": "ask"
+    },
+    {
+      "id": "B010",
+      "label": "legit",
+      "rules": "allow",
+      "combined": "ask"
+    },
+    {
+      "id": "B011",
+      "label": "scam",
+      "rules": "warn",
+      "combined": "hold"
+    },
+    {
+      "id": "B013",
+      "label": "scam",
+      "rules": "warn",
+      "combined": "hold"
+    },
+    {
+      "id": "B015",
+      "label": "scam",
+      "rules": "allow",
+      "combined": "ask"
+    },
+    {
+      "id": "B017",
+      "label": "scam",
+      "rules": "allow",
+      "combined": "hold"
+    },
+    {
+      "id": "B018",
+      "label": "legit",
+      "rules": "allow",
+      "combined": "ask"
+    },
+    {
+      "id": "B019",
+      "label": "scam",
+      "rules": "allow",
+      "combined": "ask"
+    },
+    {
+      "id": "B021",
+      "label": "scam",
+      "rules": "allow",
+      "combined": "ask"
+    },
+    {
+      "id": "B022",
+      "label": "legit",
+      "rules": "allow",
+      "combined": "ask"
+    },
+    {
+      "id": "B023",
+      "label": "scam",
+      "rules": "allow",
+      "combined": "hold"
+    },
+    {
+      "id": "B024",
+      "label": "legit",
+      "rules": "allow",
+      "combined": "ask"
+    },
+    {
+      "id": "B025",
+      "label": "scam",
+      "rules": "allow",
+      "combined": "hold"
+    },
+    {
+      "id": "B026",
+      "label": "legit",
+      "rules": "allow",
+      "combined": "ask"
+    },
+    {
+      "id": "B027",
+      "label": "scam",
+      "rules": "warn",
+      "combined": "ask"
+    },
+    {
+      "id": "B028",
+      "label": "legit",
+      "rules": "allow",
+      "combined": "ask"
+    },
+    {
+      "id": "B029",
+      "label": "scam",
+      "rules": "allow",
+      "combined": "hold"
+    },
+    {
+      "id": "B031",
+      "label": "legit",
+      "rules": "allow",
+      "combined": "ask"
+    },
+    {
+      "id": "B032",
+      "label": "scam",
+      "rules": "allow",
+      "combined": "ask"
+    },
+    {
+      "id": "B034",
+      "label": "scam",
+      "rules": "allow",
+      "combined": "ask"
+    },
+    {
+      "id": "B035",
+      "label": "legit",
+      "rules": "allow",
+      "combined": "ask"
+    },
+    {
+      "id": "B036",
+      "label": "scam",
+      "rules": "warn",
+      "combined": "hold"
+    },
+    {
+      "id": "B037",
+      "label": "legit",
+      "rules": "allow",
+      "combined": "ask"
+    },
+    {
+      "id": "B038",
+      "label": "scam",
+      "rules": "allow",
+      "combined": "ask"
+    },
+    {
+      "id": "B039",
+      "label": "legit",
+      "rules": "allow",
+      "combined": "ask"
+    },
+    {
+      "id": "B040",
+      "label": "scam",
+      "rules": "warn",
+      "combined": "ask"
+    },
+    {
+      "id": "B041",
+      "label": "legit",
+      "rules": "allow",
+      "combined": "ask"
+    },
+    {
+      "id": "B042",
+      "label": "scam",
+      "rules": "allow",
+      "combined": "hold"
+    },
+    {
+      "id": "B044",
+      "label": "scam",
+      "rules": "allow",
+      "combined": "hold"
+    },
+    {
+      "id": "B048",
+      "label": "scam",
+      "rules": "allow",
+      "combined": "hold"
+    },
+    {
+      "id": "B049",
+      "label": "legit",
+      "rules": "allow",
+      "combined": "ask"
+    },
+    {
+      "id": "B050",
+      "label": "scam",
+      "rules": "allow",
+      "combined": "ask"
+    }
+  ]
+}

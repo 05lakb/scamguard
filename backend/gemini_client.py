@@ -7,6 +7,7 @@ key and model names are only handled here.
 import os
 import re
 import time
+from pathlib import Path
 
 # On some company networks, web traffic is re-signed with a company certificate.
 # This tells Python to trust the same certificates the Windows system trusts,
@@ -23,7 +24,7 @@ from google import genai
 from google.genai import types
 
 # Read the secret key from the local ".env" file (never stored in git).
-load_dotenv(".env")
+load_dotenv(Path(__file__).resolve().parents[1] / ".env")
 
 # A cheap, quick model for everyday work, and a stronger one for harder calls.
 FAST_MODEL = os.getenv("GEMINI_FAST_MODEL") or "gemini-3.5-flash-lite"
@@ -36,25 +37,53 @@ VERTEX_LOCATION = os.getenv("VERTEX_LOCATION") or "global"
 
 # Saving answers to disk is handy when testing. A live server keeps them in memory instead.
 DISK_CACHE = os.getenv("LMG_DISK_CACHE", "1") == "1"
+REQUEST_TIMEOUT_MS = max(1000, min(int(os.getenv("GEMINI_TIMEOUT_MS", "20000")), 60000))
 
 _client = None
+
+
+class ConfigurationError(RuntimeError):
+    """Required local model configuration is missing."""
+
+
+def failure_reason(error):
+    """Return a public category, never a provider error body or credential."""
+    if isinstance(error, ConfigurationError):
+        return "configuration"
+    if "timeout" in type(error).__name__.lower():
+        return "timeout"
+    code = getattr(error, "code", None)
+    if code in (401, 403):
+        return "authentication"
+    if code == 429:
+        return "quota"
+    if code == 404:
+        return "model_unavailable"
+    if code in (408, 504):
+        return "timeout"
+    return "unavailable"
 
 
 def get_client():
     """Return the shared Gemini client, creating it the first time."""
     global _client
     if _client is None:
+        # Keep SDK retries from multiplying the application's attempt count.
+        http_options = types.HttpOptions(
+            timeout=REQUEST_TIMEOUT_MS,
+            retry_options=types.HttpRetryOptions(attempts=1),
+        )
         if USE_VERTEX:
             # On Google Cloud the app proves who it is with its own identity, so no key is needed.
             project = os.getenv("GOOGLE_CLOUD_PROJECT")
             if not project:
-                raise RuntimeError("GOOGLE_CLOUD_PROJECT is missing, so Vertex AI cannot be used.")
-            _client = genai.Client(vertexai=True, project=project, location=VERTEX_LOCATION)
+                raise ConfigurationError("GOOGLE_CLOUD_PROJECT is missing, so Vertex AI cannot be used.")
+            _client = genai.Client(vertexai=True, project=project, location=VERTEX_LOCATION, http_options=http_options)
         else:
             key = os.getenv("GEMINI_API_KEY")
             if not key:
-                raise RuntimeError("GEMINI_API_KEY is missing. Add it to your .env file.")
-            _client = genai.Client(api_key=key)
+                raise ConfigurationError("GEMINI_API_KEY is missing. Add it to your .env file.")
+            _client = genai.Client(api_key=key, http_options=http_options)
     return _client
 
 
@@ -80,7 +109,7 @@ def is_temporary(error):
     return any(sign in text for sign in signs)
 
 
-def ask_structured(prompt, answer_shape, model=None, retries=4):
+def ask_structured(prompt, answer_shape, model=None, retries=1):
     """Send a prompt and get back an answer in a fixed shape (a pydantic class)."""
     safe_to_send(prompt)
     model = model or FAST_MODEL
@@ -95,15 +124,15 @@ def ask_structured(prompt, answer_shape, model=None, retries=4):
             return answer_shape.model_validate_json(reply.text)
         except Exception as error:
             if is_temporary(error) and attempt < retries - 1:
-                time.sleep(15 * (attempt + 1))
+                time.sleep(min(2 * (attempt + 1), 5))
                 continue
             raise
 
 
-def ask(prompt, model=None, retries=4):
+def ask(prompt, model=None, retries=1):
     """Send a prompt and return the reply text.
 
-    If we hit the free-tier speed limit, wait a little and try again.
+    Live calls make one attempt. Offline callers may explicitly request retries.
     """
     safe_to_send(prompt)
     model = model or FAST_MODEL
@@ -113,6 +142,6 @@ def ask(prompt, model=None, retries=4):
             return reply.text
         except Exception as error:
             if is_temporary(error) and attempt < retries - 1:
-                time.sleep(10 * (attempt + 1))
+                time.sleep(min(2 * (attempt + 1), 5))
                 continue
             raise

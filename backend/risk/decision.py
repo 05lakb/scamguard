@@ -77,14 +77,15 @@ def action_for(score):
     return "allow"
 
 
-def decide(payment, customer, reading=None, scam_types=None, asked=False, network=None):
+def decide(payment, customer, reading=None, scam_types=None, asked=False, network=None,
+           behaviour_result=None, network_result=None):
     """Return the decision for one payment.
 
     `reading` is the message reading (or None if the customer wrote nothing).
     `asked` is True on the second round, after the customer has answered our questions.
     """
-    behaviour = check_behaviour(payment, customer)
-    network_result = investigate_network(network)
+    behaviour = behaviour_result if behaviour_result is not None else check_behaviour(payment, customer)
+    network_result = network_result if network_result is not None else investigate_network(network)
     signals = behaviour["signals"] + network_result["signals"]
     reasons = [item["reason"] for item in sorted(signals, key=lambda s: -s["points"])[:3]]
 

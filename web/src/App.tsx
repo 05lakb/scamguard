@@ -7,7 +7,7 @@ import { caseFromArena, recordedCases, type CaseItem, type CaseStatus } from "./
 import { STORY, STORY_PAUSE_MS } from "./lib/story";
 import { Analyst } from "./pages/Analyst";
 import { Architecture } from "./pages/Architecture";
-import { type FinishedCase, type Scenario } from "./pages/Console";
+import { type Autoplay, type FinishedCase, type Scenario } from "./pages/Console";
 import { ConsoleArea } from "./pages/ConsoleArea";
 import { Evidence } from "./pages/Evidence";
 import { Overview } from "./pages/Overview";
@@ -24,9 +24,9 @@ interface StoryState {
 const scenarios = demo as Scenario[];
 
 const PAGES: { id: Page; label: string }[] = [
-  { id: "overview", label: "Overview" },
-  { id: "console", label: "Live console" },
-  { id: "analyst", label: "Analyst queue" },
+  { id: "overview", label: "Home" },
+  { id: "console", label: "Try a payment" },
+  { id: "analyst", label: "Review cases" },
   { id: "evidence", label: "Evidence" },
   { id: "architecture", label: "Architecture" },
 ];
@@ -47,7 +47,14 @@ export function App() {
   const [theme, setTheme] = useState<Theme>("system");
   const [cases, setCases] = useState<CaseItem[]>(recordedCases);
   const [story, setStory] = useState<StoryState | null>(null);
+  const [demoRun, setDemoRun] = useState<Autoplay | null>(null);
   const counter = useRef(0);
+  const [reviewCaseId, setReviewCaseId] = useState<string | null>(null);
+
+  useEffect(() => {
+    window.scrollTo(0, 0);
+    if (page !== "console") setDemoRun(null);
+  }, [page]);
 
   useEffect(() => {
     const root = document.documentElement;
@@ -67,20 +74,20 @@ export function App() {
       : { ...current, phase: "done" };
   }
 
-  function addCase(finished: FinishedCase) {
+  function addCase(finished: FinishedCase, source: CaseItem["source"] = "live"): string {
     counter.current += 1;
     const { decision, scenario } = finished;
     const now = clock();
-    const trail = [{ when: now, text: "Payment received" }];
+    const trail = [{ when: now, text: "Synthetic payment assessed by the FastAPI backend" }];
     if (finished.questions) {
       trail.push({ when: now, text: "The guard asked the customer a question" });
       trail.push({ when: now, text: finished.answer ? "The customer answered" : "The customer declined to answer" });
     }
     trail.push({ when: now, text: `The guard decided: ${decision.action} (risk ${decision.score})` });
     const item: CaseItem = {
-      id: `LIVE-${String(counter.current).padStart(3, "0")}`,
+      id: `${source === "test" ? "TEST" : "LIVE"}-${String(counter.current).padStart(3, "0")}`,
       title: scenario.title,
-      source: "live",
+      source,
       when: now,
       amount: scenario.payment.amount,
       currency: scenario.payment.currency,
@@ -93,10 +100,13 @@ export function App() {
       score: decision.score,
       reasons: decision.reasons,
       audit: decision.audit,
+      execution: decision.execution,
       status: "open",
       trail,
     };
     setCases((old) => [item, ...old]);
+    setReviewCaseId(item.id);
+    return item.id;
   }
 
   function addArenaCase(record: ArenaRecord) {
@@ -114,12 +124,19 @@ export function App() {
   }
 
   function startStory() {
+    setDemoRun(null);
     setPage("console");
     setStory({ index: 0, nonce: Date.now(), phase: "running" });
   }
 
+  function startDemo() {
+    setStory(null);
+    setDemoRun({ scenarioId: "d6", autoAnswer: false, nonce: Date.now() });
+    setPage("console");
+  }
+
   const step = story && story.phase !== "done" ? STORY[story.index] : null;
-  const autoplay = step && story ? { scenarioId: step.scenarioId, autoAnswer: step.autoAnswer, nonce: story.nonce } : null;
+  const autoplay = demoRun ?? (step && story ? { scenarioId: step.scenarioId, autoAnswer: step.autoAnswer, nonce: story.nonce } : null);
 
   return (
     <div className={`shell ${story ? "with-story" : ""}`}>
@@ -135,15 +152,21 @@ export function App() {
           </span>
         </button>
         <nav aria-label="Sections">
-          {PAGES.map((entry) => (
+          {PAGES.filter(entry => !["evidence", "architecture"].includes(entry.id)).map((entry) => (
             <button key={entry.id} className={`tab ${page === entry.id ? "on" : ""}`} aria-current={page === entry.id ? "page" : undefined} onClick={() => setPage(entry.id)}>
               {entry.label}
               {entry.id === "analyst" && cases.some((item) => item.source !== "recorded") && <span className="count mono">{cases.filter((item) => item.source !== "recorded").length}</span>}
             </button>
           ))}
+          <details key={page} className={`more-navigation ${["evidence", "architecture"].includes(page) ? "active" : ""}`}>
+            <summary>Explore ▾</summary><div>
+              <button onClick={() => setPage("evidence")}>Evidence & test results</button>
+              <button onClick={() => setPage("architecture")}>Architecture</button>
+              <button onClick={startStory}>Guided story</button>
+            </div>
+          </details>
         </nav>
         <div className="top-actions">
-          <button className="ghost small-btn" onClick={startStory}><Icon name="play" size={14} /> 90-second story</button>
           <button className="icon-button" onClick={() => setTheme(THEME_NEXT[theme])} aria-label={`Colour theme: ${theme}. Press to change.`} title={`Theme: ${theme}`}>
             <Icon name={theme === "light" ? "sun" : theme === "dark" ? "moon" : "auto"} size={18} />
           </button>
@@ -151,9 +174,9 @@ export function App() {
       </header>
 
       <main>
-        {page === "overview" && <Overview tryLive={() => setPage("console")} playStory={startStory} goTo={setPage} />}
-        {page === "console" && <ConsoleArea scenarios={scenarios} onCase={addCase} onArenaCase={addArenaCase} autoplay={autoplay} onFinished={() => setStory((current) => (current && current.phase === "running" ? { ...current, phase: "showing" } : current))} />}
-        {page === "analyst" && <Analyst cases={cases} decide={decide} />}
+        {page === "overview" && <Overview tryLive={() => setPage("console")} runDemo={startDemo} playStory={startStory} goTo={setPage} />}
+        {page === "console" && <ConsoleArea onReview={() => { setStory(null); setPage("analyst"); }} scenarios={scenarios} onCase={addCase} onArenaCase={addArenaCase} autoplay={autoplay} onFinished={() => { setDemoRun(null); setStory((current) => (current && current.phase === "running" ? { ...current, phase: "showing" } : current)); }} />}
+        {page === "analyst" && <Analyst initialCaseId={reviewCaseId} cases={cases} decide={decide} scenarios={scenarios} onTestCase={(finished) => addCase(finished, "test")} />}
         {page === "evidence" && <Evidence />}
         {page === "architecture" && <Architecture />}
       </main>

@@ -1,6 +1,7 @@
 import { EvidenceBars } from "../components/EvidenceBars";
 import { Gauge } from "../components/Gauge";
 import { Icon } from "../components/Icon";
+import { INDUSTRY_STATS } from "./homepageData";
 import type { Contribution } from "../lib/contrib";
 
 // A made-up sample, shown beside the headline so visitors see what the product produces.
@@ -12,6 +13,7 @@ const SAMPLE: Contribution[] = [
 
 interface Props {
   tryLive: () => void;
+  runDemo: () => void;
   playStory: () => void;
   goTo: (page: "evidence" | "architecture") => void;
 }
@@ -20,7 +22,7 @@ const STEPS = [
   { icon: "list" as const, title: "A payment arrives", text: "The customer is about to send money, with a note if they wrote one." },
   { icon: "chart" as const, title: "Three investigations", text: "FraudShield checks the payment, ScamStop reads the customer's story, and MuleNet checks synthetic account links when supplied." },
   { icon: "ask" as const, title: "Ask when unsure", text: "A short, friendly question, then a second look at the answer. Never more than one round." },
-  { icon: "shield" as const, title: "Decide and explain", text: "Allow, warn or hold, with ranked reasons and an audit trail. A person confirms every hold." },
+  { icon: "shield" as const, title: "Decide and explain", text: "Allow, warn or hold, with ranked reasons and an audit trail. An analyst reviews the recommendation in the demo." },
 ];
 
 const CHECKS = [
@@ -34,7 +36,7 @@ export function Overview({ tryLive, playStory, goTo }: Props) {
     <div className="overview">
       <section className="hero">
         <div className="hero-copy">
-          <p className="eyebrow">FinGuard AI · Financial crime prevention</p>
+          <p className="eyebrow">FinGuard AI · A second look before the money moves</p>
           <h1>Understand the risk <span>before money moves.</span></h1>
           <p className="hero-sub">
             One view of payment behaviour, the customer's story, and receiving-account connections.
@@ -95,27 +97,14 @@ export function Overview({ tryLive, playStory, goTo }: Props) {
       <section aria-labelledby="why">
         <h2 id="why" className="eyebrow">Why it matters</h2>
         <div className="stats">
-          <div className="stat">
-            <div className="stat-number mono">$442B</div>
-            <p>lost to scams by people in 42 countries in a single year.</p>
-            <span className="source">Global State of Scams 2025, GASA and Feedzai</span>
-          </div>
-          <div className="stat">
-            <div className="stat-number mono">23%</div>
-            <p>of adults lost money to a scam in the past year. Another 34% were targeted and did not lose money.</p>
-            <span className="source">Global State of Scams 2025, GASA and Feedzai</span>
-          </div>
-          <div className="stat">
-            <div className="stat-number mono">+40%</div>
-            <p>growth in UK investment-scam losses in 2025, now £221M, the largest authorised-payment fraud type.</p>
-            <span className="source">UK Finance Annual Fraud Report 2026</span>
-          </div>
+          {INDUSTRY_STATS.map((stat) => <article className="stat" key={stat.label}>
+            <div className="stat-number mono">{stat.number}</div>
+            <p>{stat.label}</p>
+            <p className="muted small">{stat.detail}</p>
+            <a className="source" href={stat.url} target="_blank" rel="noopener noreferrer">{stat.source} ↗</a>
+          </article>)}
         </div>
-        <p className="muted wide-text">
-          In these scams the customer approves the payment, so ordinary fraud checks see a valid payment from the right
-          person. Regulators are moving the cost to banks: UK reimbursement rules, the EU's agreed payment-services
-          regulation, and Australia's Scams Prevention Framework with penalties up to A$50 million.
-        </p>
+        <p className="muted wide-text">Industry figures describe the problem, not FinGuard's performance. These sources cover different countries and reporting periods and should not be added together.</p>
       </section>
 
       <section aria-labelledby="how">
@@ -134,12 +123,12 @@ export function Overview({ tryLive, playStory, goTo }: Props) {
 
       <section aria-labelledby="built" className="built">
         <div>
-          <h2 id="built" className="eyebrow">Built on Google Cloud</h2>
+          <h2 id="built" className="eyebrow">Built for Google Cloud</h2>
           <ul className="badges">
-            <li>Gemini on Vertex AI</li>
-            <li>Cloud Run, serverless</li>
+            <li>Gemini message analysis</li>
+            <li>Cloud Run deployment</li>
             <li>Cloud Build</li>
-            <li>Service identity, no keys</li>
+            <li>Vertex AI service identity when configured</li>
           </ul>
         </div>
         <div className="row">
@@ -149,8 +138,7 @@ export function Overview({ tryLive, playStory, goTo }: Props) {
       </section>
 
       <p className="honest">
-        This is a prototype on made-up data. The Evidence page shows what works, what does not yet, and what the red-team
-        tests found and fixed.
+        This is a prototype on made-up data. Human review is simulated in this browser. The Evidence page shows measured results, unfinished conversations and current limitations.
       </p>
     </div>
   );

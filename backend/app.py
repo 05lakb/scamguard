@@ -16,8 +16,10 @@ import json
 import logging
 import os
 import random
+import re
 import threading
 import time
+import uuid
 from collections import defaultdict, deque
 from pathlib import Path
 from typing import Annotated, Literal, Optional
@@ -32,13 +34,24 @@ from backend import gemini_client
 from backend.risk import clarify
 from backend.risk.decision import decide
 from backend.risk.evidence import load_scam_types, read_message
-from backend.service import assess
+from backend.service import assess_steps
 
 log = logging.getLogger("lmg")
 logging.basicConfig(level=logging.INFO, format="%(message)s")
 
 ROOT = Path(__file__).resolve().parents[1]
 WEB_DIST = ROOT / "web" / "dist"
+HASHED_ASSET = re.compile(r"^/assets/[^/]+-[A-Za-z0-9_-]{8,}\.(?:js|css|woff2?|png|jpe?g|webp|svg|ico)$")
+
+FALLBACK_REASONS = {
+    "configuration": "Message analysis is not configured on this server.",
+    "authentication": "The message service rejected its credentials or access permissions.",
+    "quota": "The message service's quota or rate limit was reached.",
+    "timeout": "Message analysis exceeded its request time limit.",
+    "model_unavailable": "The configured message model is unavailable.",
+    "budget": "Message analysis is paused by the demo's hourly limit.",
+    "unavailable": "Message analysis could not complete.",
+}
 
 MAX_BODY_BYTES = 20_000
 PER_VISITOR_PER_MINUTE = int(os.getenv("LMG_RATE_PER_MINUTE", "12"))
@@ -155,8 +168,9 @@ def create_app(reader=read_message, asker=clarify.ask_questions, arena_writer=No
     async def protect(request: Request, call_next):
         length = request.headers.get("content-length")
         if length and length.isdigit() and int(length) > MAX_BODY_BYTES:
-            return JSONResponse({"detail": "Request too large."}, status_code=413)
-        response = await call_next(request)
+            response = JSONResponse({"detail": "Request too large."}, status_code=413)
+        else:
+            response = await call_next(request)
         response.headers["X-Content-Type-Options"] = "nosniff"
         response.headers["X-Frame-Options"] = "DENY"
         response.headers["Referrer-Policy"] = "no-referrer"
@@ -167,44 +181,121 @@ def create_app(reader=read_message, asker=clarify.ask_questions, arena_writer=No
         )
         if request.url.path.startswith("/api/"):
             response.headers["Cache-Control"] = "no-store"
+        elif response.status_code in (200, 206, 304) and HASHED_ASSET.fullmatch(request.url.path):
+            response.headers["Cache-Control"] = "public, max-age=31536000, immutable"
+        else:
+            # Revalidate HTML, unversioned files and errors after each deployment.
+            response.headers["Cache-Control"] = "no-cache"
         return response
 
     @app.get("/api/health")
     def health():
         return {"ok": True}
 
-    @app.post("/api/assess")
-    def assess_payment(body: AssessIn, request: Request):
-        if not visitors.allow(visitor_key(request)):
-            return JSONResponse({"detail": "Too many requests. Please wait a minute and try again."},
-                                status_code=429)
-
+    def assessment_events(body: AssessIn):
         payment = body.payment.model_dump()
         customer = {"id": "web", **body.customer.model_dump()}
         network = body.network.model_dump() if body.network else None
         started = time.monotonic()
+        request_id = uuid.uuid4().hex[:12]
+        active_stage = "request"
+        def event(stage, status, detail, **extra):
+            return {"type": "stage", "request_id": request_id, "stage": stage,
+                    "status": status, "detail": detail,
+                    "elapsed_ms": round((time.monotonic() - started) * 1000), **extra}
+        yield event("request", "complete", "Payment request validated by the backend.")
         degraded = None
+        fallback_reason = None
 
-        if not gemini_budget.allow("gemini"):
-            degraded = "The message reader is paused to keep costs low, so this result uses the payment details only."
+        needs_model = bool(body.message) or body.answer is not None or clarify.should_ask(
+            body.message, None, decide(payment, customer, None, scam_types, network=network)
+        )
+        if needs_model and not gemini_budget.allow("gemini"):
+            fallback_reason = "budget"
         else:
             try:
-                outcome = assess(payment, customer, body.message, questions=body.questions,
-                                 answer=body.answer, reader=reader, asker=asker, scam_types=scam_types,
-                                 network=network)
+                steps = assess_steps(payment, customer, body.message, questions=body.questions,
+                                     answer=body.answer, reader=reader, asker=asker,
+                                     scam_types=scam_types, network=network)
+                while True:
+                    try:
+                        step = next(steps)
+                    except StopIteration as finished:
+                        outcome = finished.value
+                        break
+                    active_stage = step["stage"]
+                    yield event(**step)
             except Exception as error:  # never show internal details to the visitor
                 log.warning("assess failed: %s", type(error).__name__)
-                degraded = "The message reader is busy right now, so this result uses the payment details only."
+                fallback_reason = gemini_client.failure_reason(error)
 
-        if degraded:
+        if fallback_reason:
+            yield event(active_stage if fallback_reason != "budget" else "message", "failed", FALLBACK_REASONS[fallback_reason])
+            yield event("decision", "running", "Applying fallback rules using the available payment and network evidence.")
+            degraded = FALLBACK_REASONS[fallback_reason] + (
+                " This recommendation uses payment checks and the supplied account links."
+                if network is not None else " This recommendation uses payment checks only."
+            )
             outcome = decide(payment, customer, None, scam_types, network=network)
             outcome["round"] = 2 if body.answer is not None else 1
             outcome["degraded"] = True
             outcome["notice"] = degraded
+            if fallback_reason == "budget":
+                yield event("behaviour", "complete", "Payment rules completed for the fallback recommendation.", score=outcome["audit"]["behaviour_score"])
+                yield event("network", "complete" if network is not None else "skipped",
+                            "Account-link rules completed." if network is not None else "No account graph supplied for this case.",
+                            score=outcome["audit"]["network_score"])
+            if active_stage != "clarify":
+                yield event("clarify", "skipped", "Follow-up generation unavailable in this fallback run.")
 
-        log.info("assess action=%s score=%s round=%s degraded=%s ms=%d", outcome["action"], outcome["score"],
-                 outcome.get("round"), bool(degraded), (time.monotonic() - started) * 1000)
-        return outcome
+        reading = outcome.get("audit", {}).get("message_reading")
+        if degraded:
+            message_mode = "fallback_payment_only"
+        elif not reading:
+            message_mode = "not_requested"
+        elif reader is not read_message:
+            message_mode = "injected_reader"  # Only used by automated tests.
+        elif reading.get("from_cache"):
+            message_mode = "gemini_cached"
+        else:
+            message_mode = "gemini_live"
+        outcome["execution"] = {
+            "request_id": request_id,
+            "backend": "FastAPI /api/assess",
+            "duration_ms": round((time.monotonic() - started) * 1000),
+            "message_mode": message_mode,
+            "network_checked": network is not None,
+            "model": gemini_client.FAST_MODEL if message_mode.startswith("gemini_") else None,
+            "fallback_reason": fallback_reason,
+        }
+
+        log.info("assess request_id=%s action=%s score=%s round=%s mode=%s degraded=%s ms=%d",
+                 outcome["execution"]["request_id"], outcome["action"], outcome["score"],
+                 outcome.get("round"), message_mode, bool(degraded), outcome["execution"]["duration_ms"])
+        yield event("decision", "complete", "Recommendation ready: " + outcome["action"] + ".", score=outcome["score"])
+        yield {"type": "result", "request_id": request_id, "result": outcome}
+
+    @app.post("/api/assess")
+    def assess_payment(body: AssessIn, request: Request):
+        if not visitors.allow(visitor_key(request)):
+            return JSONResponse({"detail": "Too many requests. Please wait a minute and try again."}, status_code=429)
+        for event in assessment_events(body):
+            if event["type"] == "result":
+                return event["result"]
+
+    @app.post("/api/assess/stream")
+    def stream_payment(body: AssessIn, request: Request):
+        if not visitors.allow(visitor_key(request)):
+            return JSONResponse({"detail": "Too many requests. Please wait a minute and try again."}, status_code=429)
+        def lines():
+            try:
+                for event in assessment_events(body):
+                    yield json.dumps(event) + "\n"
+            except Exception:
+                log.warning("assessment stream could not finish")
+                yield json.dumps({"type": "error", "detail": "The assessment could not finish. No final result was received."}) + "\n"
+        return StreamingResponse(lines(), media_type="application/x-ndjson",
+                                 headers={"Cache-Control": "no-store", "X-Accel-Buffering": "no"})
 
     @app.post("/api/arena")
     def arena_run(body: ArenaIn, request: Request):

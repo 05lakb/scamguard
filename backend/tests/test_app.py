@@ -104,3 +104,22 @@ def test_security_headers_are_present():
     assert headers["x-content-type-options"] == "nosniff"
     assert headers["x-frame-options"] == "DENY"
     assert "default-src 'self'" in headers["content-security-policy"]
+
+
+def test_backend_returns_execution_provenance_without_claiming_fake_reader_is_gemini():
+    result = make_client().post("/api/assess", json=BODY).json()
+    trace = result["execution"]
+    assert len(trace["request_id"]) == 12
+    assert trace["backend"] == "FastAPI /api/assess"
+    assert trace["duration_ms"] >= 0
+    assert trace["message_mode"] == "injected_reader"
+    assert trace["network_checked"] is False
+
+
+def test_fallback_is_explicit_in_provenance():
+    def broken(text, scam_types):
+        raise RuntimeError("fake failure")
+
+    result = make_client(reader=broken).post("/api/assess", json=BODY).json()
+    assert result["execution"]["message_mode"] == "fallback_payment_only"
+    assert result["degraded"] is True

@@ -4,10 +4,56 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <meta name="description" content="FinGuard AI: transaction, scam, and account-network checks before money moves." />
-    <title>FinGuard AI</title>
+    <meta name="theme-color" content="#172341" />
+    <meta property="og:type" content="website" />
+    <meta property="og:site_name" content="FinGuard AI" />
+    <meta property="og:title" content="FinGuard AI | Explainable payment protection" />
+    <meta property="og:description" content="Explore a synthetic payment through FraudShield, ScamStop and MuleNet. Inspect the evidence behind an allow, warn or hold recommendation." />
+    <meta name="twitter:card" content="summary" />
+    <meta name="twitter:title" content="FinGuard AI | Explainable payment protection" />
+    <meta name="twitter:description" content="A working payment fraud demo with Gemini-assisted message analysis, transaction checks and synthetic account links." />
+    <title>FinGuard AI | Explainable payment protection</title>
+    <style>
+      .boot { box-sizing: border-box; min-height: 100vh; padding: clamp(24px, 6vw, 80px); background: #f7f9fe; color: #172341; font: 16px/1.6 system-ui, sans-serif; }
+      .boot-inner { max-width: 1000px; margin: 0 auto; }
+      .boot-brand { font-weight: 750; letter-spacing: -.02em; }
+      .boot h1 { max-width: 750px; margin: 64px 0 20px; font-size: clamp(32px, 5vw, 58px); line-height: 1.12; letter-spacing: -.04em; }
+      .boot-intro { max-width: 660px; color: #526079; }
+      .boot-checks { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 16px; margin: 32px 0; padding: 0; list-style: none; }
+      .boot-checks li { padding: 20px; background: #fff; border: 1px solid #dce3f1; border-radius: 16px; }
+      .boot-checks strong, .boot-checks span { display: block; }
+      .boot-checks span { margin-top: 8px; color: #526079; }
+      .boot-status { padding: 14px 18px; border-left: 4px solid #435ce5; background: #eaf0ff; }
+      .boot-note { font-size: 14px; color: #526079; }
+      .boot a { color: #3048c9; }
+      @media (prefers-color-scheme: dark) {
+        .boot { background: #10182b; color: #f3f5fc; }
+        .boot-intro, .boot-checks span, .boot-note { color: #b4c0d9; }
+        .boot-checks li { background: #172341; border-color: #344360; }
+        .boot-status { background: #21335b; }
+        .boot a { color: #b1c3ff; }
+      }
+    </style>
   </head>
   <body>
-    <div id="root"></div>
+    <div id="root">
+      <main class="boot">
+        <div class="boot-inner">
+          <div class="boot-brand">FinGuard AI · Financial crime prevention</div>
+          <h1>Investigate a suspicious payment before money moves.</h1>
+          <p class="boot-intro">See how transaction behaviour, a customer's explanation and account links combine into an explainable recommendation for human review.</p>
+          <ul class="boot-checks">
+            <li><strong>FraudShield</strong><span>Checks unusual payments and recent spending patterns.</span></li>
+            <li><strong>ScamStop</strong><span>Uses Gemini to examine pressure, secrecy and impersonation in a customer's message.</span></li>
+            <li><strong>MuleNet</strong><span>Checks a synthetic account graph for suspicious connections and onward transfers.</span></li>
+          </ul>
+          <p class="boot-status" role="status">Opening the interactive demo. Once loaded, choose “Run a payment demo” to see a backend assessment.</p>
+          <p class="boot-note">Synthetic-data prototype. No live bank connection or money movement. Risk scores are rule-based indicators, not calibrated probabilities.</p>
+          <p class="boot-note">If the demo does not open, <a href="/">reload this page</a> and check your connection.</p>
+          <noscript><p>JavaScript is required to run the interactive scenarios. Enable it and reload to inspect live results.</p><style>.boot-status { display: none; }</style></noscript>
+        </div>
+      </main>
+    </div>
     <script type="module" src="/src/main.tsx"></script>
   </body>
 </html>

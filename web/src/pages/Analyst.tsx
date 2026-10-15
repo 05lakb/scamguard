@@ -1,4 +1,7 @@
 import { useState } from "react";
+import { assessPayment, type AssessRequest } from "../api";
+import { AgentEvidence } from "../components/AgentEvidence";
+import type { FinishedCase, Scenario } from "./Console";
 import { EvidenceBars } from "../components/EvidenceBars";
 import { Gauge } from "../components/Gauge";
 import { Icon, type IconName } from "../components/Icon";
@@ -32,32 +35,74 @@ function partsAsBars(item: CaseItem): Contribution[] {
   ].filter((entry) => entry.points !== 0);
 }
 
-export function Analyst({ cases, decide }: { cases: CaseItem[]; decide: (id: string, status: CaseStatus) => void }) {
-  const [filter, setFilter] = useState<Filter>("review");
-  const [selectedId, setSelectedId] = useState<string | null>(null);
+export function Analyst({ cases, decide, scenarios, onTestCase, initialCaseId }: {
+  initialCaseId?: string | null;
+  cases: CaseItem[];
+  decide: (id: string, status: CaseStatus) => void;
+  scenarios: Scenario[];
+  onTestCase: (item: FinishedCase) => string;
+}) {
+  const [filter, setFilter] = useState<Filter>(initialCaseId ? "all" : "review");
+  const [selectedId, setSelectedId] = useState<string | null>(initialCaseId ?? null);
+  const [scenarioId, setScenarioId] = useState("d2");
+  const [running, setRunning] = useState(false);
+  const [testStatus, setTestStatus] = useState("");
+  const [testError, setTestError] = useState("");
+
+  async function runBackendScenario() {
+    if (running) return;
+    const scenario = scenarios.find((entry) => entry.id === scenarioId);
+    if (!scenario) return;
+    setRunning(true);
+    setTestError("");
+    setTestStatus("POST /api/assess · Round 1 · awaiting backend response...");
+    const request: AssessRequest = {
+      customer: scenario.customer,
+      payment: scenario.payment,
+      message: scenario.message || null,
+      ...(scenario.network ? { network: scenario.network } : {}),
+    };
+    try {
+      const initial = await assessPayment(request);
+      let final = initial;
+      let answered: string | undefined;
+      let questions: string[] | undefined;
+      if (initial.action === "ask") {
+        questions = initial.questions;
+        answered = scenario.sample_reply || "";
+        setTestStatus("POST /api/assess · Round 2 · using the scenario's synthetic sample reply...");
+        final = await assessPayment({ ...request, questions, answer: answered });
+      }
+      if (final.action === "ask") throw new Error("Assessment requires another answer; open Live Console to answer manually.");
+      const id = onTestCase({ scenario, message: scenario.message || null, questions, answer: answered, decision: final });
+      setFilter("all");
+      setSelectedId(id);
+      const execution = final.execution;
+      setTestStatus(`Case ${id} created from backend response${execution ? ` ${execution.request_id} (${execution.duration_ms} ms; ${execution.message_mode})` : ""}. Review its three evidence panels below.`);
+    } catch (error) {
+      setTestStatus("");
+      setTestError(error instanceof Error ? error.message : "Backend assessment failed.");
+    } finally {
+      setRunning(false);
+    }
+  }
 
   const visible = cases.filter((item) => {
     if (filter === "all") return true;
     if (filter === "review") return needsReview(item);
     return item.action === filter;
   });
-  const selected = cases.find((item) => item.id === selectedId) ?? visible[0] ?? null;
+  const selected = visible.find((item) => item.id === selectedId) ?? visible[0] ?? null;
   const count = (test: (item: CaseItem) => boolean) => cases.filter(test).length;
 
   return (
     <div className="analyst">
-      <div className="tiles">
-        <div className="tile"><span className="muted">Needs review</span><strong className="mono">{count(needsReview)}</strong></div>
-        <div className="tile hold"><span className="muted">Held</span><strong className="mono">{count((c) => c.action === "hold")}</strong></div>
-        <div className="tile warn"><span className="muted">Warnings</span><strong className="mono">{count((c) => c.action === "warn")}</strong></div>
-        <div className="tile allow"><span className="muted">Allowed</span><strong className="mono">{count((c) => c.action === "allow")}</strong></div>
-      </div>
-
+      <header className="simple-demo-heading"><div><h1>Review the case. Decide the next step.</h1><p className="muted">Inspect the reasons and record a simulated analyst decision. No real payment is changed.</p></div></header>
       <div className="queue-layout">
         <section className="card queue" aria-labelledby="queue-title">
           <div className="card-head">
             <h2 id="queue-title" className="eyebrow">Case queue</h2>
-            <span className="muted">Recorded cases come from our own test runs. Live and test-run cases appear as you use the console.</span>
+            <span className="muted">Your new cases appear first. Recorded examples are labelled in the list.</span>
           </div>
           <div className="filters" role="group" aria-label="Filter cases">
             {FILTERS.map((entry) => (
@@ -116,6 +161,16 @@ export function Analyst({ cases, decide }: { cases: CaseItem[]; decide: (id: str
                 </div>
               </div>
 
+              {selected.action !== "allow" && selected.status === "open" && (
+                <div className="row">
+                  <button className="ghost" onClick={() => decide(selected.id, "approved")}>Approve payment</button>
+                  <button className="ghost" onClick={() => decide(selected.id, "held")}>Keep on hold</button>
+                  <button className="ghost" onClick={() => decide(selected.id, "escalated")}>Escalate</button>
+                </div>
+              )}
+              {selected.action !== "allow" && <p className="muted small">Human review is simulated in the browser. Approval/hold/escalation updates this case's state and audit trail, but is not yet persisted in a backend case database or sent to a bank.</p>}
+              <details className="simple-result-details"><summary>Detailed findings from each check</summary><AgentEvidence item={selected} /></details>
+
               <h3 className="mini">Why, ranked by weight</h3>
               <EvidenceBars items={partsAsBars(selected)} />
               {!selected.audit && selected.reasons.length > 0 && (
@@ -136,18 +191,46 @@ export function Analyst({ cases, decide }: { cases: CaseItem[]; decide: (id: str
                 ))}
               </ol>
 
-              {selected.action !== "allow" && (
-                <div className="row">
-                  <button className="ghost" onClick={() => decide(selected.id, "approved")}>Approve payment</button>
-                  <button className="ghost" onClick={() => decide(selected.id, "held")}>Keep on hold</button>
-                  <button className="ghost" onClick={() => decide(selected.id, "escalated")}>Escalate</button>
-                </div>
+              {selected.audit && (
+                <details>
+                  <summary>Inspect raw backend evidence and execution trace</summary>
+                  <pre>{JSON.stringify({ audit: selected.audit, execution: selected.execution }, null, 2)}</pre>
+                </details>
               )}
-              {selected.action !== "allow" && <p className="muted small">A person confirms every hold. The guard only recommends.</p>}
+
+
             </>
           )}
         </section>
       </div>
+      <details className="simple-technical"><summary>Advanced: run another test & view queue totals</summary>
+      <section className="card scenario-tester" aria-label="Run one real backend test">
+        <div>
+          <h2 className="case-title">Run a single backend scenario</h2>
+          <p className="muted small">Choose synthetic input, then run the real FastAPI assessment. FraudShield/MuleNet rules run on the backend; ScamStop uses Gemini, cached Gemini output, or an explicitly labelled fallback.</p>
+        </div>
+        <div className="scenario-controls">
+          <label htmlFor="scenario-select">Test scenario</label>
+          <select id="scenario-select" value={scenarioId} disabled={running} onChange={(event) => setScenarioId(event.target.value)}>
+            {scenarios.map((item) => <option key={item.id} value={item.id}>{item.title}{item.network ? " · MuleNet graph" : ""}</option>)}
+          </select>
+          <button className="primary" onClick={() => void runBackendScenario()} disabled={running}>
+            {running ? "Running backend..." : "Run test scenario"}
+          </button>
+        </div>
+        {testStatus && <p role="status" className="scenario-status">{testStatus}</p>}
+        {testError && <p role="alert" className="problem">{testError} Check that Python backend is running at localhost:8080.</p>}
+        <p className="muted small">Network test: “Same payee, paid again and again”. Gemini test: “Fake bank security call”. This tool does not use hardcoded risk outcomes, initiate bank transfers, or bypass backend scoring.</p>
+      </section>
+
+      <div className="tiles">
+        <div className="tile"><span className="muted">Needs review</span><strong className="mono">{count(needsReview)}</strong></div>
+        <div className="tile hold"><span className="muted">Hold recommended</span><strong className="mono">{count((c) => c.action === "hold")}</strong></div>
+        <div className="tile warn"><span className="muted">Warnings</span><strong className="mono">{count((c) => c.action === "warn")}</strong></div>
+        <div className="tile allow"><span className="muted">Allowed</span><strong className="mono">{count((c) => c.action === "allow")}</strong></div>
+      </div>
+
+      </details>
     </div>
   );
 }

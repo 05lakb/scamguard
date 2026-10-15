@@ -37,7 +37,7 @@ flowchart TB
 - **ScamStop:** Gemini-assisted note reading and one follow-up round; deterministic decision rules in `backend/risk/`.
 - **MuleNet:** Rule-based checks on an optional, bounded **synthetic** transfer graph in `backend/risk/network.py`.
 - **API:** `POST /api/assess` returns a recommendation, score, ranked reasons, and audit breakdown; `GET /api/health` checks service health.
-- **Demo:** React assessment console, browser-only analyst queue, architecture and evidence views, and synthetic red-team arena.
+- **Demo:** React assessment console, browser-only analyst queue with **Run test scenario** calling the real backend, three-agent audit panels, execution trace, architecture/evidence views, and synthetic red-team arena.
 - **Evaluation:** Synthetic scenarios, Python evaluations, red-team tools, Pytest, and web unit tests.
 
 ## Google technology
@@ -71,6 +71,10 @@ flowchart TB
 2. Validate and calibrate combined scoring on held-back fraud, scam, mule, and legitimate cases.
 3. Add authenticated analyst review, durable case/audit storage, and bank-controlled hold/release.
 4. Add Pub/Sub ingestion, governed BigQuery lookups, monitoring, and automated CI checks.
+
+## Live backend-verified analyst demonstration
+
+For an exact local test walkthrough, synthetic scenario selection, Gemini cache/fallback labels, and an independent PowerShell API test, see [Analyst backend demo](docs/ANALYST_DEMO.md). The backend returns a request ID and timing for every payment assessment, which the application displays next to the scored evidence.
 
 ## Run locally
 

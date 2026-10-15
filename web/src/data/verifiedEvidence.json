@@ -1,0 +1,2320 @@
+{
+  "schema_version": 1,
+  "generated_at": "2026-10-15T13:46:03+00:00",
+  "scope": "Synthetic payment-rules baseline only; no Gemini, MuleNet or full-system assessment.",
+  "command": ".venv/Scripts/python.exe eval/export_evidence.py",
+  "source_sha256": {
+    "data/scenarios.json": "ad1763d43861f93b926a2a2ab17d694b7b6f9114305e4d564a54a4bed40eaa73",
+    "data/customers.json": "18f65bd5b0c2d4970ae04cb18be89d73cae1f0a411aeaa0e13f327fab7801323",
+    "backend/risk/behaviour.py": "672d3c9dd9a4e3bff179713361f137de2dc3ea2b973a3ae9234ad8de79ab7c94",
+    "eval/export_evidence.py": "2103aec9801195f06d6fe185d8ffcd8535c77cc6ff7bbaf4b0224674af75bd32"
+  },
+  "total_cases": 200,
+  "included_cases": 200,
+  "excluded_cases": 0,
+  "metrics": {
+    "scams_flagged": {
+      "numerator": 70,
+      "denominator": 100,
+      "percent": 70.0
+    },
+    "genuine_friction": {
+      "numerator": 20,
+      "denominator": 100,
+      "percent": 20.0
+    },
+    "expected_matches": {
+      "numerator": 143,
+      "denominator": 200,
+      "percent": 71.5
+    }
+  },
+  "cases": [
+    {
+      "id": "S001",
+      "label": "scam",
+      "included": true,
+      "action": "warn",
+      "score": 60,
+      "acceptable_actions": [
+        "hold"
+      ],
+      "matches_expected": false
+    },
+    {
+      "id": "S002",
+      "label": "scam",
+      "included": true,
+      "action": "warn",
+      "score": 65,
+      "acceptable_actions": [
+        "hold"
+      ],
+      "matches_expected": false
+    },
+    {
+      "id": "S003",
+      "label": "scam",
+      "included": true,
+      "action": "warn",
+      "score": 40,
+      "acceptable_actions": [
+        "warn",
+        "hold"
+      ],
+      "matches_expected": true
+    },
+    {
+      "id": "S004",
+      "label": "scam",
+      "included": true,
+      "action": "hold",
+      "score": 90,
+      "acceptable_actions": [
+        "hold"
+      ],
+      "matches_expected": true
+    },
+    {
+      "id": "S005",
+      "label": "scam",
+      "included": true,
+      "action": "allow",
+      "score": 30,
+      "acceptable_actions": [
+        "warn",
+        "hold"
+      ],
+      "matches_expected": false
+    },
+    {
+      "id": "S006",
+      "label": "scam",
+      "included": true,
+      "action": "warn",
+      "score": 40,
+      "acceptable_actions": [
+        "warn",
+        "hold"
+      ],
+      "matches_expected": true
+    },
+    {
+      "id": "S007",
+      "label": "scam",
+      "included": true,
+      "action": "allow",
+      "score": 30,
+      "acceptable_actions": [
+        "warn",
+        "hold"
+      ],
+      "matches_expected": false
+    },
+    {
+      "id": "S008",
+      "label": "scam",
+      "included": true,
+      "action": "allow",
+      "score": 15,
+      "acceptable_actions": [
+        "warn",
+        "hold"
+      ],
+      "matches_expected": false
+    },
+    {
+      "id": "S009",
+      "label": "scam",
+      "included": true,
+      "action": "allow",
+      "score": 25,
+      "acceptable_actions": [
+        "warn",
+        "hold"
+      ],
+      "matches_expected": false
+    },
+    {
+      "id": "S010",
+      "label": "scam",
+      "included": true,
+      "action": "hold",
+      "score": 75,
+      "acceptable_actions": [
+        "hold"
+      ],
+      "matches_expected": true
+    },
+    {
+      "id": "S011",
+      "label": "scam",
+      "included": true,
+      "action": "allow",
+      "score": 15,
+      "acceptable_actions": [
+        "warn",
+        "hold"
+      ],
+      "matches_expected": false
+    },
+    {
+      "id": "S012",
+      "label": "scam",
+      "included": true,
+      "action": "hold",
+      "score": 100,
+      "acceptable_actions": [
+        "hold"
+      ],
+      "matches_expected": true
+    },
+    {
+      "id": "S013",
+      "label": "scam",
+      "included": true,
+      "action": "warn",
+      "score": 60,
+      "acceptable_actions": [
+        "hold"
+      ],
+      "matches_expected": false
+    },
+    {
+      "id": "S014",
+      "label": "scam",
+      "included": true,
+      "action": "hold",
+      "score": 70,
+      "acceptable_actions": [
+        "hold"
+      ],
+      "matches_expected": true
+    },
+    {
+      "id": "S015",
+      "label": "scam",
+      "included": true,
+      "action": "warn",
+      "score": 50,
+      "acceptable_actions": [
+        "warn",
+        "hold"
+      ],
+      "matches_expected": true
+    },
+    {
+      "id": "S016",
+      "label": "scam",
+      "included": true,
+      "action": "warn",
+      "score": 40,
+      "acceptable_actions": [
+        "warn",
+        "hold"
+      ],
+      "matches_expected": true
+    },
+    {
+      "id": "S017",
+      "label": "scam",
+      "included": true,
+      "action": "warn",
+      "score": 50,
+      "acceptable_actions": [
+        "warn",
+        "hold"
+      ],
+      "matches_expected": true
+    },
+    {
+      "id": "S018",
+      "label": "scam",
+      "included": true,
+      "action": "hold",
+      "score": 95,
+      "acceptable_actions": [
+        "hold"
+      ],
+      "matches_expected": true
+    },
+    {
+      "id": "S019",
+      "label": "scam",
+      "included": true,
+      "action": "allow",
+      "score": 15,
+      "acceptable_actions": [
+        "warn",
+        "hold"
+      ],
+      "matches_expected": false
+    },
+    {
+      "id": "S020",
+      "label": "scam",
+      "included": true,
+      "action": "hold",
+      "score": 100,
+      "acceptable_actions": [
+        "hold"
+      ],
+      "matches_expected": true
+    },
+    {
+      "id": "S021",
+      "label": "scam",
+      "included": true,
+      "action": "allow",
+      "score": 15,
+      "acceptable_actions": [
+        "warn",
+        "hold"
+      ],
+      "matches_expected": false
+    },
+    {
+      "id": "S022",
+      "label": "scam",
+      "included": true,
+      "action": "hold",
+      "score": 70,
+      "acceptable_actions": [
+        "hold"
+      ],
+      "matches_expected": true
+    },
+    {
+      "id": "S023",
+      "label": "scam",
+      "included": true,
+      "action": "warn",
+      "score": 60,
+      "acceptable_actions": [
+        "hold"
+      ],
+      "matches_expected": false
+    },
+    {
+      "id": "S024",
+      "label": "scam",
+      "included": true,
+      "action": "warn",
+      "score": 50,
+      "acceptable_actions": [
+        "hold"
+      ],
+      "matches_expected": false
+    },
+    {
+      "id": "S025",
+      "label": "scam",
+      "included": true,
+      "action": "allow",
+      "score": 15,
+      "acceptable_actions": [
+        "warn",
+        "hold"
+      ],
+      "matches_expected": false
+    },
+    {
+      "id": "S026",
+      "label": "scam",
+      "included": true,
+      "action": "allow",
+      "score": 15,
+      "acceptable_actions": [
+        "hold"
+      ],
+      "matches_expected": false
+    },
+    {
+      "id": "S027",
+      "label": "scam",
+      "included": true,
+      "action": "allow",
+      "score": 25,
+      "acceptable_actions": [
+        "warn",
+        "hold"
+      ],
+      "matches_expected": false
+    },
+    {
+      "id": "S028",
+      "label": "scam",
+      "included": true,
+      "action": "warn",
+      "score": 65,
+      "acceptable_actions": [
+        "hold"
+      ],
+      "matches_expected": false
+    },
+    {
+      "id": "S029",
+      "label": "scam",
+      "included": true,
+      "action": "warn",
+      "score": 60,
+      "acceptable_actions": [
+        "hold"
+      ],
+      "matches_expected": false
+    },
+    {
+      "id": "S030",
+      "label": "scam",
+      "included": true,
+      "action": "warn",
+      "score": 50,
+      "acceptable_actions": [
+        "hold"
+      ],
+      "matches_expected": false
+    },
+    {
+      "id": "S031",
+      "label": "scam",
+      "included": true,
+      "action": "hold",
+      "score": 80,
+      "acceptable_actions": [
+        "hold"
+      ],
+      "matches_expected": true
+    },
+    {
+      "id": "S032",
+      "label": "scam",
+      "included": true,
+      "action": "allow",
+      "score": 25,
+      "acceptable_actions": [
+        "warn",
+        "hold"
+      ],
+      "matches_expected": false
+    },
+    {
+      "id": "S033",
+      "label": "scam",
+      "included": true,
+      "action": "warn",
+      "score": 60,
+      "acceptable_actions": [
+        "hold"
+      ],
+      "matches_expected": false
+    },
+    {
+      "id": "S034",
+      "label": "scam",
+      "included": true,
+      "action": "hold",
+      "score": 75,
+      "acceptable_actions": [
+        "hold"
+      ],
+      "matches_expected": true
+    },
+    {
+      "id": "S035",
+      "label": "scam",
+      "included": true,
+      "action": "allow",
+      "score": 15,
+      "acceptable_actions": [
+        "warn",
+        "hold"
+      ],
+      "matches_expected": false
+    },
+    {
+      "id": "S036",
+      "label": "scam",
+      "included": true,
+      "action": "hold",
+      "score": 75,
+      "acceptable_actions": [
+        "hold"
+      ],
+      "matches_expected": true
+    },
+    {
+      "id": "S037",
+      "label": "scam",
+      "included": true,
+      "action": "hold",
+      "score": 80,
+      "acceptable_actions": [
+        "hold"
+      ],
+      "matches_expected": true
+    },
+    {
+      "id": "S038",
+      "label": "scam",
+      "included": true,
+      "action": "hold",
+      "score": 70,
+      "acceptable_actions": [
+        "hold"
+      ],
+      "matches_expected": true
+    },
+    {
+      "id": "S039",
+      "label": "scam",
+      "included": true,
+      "action": "warn",
+      "score": 50,
+      "acceptable_actions": [
+        "warn",
+        "hold"
+      ],
+      "matches_expected": true
+    },
+    {
+      "id": "S040",
+      "label": "scam",
+      "included": true,
+      "action": "hold",
+      "score": 70,
+      "acceptable_actions": [
+        "hold"
+      ],
+      "matches_expected": true
+    },
+    {
+      "id": "S041",
+      "label": "scam",
+      "included": true,
+      "action": "warn",
+      "score": 50,
+      "acceptable_actions": [
+        "warn",
+        "hold"
+      ],
+      "matches_expected": true
+    },
+    {
+      "id": "S042",
+      "label": "scam",
+      "included": true,
+      "action": "allow",
+      "score": 15,
+      "acceptable_actions": [
+        "hold"
+      ],
+      "matches_expected": false
+    },
+    {
+      "id": "S043",
+      "label": "scam",
+      "included": true,
+      "action": "warn",
+      "score": 50,
+      "acceptable_actions": [
+        "warn",
+        "hold"
+      ],
+      "matches_expected": true
+    },
+    {
+      "id": "S044",
+      "label": "scam",
+      "included": true,
+      "action": "hold",
+      "score": 95,
+      "acceptable_actions": [
+        "hold"
+      ],
+      "matches_expected": true
+    },
+    {
+      "id": "S045",
+      "label": "scam",
+      "included": true,
+      "action": "hold",
+      "score": 70,
+      "acceptable_actions": [
+        "hold"
+      ],
+      "matches_expected": true
+    },
+    {
+      "id": "S046",
+      "label": "scam",
+      "included": true,
+      "action": "hold",
+      "score": 70,
+      "acceptable_actions": [
+        "hold"
+      ],
+      "matches_expected": true
+    },
+    {
+      "id": "S047",
+      "label": "scam",
+      "included": true,
+      "action": "allow",
+      "score": 15,
+      "acceptable_actions": [
+        "warn",
+        "hold"
+      ],
+      "matches_expected": false
+    },
+    {
+      "id": "S048",
+      "label": "scam",
+      "included": true,
+      "action": "allow",
+      "score": 15,
+      "acceptable_actions": [
+        "warn",
+        "hold"
+      ],
+      "matches_expected": false
+    },
+    {
+      "id": "S049",
+      "label": "scam",
+      "included": true,
+      "action": "allow",
+      "score": 15,
+      "acceptable_actions": [
+        "warn",
+        "hold"
+      ],
+      "matches_expected": false
+    },
+    {
+      "id": "S050",
+      "label": "scam",
+      "included": true,
+      "action": "hold",
+      "score": 85,
+      "acceptable_actions": [
+        "hold"
+      ],
+      "matches_expected": true
+    },
+    {
+      "id": "S051",
+      "label": "scam",
+      "included": true,
+      "action": "allow",
+      "score": 30,
+      "acceptable_actions": [
+        "warn",
+        "hold"
+      ],
+      "matches_expected": false
+    },
+    {
+      "id": "S052",
+      "label": "scam",
+      "included": true,
+      "action": "hold",
+      "score": 100,
+      "acceptable_actions": [
+        "hold"
+      ],
+      "matches_expected": true
+    },
+    {
+      "id": "S053",
+      "label": "scam",
+      "included": true,
+      "action": "hold",
+      "score": 80,
+      "acceptable_actions": [
+        "hold"
+      ],
+      "matches_expected": true
+    },
+    {
+      "id": "S054",
+      "label": "scam",
+      "included": true,
+      "action": "allow",
+      "score": 15,
+      "acceptable_actions": [
+        "warn",
+        "hold"
+      ],
+      "matches_expected": false
+    },
+    {
+      "id": "S055",
+      "label": "scam",
+      "included": true,
+      "action": "warn",
+      "score": 60,
+      "acceptable_actions": [
+        "hold"
+      ],
+      "matches_expected": false
+    },
+    {
+      "id": "S056",
+      "label": "scam",
+      "included": true,
+      "action": "allow",
+      "score": 15,
+      "acceptable_actions": [
+        "warn",
+        "hold"
+      ],
+      "matches_expected": false
+    },
+    {
+      "id": "S057",
+      "label": "scam",
+      "included": true,
+      "action": "warn",
+      "score": 60,
+      "acceptable_actions": [
+        "hold"
+      ],
+      "matches_expected": false
+    },
+    {
+      "id": "S058",
+      "label": "scam",
+      "included": true,
+      "action": "hold",
+      "score": 95,
+      "acceptable_actions": [
+        "hold"
+      ],
+      "matches_expected": true
+    },
+    {
+      "id": "S059",
+      "label": "scam",
+      "included": true,
+      "action": "allow",
+      "score": 30,
+      "acceptable_actions": [
+        "warn",
+        "hold"
+      ],
+      "matches_expected": false
+    },
+    {
+      "id": "S060",
+      "label": "scam",
+      "included": true,
+      "action": "hold",
+      "score": 100,
+      "acceptable_actions": [
+        "hold"
+      ],
+      "matches_expected": true
+    },
+    {
+      "id": "S061",
+      "label": "scam",
+      "included": true,
+      "action": "allow",
+      "score": 30,
+      "acceptable_actions": [
+        "warn",
+        "hold"
+      ],
+      "matches_expected": false
+    },
+    {
+      "id": "S062",
+      "label": "scam",
+      "included": true,
+      "action": "allow",
+      "score": 30,
+      "acceptable_actions": [
+        "warn",
+        "hold"
+      ],
+      "matches_expected": false
+    },
+    {
+      "id": "S063",
+      "label": "scam",
+      "included": true,
+      "action": "warn",
+      "score": 40,
+      "acceptable_actions": [
+        "warn",
+        "hold"
+      ],
+      "matches_expected": true
+    },
+    {
+      "id": "S064",
+      "label": "scam",
+      "included": true,
+      "action": "hold",
+      "score": 70,
+      "acceptable_actions": [
+        "hold"
+      ],
+      "matches_expected": true
+    },
+    {
+      "id": "S065",
+      "label": "scam",
+      "included": true,
+      "action": "allow",
+      "score": 15,
+      "acceptable_actions": [
+        "warn",
+        "hold"
+      ],
+      "matches_expected": false
+    },
+    {
+      "id": "S066",
+      "label": "scam",
+      "included": true,
+      "action": "hold",
+      "score": 100,
+      "acceptable_actions": [
+        "hold"
+      ],
+      "matches_expected": true
+    },
+    {
+      "id": "S067",
+      "label": "scam",
+      "included": true,
+      "action": "hold",
+      "score": 80,
+      "acceptable_actions": [
+        "hold"
+      ],
+      "matches_expected": true
+    },
+    {
+      "id": "S068",
+      "label": "scam",
+      "included": true,
+      "action": "hold",
+      "score": 100,
+      "acceptable_actions": [
+        "hold"
+      ],
+      "matches_expected": true
+    },
+    {
+      "id": "S069",
+      "label": "scam",
+      "included": true,
+      "action": "warn",
+      "score": 50,
+      "acceptable_actions": [
+        "warn",
+        "hold"
+      ],
+      "matches_expected": true
+    },
+    {
+      "id": "S070",
+      "label": "scam",
+      "included": true,
+      "action": "allow",
+      "score": 15,
+      "acceptable_actions": [
+        "warn",
+        "hold"
+      ],
+      "matches_expected": false
+    },
+    {
+      "id": "S071",
+      "label": "scam",
+      "included": true,
+      "action": "warn",
+      "score": 60,
+      "acceptable_actions": [
+        "hold"
+      ],
+      "matches_expected": false
+    },
+    {
+      "id": "S072",
+      "label": "scam",
+      "included": true,
+      "action": "warn",
+      "score": 60,
+      "acceptable_actions": [
+        "hold"
+      ],
+      "matches_expected": false
+    },
+    {
+      "id": "S073",
+      "label": "scam",
+      "included": true,
+      "action": "allow",
+      "score": 15,
+      "acceptable_actions": [
+        "warn",
+        "hold"
+      ],
+      "matches_expected": false
+    },
+    {
+      "id": "S074",
+      "label": "scam",
+      "included": true,
+      "action": "hold",
+      "score": 75,
+      "acceptable_actions": [
+        "hold"
+      ],
+      "matches_expected": true
+    },
+    {
+      "id": "S075",
+      "label": "scam",
+      "included": true,
+      "action": "hold",
+      "score": 70,
+      "acceptable_actions": [
+        "hold"
+      ],
+      "matches_expected": true
+    },
+    {
+      "id": "S076",
+      "label": "scam",
+      "included": true,
+      "action": "hold",
+      "score": 100,
+      "acceptable_actions": [
+        "hold"
+      ],
+      "matches_expected": true
+    },
+    {
+      "id": "S077",
+      "label": "scam",
+      "included": true,
+      "action": "hold",
+      "score": 70,
+      "acceptable_actions": [
+        "hold"
+      ],
+      "matches_expected": true
+    },
+    {
+      "id": "S078",
+      "label": "scam",
+      "included": true,
+      "action": "hold",
+      "score": 70,
+      "acceptable_actions": [
+        "hold"
+      ],
+      "matches_expected": true
+    },
+    {
+      "id": "S079",
+      "label": "scam",
+      "included": true,
+      "action": "warn",
+      "score": 40,
+      "acceptable_actions": [
+        "warn",
+        "hold"
+      ],
+      "matches_expected": true
+    },
+    {
+      "id": "S080",
+      "label": "scam",
+      "included": true,
+      "action": "allow",
+      "score": 15,
+      "acceptable_actions": [
+        "warn",
+        "hold"
+      ],
+      "matches_expected": false
+    },
+    {
+      "id": "S081",
+      "label": "scam",
+      "included": true,
+      "action": "warn",
+      "score": 60,
+      "acceptable_actions": [
+        "warn",
+        "hold"
+      ],
+      "matches_expected": true
+    },
+    {
+      "id": "S082",
+      "label": "scam",
+      "included": true,
+      "action": "hold",
+      "score": 100,
+      "acceptable_actions": [
+        "hold"
+      ],
+      "matches_expected": true
+    },
+    {
+      "id": "S083",
+      "label": "scam",
+      "included": true,
+      "action": "warn",
+      "score": 60,
+      "acceptable_actions": [
+        "hold"
+      ],
+      "matches_expected": false
+    },
+    {
+      "id": "S084",
+      "label": "scam",
+      "included": true,
+      "action": "hold",
+      "score": 100,
+      "acceptable_actions": [
+        "hold"
+      ],
+      "matches_expected": true
+    },
+    {
+      "id": "S085",
+      "label": "scam",
+      "included": true,
+      "action": "warn",
+      "score": 60,
+      "acceptable_actions": [
+        "hold"
+      ],
+      "matches_expected": false
+    },
+    {
+      "id": "S086",
+      "label": "scam",
+      "included": true,
+      "action": "allow",
+      "score": 15,
+      "acceptable_actions": [
+        "warn",
+        "hold"
+      ],
+      "matches_expected": false
+    },
+    {
+      "id": "S087",
+      "label": "scam",
+      "included": true,
+      "action": "warn",
+      "score": 60,
+      "acceptable_actions": [
+        "hold"
+      ],
+      "matches_expected": false
+    },
+    {
+      "id": "S088",
+      "label": "scam",
+      "included": true,
+      "action": "hold",
+      "score": 70,
+      "acceptable_actions": [
+        "hold"
+      ],
+      "matches_expected": true
+    },
+    {
+      "id": "S089",
+      "label": "scam",
+      "included": true,
+      "action": "allow",
+      "score": 15,
+      "acceptable_actions": [
+        "warn",
+        "hold"
+      ],
+      "matches_expected": false
+    },
+    {
+      "id": "S090",
+      "label": "scam",
+      "included": true,
+      "action": "allow",
+      "score": 15,
+      "acceptable_actions": [
+        "hold"
+      ],
+      "matches_expected": false
+    },
+    {
+      "id": "S091",
+      "label": "scam",
+      "included": true,
+      "action": "warn",
+      "score": 60,
+      "acceptable_actions": [
+        "hold"
+      ],
+      "matches_expected": false
+    },
+    {
+      "id": "S092",
+      "label": "scam",
+      "included": true,
+      "action": "hold",
+      "score": 85,
+      "acceptable_actions": [
+        "hold"
+      ],
+      "matches_expected": true
+    },
+    {
+      "id": "S093",
+      "label": "scam",
+      "included": true,
+      "action": "warn",
+      "score": 60,
+      "acceptable_actions": [
+        "hold"
+      ],
+      "matches_expected": false
+    },
+    {
+      "id": "S094",
+      "label": "scam",
+      "included": true,
+      "action": "allow",
+      "score": 15,
+      "acceptable_actions": [
+        "warn",
+        "hold"
+      ],
+      "matches_expected": false
+    },
+    {
+      "id": "S095",
+      "label": "scam",
+      "included": true,
+      "action": "warn",
+      "score": 60,
+      "acceptable_actions": [
+        "hold"
+      ],
+      "matches_expected": false
+    },
+    {
+      "id": "S096",
+      "label": "scam",
+      "included": true,
+      "action": "hold",
+      "score": 70,
+      "acceptable_actions": [
+        "hold"
+      ],
+      "matches_expected": true
+    },
+    {
+      "id": "S097",
+      "label": "scam",
+      "included": true,
+      "action": "warn",
+      "score": 60,
+      "acceptable_actions": [
+        "hold"
+      ],
+      "matches_expected": false
+    },
+    {
+      "id": "S098",
+      "label": "scam",
+      "included": true,
+      "action": "hold",
+      "score": 85,
+      "acceptable_actions": [
+        "hold"
+      ],
+      "matches_expected": true
+    },
+    {
+      "id": "S099",
+      "label": "scam",
+      "included": true,
+      "action": "warn",
+      "score": 60,
+      "acceptable_actions": [
+        "hold"
+      ],
+      "matches_expected": false
+    },
+    {
+      "id": "S100",
+      "label": "scam",
+      "included": true,
+      "action": "hold",
+      "score": 100,
+      "acceptable_actions": [
+        "hold"
+      ],
+      "matches_expected": true
+    },
+    {
+      "id": "L001",
+      "label": "legit",
+      "included": true,
+      "action": "allow",
+      "score": 0,
+      "acceptable_actions": [
+        "allow"
+      ],
+      "matches_expected": true
+    },
+    {
+      "id": "L002",
+      "label": "legit",
+      "included": true,
+      "action": "allow",
+      "score": 0,
+      "acceptable_actions": [
+        "allow"
+      ],
+      "matches_expected": true
+    },
+    {
+      "id": "L003",
+      "label": "legit",
+      "included": true,
+      "action": "allow",
+      "score": 0,
+      "acceptable_actions": [
+        "allow"
+      ],
+      "matches_expected": true
+    },
+    {
+      "id": "L004",
+      "label": "legit",
+      "included": true,
+      "action": "allow",
+      "score": 0,
+      "acceptable_actions": [
+        "allow"
+      ],
+      "matches_expected": true
+    },
+    {
+      "id": "L005",
+      "label": "legit",
+      "included": true,
+      "action": "allow",
+      "score": 0,
+      "acceptable_actions": [
+        "allow"
+      ],
+      "matches_expected": true
+    },
+    {
+      "id": "L006",
+      "label": "legit",
+      "included": true,
+      "action": "allow",
+      "score": 0,
+      "acceptable_actions": [
+        "allow"
+      ],
+      "matches_expected": true
+    },
+    {
+      "id": "L007",
+      "label": "legit",
+      "included": true,
+      "action": "allow",
+      "score": 0,
+      "acceptable_actions": [
+        "allow"
+      ],
+      "matches_expected": true
+    },
+    {
+      "id": "L008",
+      "label": "legit",
+      "included": true,
+      "action": "allow",
+      "score": 0,
+      "acceptable_actions": [
+        "allow"
+      ],
+      "matches_expected": true
+    },
+    {
+      "id": "L009",
+      "label": "legit",
+      "included": true,
+      "action": "allow",
+      "score": 0,
+      "acceptable_actions": [
+        "allow"
+      ],
+      "matches_expected": true
+    },
+    {
+      "id": "L010",
+      "label": "legit",
+      "included": true,
+      "action": "allow",
+      "score": 0,
+      "acceptable_actions": [
+        "allow"
+      ],
+      "matches_expected": true
+    },
+    {
+      "id": "L011",
+      "label": "legit",
+      "included": true,
+      "action": "allow",
+      "score": 0,
+      "acceptable_actions": [
+        "allow"
+      ],
+      "matches_expected": true
+    },
+    {
+      "id": "L012",
+      "label": "legit",
+      "included": true,
+      "action": "allow",
+      "score": 0,
+      "acceptable_actions": [
+        "allow"
+      ],
+      "matches_expected": true
+    },
+    {
+      "id": "L013",
+      "label": "legit",
+      "included": true,
+      "action": "allow",
+      "score": 0,
+      "acceptable_actions": [
+        "allow"
+      ],
+      "matches_expected": true
+    },
+    {
+      "id": "L014",
+      "label": "legit",
+      "included": true,
+      "action": "allow",
+      "score": 0,
+      "acceptable_actions": [
+        "allow"
+      ],
+      "matches_expected": true
+    },
+    {
+      "id": "L015",
+      "label": "legit",
+      "included": true,
+      "action": "allow",
+      "score": 10,
+      "acceptable_actions": [
+        "allow"
+      ],
+      "matches_expected": true
+    },
+    {
+      "id": "L016",
+      "label": "legit",
+      "included": true,
+      "action": "allow",
+      "score": 0,
+      "acceptable_actions": [
+        "allow"
+      ],
+      "matches_expected": true
+    },
+    {
+      "id": "L017",
+      "label": "legit",
+      "included": true,
+      "action": "allow",
+      "score": 0,
+      "acceptable_actions": [
+        "allow"
+      ],
+      "matches_expected": true
+    },
+    {
+      "id": "L018",
+      "label": "legit",
+      "included": true,
+      "action": "allow",
+      "score": 0,
+      "acceptable_actions": [
+        "allow"
+      ],
+      "matches_expected": true
+    },
+    {
+      "id": "L019",
+      "label": "legit",
+      "included": true,
+      "action": "allow",
+      "score": 0,
+      "acceptable_actions": [
+        "allow"
+      ],
+      "matches_expected": true
+    },
+    {
+      "id": "L020",
+      "label": "legit",
+      "included": true,
+      "action": "allow",
+      "score": 0,
+      "acceptable_actions": [
+        "allow"
+      ],
+      "matches_expected": true
+    },
+    {
+      "id": "L021",
+      "label": "legit",
+      "included": true,
+      "action": "allow",
+      "score": 0,
+      "acceptable_actions": [
+        "allow"
+      ],
+      "matches_expected": true
+    },
+    {
+      "id": "L022",
+      "label": "legit",
+      "included": true,
+      "action": "allow",
+      "score": 0,
+      "acceptable_actions": [
+        "allow"
+      ],
+      "matches_expected": true
+    },
+    {
+      "id": "L023",
+      "label": "legit",
+      "included": true,
+      "action": "allow",
+      "score": 0,
+      "acceptable_actions": [
+        "allow"
+      ],
+      "matches_expected": true
+    },
+    {
+      "id": "L024",
+      "label": "legit",
+      "included": true,
+      "action": "allow",
+      "score": 0,
+      "acceptable_actions": [
+        "allow"
+      ],
+      "matches_expected": true
+    },
+    {
+      "id": "L025",
+      "label": "legit",
+      "included": true,
+      "action": "allow",
+      "score": 0,
+      "acceptable_actions": [
+        "allow"
+      ],
+      "matches_expected": true
+    },
+    {
+      "id": "L026",
+      "label": "legit",
+      "included": true,
+      "action": "allow",
+      "score": 0,
+      "acceptable_actions": [
+        "allow"
+      ],
+      "matches_expected": true
+    },
+    {
+      "id": "L027",
+      "label": "legit",
+      "included": true,
+      "action": "allow",
+      "score": 10,
+      "acceptable_actions": [
+        "allow"
+      ],
+      "matches_expected": true
+    },
+    {
+      "id": "L028",
+      "label": "legit",
+      "included": true,
+      "action": "allow",
+      "score": 0,
+      "acceptable_actions": [
+        "allow"
+      ],
+      "matches_expected": true
+    },
+    {
+      "id": "L029",
+      "label": "legit",
+      "included": true,
+      "action": "allow",
+      "score": 0,
+      "acceptable_actions": [
+        "allow"
+      ],
+      "matches_expected": true
+    },
+    {
+      "id": "L030",
+      "label": "legit",
+      "included": true,
+      "action": "allow",
+      "score": 0,
+      "acceptable_actions": [
+        "allow"
+      ],
+      "matches_expected": true
+    },
+    {
+      "id": "L031",
+      "label": "legit",
+      "included": true,
+      "action": "allow",
+      "score": 0,
+      "acceptable_actions": [
+        "allow"
+      ],
+      "matches_expected": true
+    },
+    {
+      "id": "L032",
+      "label": "legit",
+      "included": true,
+      "action": "allow",
+      "score": 0,
+      "acceptable_actions": [
+        "allow"
+      ],
+      "matches_expected": true
+    },
+    {
+      "id": "L033",
+      "label": "legit",
+      "included": true,
+      "action": "allow",
+      "score": 0,
+      "acceptable_actions": [
+        "allow"
+      ],
+      "matches_expected": true
+    },
+    {
+      "id": "L034",
+      "label": "legit",
+      "included": true,
+      "action": "allow",
+      "score": 0,
+      "acceptable_actions": [
+        "allow"
+      ],
+      "matches_expected": true
+    },
+    {
+      "id": "L035",
+      "label": "legit",
+      "included": true,
+      "action": "allow",
+      "score": 0,
+      "acceptable_actions": [
+        "allow"
+      ],
+      "matches_expected": true
+    },
+    {
+      "id": "L036",
+      "label": "legit",
+      "included": true,
+      "action": "allow",
+      "score": 0,
+      "acceptable_actions": [
+        "allow"
+      ],
+      "matches_expected": true
+    },
+    {
+      "id": "L037",
+      "label": "legit",
+      "included": true,
+      "action": "allow",
+      "score": 0,
+      "acceptable_actions": [
+        "allow"
+      ],
+      "matches_expected": true
+    },
+    {
+      "id": "L038",
+      "label": "legit",
+      "included": true,
+      "action": "allow",
+      "score": 10,
+      "acceptable_actions": [
+        "allow"
+      ],
+      "matches_expected": true
+    },
+    {
+      "id": "L039",
+      "label": "legit",
+      "included": true,
+      "action": "allow",
+      "score": 0,
+      "acceptable_actions": [
+        "allow"
+      ],
+      "matches_expected": true
+    },
+    {
+      "id": "L040",
+      "label": "legit",
+      "included": true,
+      "action": "allow",
+      "score": 0,
+      "acceptable_actions": [
+        "allow"
+      ],
+      "matches_expected": true
+    },
+    {
+      "id": "L041",
+      "label": "legit",
+      "included": true,
+      "action": "hold",
+      "score": 70,
+      "acceptable_actions": [
+        "allow",
+        "warn"
+      ],
+      "matches_expected": false
+    },
+    {
+      "id": "L042",
+      "label": "legit",
+      "included": true,
+      "action": "hold",
+      "score": 75,
+      "acceptable_actions": [
+        "allow",
+        "warn"
+      ],
+      "matches_expected": false
+    },
+    {
+      "id": "L043",
+      "label": "legit",
+      "included": true,
+      "action": "warn",
+      "score": 50,
+      "acceptable_actions": [
+        "allow",
+        "warn"
+      ],
+      "matches_expected": true
+    },
+    {
+      "id": "L044",
+      "label": "legit",
+      "included": true,
+      "action": "hold",
+      "score": 85,
+      "acceptable_actions": [
+        "allow",
+        "warn"
+      ],
+      "matches_expected": false
+    },
+    {
+      "id": "L045",
+      "label": "legit",
+      "included": true,
+      "action": "allow",
+      "score": 25,
+      "acceptable_actions": [
+        "allow",
+        "warn"
+      ],
+      "matches_expected": true
+    },
+    {
+      "id": "L046",
+      "label": "legit",
+      "included": true,
+      "action": "warn",
+      "score": 45,
+      "acceptable_actions": [
+        "allow",
+        "warn"
+      ],
+      "matches_expected": true
+    },
+    {
+      "id": "L047",
+      "label": "legit",
+      "included": true,
+      "action": "allow",
+      "score": 35,
+      "acceptable_actions": [
+        "allow",
+        "warn"
+      ],
+      "matches_expected": true
+    },
+    {
+      "id": "L048",
+      "label": "legit",
+      "included": true,
+      "action": "warn",
+      "score": 40,
+      "acceptable_actions": [
+        "allow",
+        "warn"
+      ],
+      "matches_expected": true
+    },
+    {
+      "id": "L049",
+      "label": "legit",
+      "included": true,
+      "action": "allow",
+      "score": 35,
+      "acceptable_actions": [
+        "allow",
+        "warn"
+      ],
+      "matches_expected": true
+    },
+    {
+      "id": "L050",
+      "label": "legit",
+      "included": true,
+      "action": "allow",
+      "score": 35,
+      "acceptable_actions": [
+        "allow",
+        "warn"
+      ],
+      "matches_expected": true
+    },
+    {
+      "id": "L051",
+      "label": "legit",
+      "included": true,
+      "action": "allow",
+      "score": 30,
+      "acceptable_actions": [
+        "allow",
+        "warn"
+      ],
+      "matches_expected": true
+    },
+    {
+      "id": "L052",
+      "label": "legit",
+      "included": true,
+      "action": "allow",
+      "score": 35,
+      "acceptable_actions": [
+        "allow",
+        "warn"
+      ],
+      "matches_expected": true
+    },
+    {
+      "id": "L053",
+      "label": "legit",
+      "included": true,
+      "action": "allow",
+      "score": 35,
+      "acceptable_actions": [
+        "allow",
+        "warn"
+      ],
+      "matches_expected": true
+    },
+    {
+      "id": "L054",
+      "label": "legit",
+      "included": true,
+      "action": "allow",
+      "score": 35,
+      "acceptable_actions": [
+        "allow",
+        "warn"
+      ],
+      "matches_expected": true
+    },
+    {
+      "id": "L055",
+      "label": "legit",
+      "included": true,
+      "action": "warn",
+      "score": 50,
+      "acceptable_actions": [
+        "allow",
+        "warn"
+      ],
+      "matches_expected": true
+    },
+    {
+      "id": "L056",
+      "label": "legit",
+      "included": true,
+      "action": "warn",
+      "score": 45,
+      "acceptable_actions": [
+        "allow",
+        "warn"
+      ],
+      "matches_expected": true
+    },
+    {
+      "id": "L057",
+      "label": "legit",
+      "included": true,
+      "action": "warn",
+      "score": 60,
+      "acceptable_actions": [
+        "allow",
+        "warn"
+      ],
+      "matches_expected": true
+    },
+    {
+      "id": "L058",
+      "label": "legit",
+      "included": true,
+      "action": "allow",
+      "score": 35,
+      "acceptable_actions": [
+        "allow",
+        "warn"
+      ],
+      "matches_expected": true
+    },
+    {
+      "id": "L059",
+      "label": "legit",
+      "included": true,
+      "action": "warn",
+      "score": 60,
+      "acceptable_actions": [
+        "allow",
+        "warn"
+      ],
+      "matches_expected": true
+    },
+    {
+      "id": "L060",
+      "label": "legit",
+      "included": true,
+      "action": "warn",
+      "score": 50,
+      "acceptable_actions": [
+        "allow",
+        "warn"
+      ],
+      "matches_expected": true
+    },
+    {
+      "id": "L061",
+      "label": "legit",
+      "included": true,
+      "action": "warn",
+      "score": 60,
+      "acceptable_actions": [
+        "allow",
+        "warn"
+      ],
+      "matches_expected": true
+    },
+    {
+      "id": "L062",
+      "label": "legit",
+      "included": true,
+      "action": "hold",
+      "score": 80,
+      "acceptable_actions": [
+        "allow",
+        "warn"
+      ],
+      "matches_expected": false
+    },
+    {
+      "id": "L063",
+      "label": "legit",
+      "included": true,
+      "action": "hold",
+      "score": 70,
+      "acceptable_actions": [
+        "allow",
+        "warn"
+      ],
+      "matches_expected": false
+    },
+    {
+      "id": "L064",
+      "label": "legit",
+      "included": true,
+      "action": "hold",
+      "score": 85,
+      "acceptable_actions": [
+        "allow",
+        "warn"
+      ],
+      "matches_expected": false
+    },
+    {
+      "id": "L065",
+      "label": "legit",
+      "included": true,
+      "action": "warn",
+      "score": 55,
+      "acceptable_actions": [
+        "allow",
+        "warn"
+      ],
+      "matches_expected": true
+    },
+    {
+      "id": "L066",
+      "label": "legit",
+      "included": true,
+      "action": "allow",
+      "score": 25,
+      "acceptable_actions": [
+        "allow",
+        "warn"
+      ],
+      "matches_expected": true
+    },
+    {
+      "id": "L067",
+      "label": "legit",
+      "included": true,
+      "action": "allow",
+      "score": 15,
+      "acceptable_actions": [
+        "allow",
+        "warn"
+      ],
+      "matches_expected": true
+    },
+    {
+      "id": "L068",
+      "label": "legit",
+      "included": true,
+      "action": "allow",
+      "score": 15,
+      "acceptable_actions": [
+        "allow",
+        "warn"
+      ],
+      "matches_expected": true
+    },
+    {
+      "id": "L069",
+      "label": "legit",
+      "included": true,
+      "action": "warn",
+      "score": 45,
+      "acceptable_actions": [
+        "allow",
+        "warn"
+      ],
+      "matches_expected": true
+    },
+    {
+      "id": "L070",
+      "label": "legit",
+      "included": true,
+      "action": "allow",
+      "score": 25,
+      "acceptable_actions": [
+        "allow",
+        "warn"
+      ],
+      "matches_expected": true
+    },
+    {
+      "id": "L071",
+      "label": "legit",
+      "included": true,
+      "action": "allow",
+      "score": 25,
+      "acceptable_actions": [
+        "allow",
+        "warn"
+      ],
+      "matches_expected": true
+    },
+    {
+      "id": "L072",
+      "label": "legit",
+      "included": true,
+      "action": "allow",
+      "score": 35,
+      "acceptable_actions": [
+        "allow",
+        "warn"
+      ],
+      "matches_expected": true
+    },
+    {
+      "id": "L073",
+      "label": "legit",
+      "included": true,
+      "action": "allow",
+      "score": 15,
+      "acceptable_actions": [
+        "allow",
+        "warn"
+      ],
+      "matches_expected": true
+    },
+    {
+      "id": "L074",
+      "label": "legit",
+      "included": true,
+      "action": "allow",
+      "score": 25,
+      "acceptable_actions": [
+        "allow",
+        "warn"
+      ],
+      "matches_expected": true
+    },
+    {
+      "id": "L075",
+      "label": "legit",
+      "included": true,
+      "action": "allow",
+      "score": 35,
+      "acceptable_actions": [
+        "allow",
+        "warn"
+      ],
+      "matches_expected": true
+    },
+    {
+      "id": "L076",
+      "label": "legit",
+      "included": true,
+      "action": "allow",
+      "score": 0,
+      "acceptable_actions": [
+        "allow"
+      ],
+      "matches_expected": true
+    },
+    {
+      "id": "L077",
+      "label": "legit",
+      "included": true,
+      "action": "allow",
+      "score": 0,
+      "acceptable_actions": [
+        "allow"
+      ],
+      "matches_expected": true
+    },
+    {
+      "id": "L078",
+      "label": "legit",
+      "included": true,
+      "action": "allow",
+      "score": 0,
+      "acceptable_actions": [
+        "allow"
+      ],
+      "matches_expected": true
+    },
+    {
+      "id": "L079",
+      "label": "legit",
+      "included": true,
+      "action": "allow",
+      "score": 10,
+      "acceptable_actions": [
+        "allow"
+      ],
+      "matches_expected": true
+    },
+    {
+      "id": "L080",
+      "label": "legit",
+      "included": true,
+      "action": "allow",
+      "score": 0,
+      "acceptable_actions": [
+        "allow"
+      ],
+      "matches_expected": true
+    },
+    {
+      "id": "L081",
+      "label": "legit",
+      "included": true,
+      "action": "allow",
+      "score": 0,
+      "acceptable_actions": [
+        "allow"
+      ],
+      "matches_expected": true
+    },
+    {
+      "id": "L082",
+      "label": "legit",
+      "included": true,
+      "action": "allow",
+      "score": 0,
+      "acceptable_actions": [
+        "allow"
+      ],
+      "matches_expected": true
+    },
+    {
+      "id": "L083",
+      "label": "legit",
+      "included": true,
+      "action": "allow",
+      "score": 0,
+      "acceptable_actions": [
+        "allow"
+      ],
+      "matches_expected": true
+    },
+    {
+      "id": "L084",
+      "label": "legit",
+      "included": true,
+      "action": "allow",
+      "score": 30,
+      "acceptable_actions": [
+        "allow",
+        "warn"
+      ],
+      "matches_expected": true
+    },
+    {
+      "id": "L085",
+      "label": "legit",
+      "included": true,
+      "action": "allow",
+      "score": 30,
+      "acceptable_actions": [
+        "allow",
+        "warn"
+      ],
+      "matches_expected": true
+    },
+    {
+      "id": "L086",
+      "label": "legit",
+      "included": true,
+      "action": "allow",
+      "score": 15,
+      "acceptable_actions": [
+        "allow",
+        "warn"
+      ],
+      "matches_expected": true
+    },
+    {
+      "id": "L087",
+      "label": "legit",
+      "included": true,
+      "action": "warn",
+      "score": 65,
+      "acceptable_actions": [
+        "allow",
+        "warn"
+      ],
+      "matches_expected": true
+    },
+    {
+      "id": "L088",
+      "label": "legit",
+      "included": true,
+      "action": "allow",
+      "score": 15,
+      "acceptable_actions": [
+        "allow",
+        "warn"
+      ],
+      "matches_expected": true
+    },
+    {
+      "id": "L089",
+      "label": "legit",
+      "included": true,
+      "action": "warn",
+      "score": 40,
+      "acceptable_actions": [
+        "allow",
+        "warn"
+      ],
+      "matches_expected": true
+    },
+    {
+      "id": "L090",
+      "label": "legit",
+      "included": true,
+      "action": "allow",
+      "score": 30,
+      "acceptable_actions": [
+        "allow",
+        "warn"
+      ],
+      "matches_expected": true
+    },
+    {
+      "id": "L091",
+      "label": "legit",
+      "included": true,
+      "action": "allow",
+      "score": 15,
+      "acceptable_actions": [
+        "allow",
+        "warn"
+      ],
+      "matches_expected": true
+    },
+    {
+      "id": "L092",
+      "label": "legit",
+      "included": true,
+      "action": "allow",
+      "score": 25,
+      "acceptable_actions": [
+        "allow",
+        "warn"
+      ],
+      "matches_expected": true
+    },
+    {
+      "id": "L093",
+      "label": "legit",
+      "included": true,
+      "action": "warn",
+      "score": 50,
+      "acceptable_actions": [
+        "allow",
+        "warn"
+      ],
+      "matches_expected": true
+    },
+    {
+      "id": "L094",
+      "label": "legit",
+      "included": true,
+      "action": "allow",
+      "score": 35,
+      "acceptable_actions": [
+        "allow",
+        "warn"
+      ],
+      "matches_expected": true
+    },
+    {
+      "id": "L095",
+      "label": "legit",
+      "included": true,
+      "action": "allow",
+      "score": 35,
+      "acceptable_actions": [
+        "allow",
+        "warn"
+      ],
+      "matches_expected": true
+    },
+    {
+      "id": "L096",
+      "label": "legit",
+      "included": true,
+      "action": "allow",
+      "score": 10,
+      "acceptable_actions": [
+        "allow"
+      ],
+      "matches_expected": true
+    },
+    {
+      "id": "L097",
+      "label": "legit",
+      "included": true,
+      "action": "allow",
+      "score": 10,
+      "acceptable_actions": [
+        "allow"
+      ],
+      "matches_expected": true
+    },
+    {
+      "id": "L098",
+      "label": "legit",
+      "included": true,
+      "action": "allow",
+      "score": 10,
+      "acceptable_actions": [
+        "allow"
+      ],
+      "matches_expected": true
+    },
+    {
+      "id": "L099",
+      "label": "legit",
+      "included": true,
+      "action": "allow",
+      "score": 10,
+      "acceptable_actions": [
+        "allow"
+      ],
+      "matches_expected": true
+    },
+    {
+      "id": "L100",
+      "label": "legit",
+      "included": true,
+      "action": "allow",
+      "score": 10,
+      "acceptable_actions": [
+        "allow"
+      ],
+      "matches_expected": true
+    }
+  ]
+}

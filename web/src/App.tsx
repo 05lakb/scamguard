@@ -1,19 +1,26 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, type FormEvent } from "react";
 import demo from "./data/demo.json";
+import { checkHealth, type ArenaRecord, type ConversationResult, type Health } from "./api";
 import { Icon } from "./components/Icon";
 import { Logo } from "./components/Logo";
-import type { ArenaRecord } from "./api";
-import { caseFromArena, recordedCases, type CaseItem, type CaseStatus } from "./lib/cases";
+import { ThemePicker, isTheme, type Theme } from "./components/ThemePicker";
+import { caseFromArena, needsReview, recordedCases, type CaseItem, type CaseStatus } from "./lib/cases";
+import { NAV, type Page } from "./lib/pages";
 import { STORY, STORY_PAUSE_MS } from "./lib/story";
 import { Analyst } from "./pages/Analyst";
+import { Analytics } from "./pages/Analytics";
+import { Analyzer, type CaseContext } from "./pages/Analyzer";
 import { Architecture } from "./pages/Architecture";
 import { type Autoplay, type FinishedCase, type Scenario } from "./pages/Console";
 import { ConsoleArea } from "./pages/ConsoleArea";
+import { Dashboard } from "./pages/Dashboard";
 import { Evidence } from "./pages/Evidence";
-import { Overview } from "./pages/Overview";
+import { Geography } from "./pages/Geography";
+import { Landing } from "./pages/Landing";
+import { Network } from "./pages/Network";
+import { RiskProfile } from "./pages/RiskProfile";
+import { VoiceAI } from "./pages/VoiceAI";
 
-type Page = "overview" | "console" | "analyst" | "evidence" | "architecture";
-type Theme = "system" | "light" | "dark";
 
 interface StoryState {
   index: number;
@@ -22,16 +29,7 @@ interface StoryState {
 }
 
 const scenarios = demo as Scenario[];
-
-const PAGES: { id: Page; label: string }[] = [
-  { id: "overview", label: "Home" },
-  { id: "console", label: "Try a payment" },
-  { id: "analyst", label: "Review cases" },
-  { id: "evidence", label: "Evidence" },
-  { id: "architecture", label: "Architecture" },
-];
-
-const THEME_NEXT: Record<Theme, Theme> = { system: "light", light: "dark", dark: "system" };
+const PAGE_IDS = new Set<string>(NAV.map((entry) => entry.id));
 
 const STATUS_TRAIL: Record<CaseStatus, string> = {
   open: "",
@@ -42,10 +40,40 @@ const STATUS_TRAIL: Record<CaseStatus, string> = {
 
 const clock = () => new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit", second: "2-digit" });
 
+// Browser storage is a convenience only (remembered name and theme); the app works without it.
+function load(key: string): string | null {
+  try {
+    return localStorage.getItem(key);
+  } catch {
+    return null;
+  }
+}
+
+function save(key: string, value: string | null) {
+  try {
+    if (value === null) localStorage.removeItem(key);
+    else localStorage.setItem(key, value);
+  } catch {
+    /* storage unavailable: keep going */
+  }
+}
+
+// The address bar mirrors the page (#/dashboard), so refresh and back/forward work.
+function pageFromHash(): Page | null {
+  const id = window.location.hash.replace(/^#\/?/, "");
+  return PAGE_IDS.has(id) ? (id as Page) : null;
+}
+
 export function App() {
-  const [page, setPage] = useState<Page>("overview");
-  const [theme, setTheme] = useState<Theme>("system");
+  const [theme, setTheme] = useState<Theme>(() => { const saved = load("ps-theme"); return isTheme(saved) ? saved : "indigo"; });
+  const [user, setUser] = useState<string | null>(load("ps-user"));
+  const [page, setPageState] = useState<Page | null>(() => (load("ps-user") ? pageFromHash() : null));
+  const [signIn, setSignIn] = useState<{ then: Page } | null>(null);
+  const [nameDraft, setNameDraft] = useState("");
   const [cases, setCases] = useState<CaseItem[]>(recordedCases);
+  const [voice, setVoice] = useState<ConversationResult[]>([]);
+  const [health, setHealth] = useState<Health | null | undefined>(undefined);
+  const [focus, setFocus] = useState<{ id: string; nonce: number } | null>(null);
   const [story, setStory] = useState<StoryState | null>(null);
   const [demoRun, setDemoRun] = useState<Autoplay | null>(null);
   const counter = useRef(0);
@@ -53,14 +81,23 @@ export function App() {
 
   useEffect(() => {
     window.scrollTo(0, 0);
-    if (page !== "console") setDemoRun(null);
+    if (page !== "lab") setDemoRun(null);
   }, [page]);
 
   useEffect(() => {
-    const root = document.documentElement;
-    if (theme === "system") root.removeAttribute("data-theme");
-    else root.setAttribute("data-theme", theme);
+    document.documentElement.setAttribute("data-theme", theme);
+    save("ps-theme", theme);
   }, [theme]);
+
+  useEffect(() => {
+    const onHash = () => setPageState(user ? pageFromHash() : null);
+    window.addEventListener("hashchange", onHash);
+    return () => window.removeEventListener("hashchange", onHash);
+  }, [user]);
+
+  useEffect(() => {
+    void refreshHealth();
+  }, []);
 
   useEffect(() => {
     if (!story || story.phase !== "showing") return;
@@ -68,24 +105,63 @@ export function App() {
     return () => clearTimeout(timer);
   }, [story?.phase, story?.index, story?.nonce]);
 
+  async function refreshHealth() {
+    setHealth(undefined);
+    setHealth(await checkHealth());
+  }
+
+  function setPage(next: Page | null) {
+    setPageState(next);
+    const hash = next ? `#/${next}` : "#";
+    if (window.location.hash !== hash) window.history.pushState(null, "", hash);
+    window.scrollTo({ top: 0 });
+  }
+
+  function enter(target: Page = "dashboard") {
+    if (user) setPage(target);
+    else {
+      setNameDraft("");
+      setSignIn({ then: target });
+    }
+  }
+
+  function completeSignIn(event: FormEvent) {
+    event.preventDefault();
+    const name = nameDraft.trim().replace(/\s+/g, " ").slice(0, 40);
+    if (!name || !signIn) return;
+    setUser(name);
+    save("ps-user", name);
+    const target = signIn.then;
+    setSignIn(null);
+    setPage(target);
+  }
+
+  function signOut() {
+    setUser(null);
+    save("ps-user", null);
+    setStory(null);
+    setPage(null);
+  }
+
   function advance(current: StoryState): StoryState {
     return current.index + 1 < STORY.length
       ? { index: current.index + 1, nonce: current.nonce + 1, phase: "running" }
       : { ...current, phase: "done" };
   }
 
-  function addCase(finished: FinishedCase, source: CaseItem["source"] = "live"): string {
+  function addCase(finished: FinishedCase, context?: CaseContext, source: CaseItem["source"] = "live"): string {
     counter.current += 1;
     const { decision, scenario } = finished;
     const now = clock();
     const trail = [{ when: now, text: "Synthetic payment assessed by the FastAPI backend" }];
     if (finished.questions) {
-      trail.push({ when: now, text: "The guard asked the customer a question" });
+      trail.push({ when: now, text: "The engine asked the customer a question" });
       trail.push({ when: now, text: finished.answer ? "The customer answered" : "The customer declined to answer" });
     }
-    trail.push({ when: now, text: `The guard decided: ${decision.action} (risk ${decision.score})` });
+    if (decision.notice) trail.push({ when: now, text: decision.notice });
+    trail.push({ when: now, text: `The engine decided: ${decision.action} (risk ${decision.score})` });
     const item: CaseItem = {
-      id: `${source === "test" ? "TEST" : "LIVE"}-${String(counter.current).padStart(3, "0")}`,
+      id: `${source === "test" ? "TEST" : "TXN"}-${String(counter.current).padStart(3, "0")}`,
       title: scenario.title,
       source,
       when: now,
@@ -103,6 +179,10 @@ export function App() {
       execution: decision.execution,
       status: "open",
       trail,
+      device: context?.device || undefined,
+      location: context?.location || undefined,
+      channel: context?.channel ?? scenario.payment.channel,
+      timestamp: Date.now(),
     };
     setCases((old) => [item, ...old]);
     setReviewCaseId(item.id);
@@ -117,74 +197,122 @@ export function App() {
 
   function decide(id: string, status: CaseStatus) {
     setCases((old) =>
-      old.map((item) =>
-        item.id === id ? { ...item, status, trail: [...item.trail, { when: clock(), text: STATUS_TRAIL[status] }] } : item,
-      ),
+      old.map((item) => (item.id === id ? { ...item, status, trail: [...item.trail, { when: clock(), text: STATUS_TRAIL[status] }] } : item)),
     );
+  }
+
+  function openCase(id?: string) {
+    if (id) setFocus({ id, nonce: Date.now() });
+    else {
+      const latest = cases.find((item) => item.source !== "recorded");
+      setFocus(latest ? { id: latest.id, nonce: Date.now() } : null);
+    }
+    setPage("analyst");
   }
 
   function startStory() {
     setDemoRun(null);
-    setPage("console");
+    setPage("lab");
     setStory({ index: 0, nonce: Date.now(), phase: "running" });
   }
 
   function startDemo() {
     setStory(null);
     setDemoRun({ scenarioId: "d6", autoAnswer: false, nonce: Date.now() });
-    setPage("console");
+    setPage("lab");
   }
 
   const step = story && story.phase !== "done" ? STORY[story.index] : null;
   const autoplay = demoRun ?? (step && story ? { scenarioId: step.scenarioId, autoAnswer: step.autoAnswer, nonce: story.nonce } : null);
+  const pending = cases.filter((item) => item.source !== "recorded" && needsReview(item)).length;
+
+  const dialog = signIn && (
+    <div className="modal-back" role="presentation" onClick={() => setSignIn(null)}>
+      <div className="modal" role="dialog" aria-modal="true" aria-labelledby="signin-title" onClick={(event) => event.stopPropagation()}>
+        <Logo size={44} />
+        <h2 id="signin-title">Sign in</h2>
+        <p>Enter your name to open the command centre. It only personalises the workspace and stays in this browser.</p>
+        <form onSubmit={completeSignIn}>
+          <div>
+            <label className="f-label" htmlFor="analyst-name">Your name</label>
+            <input id="analyst-name" className="f-input" autoFocus maxLength={40} value={nameDraft} onChange={(event) => setNameDraft(event.target.value)} placeholder="Enter your name" />
+          </div>
+          <button className="btn primary" type="submit" disabled={!nameDraft.trim()}>Sign in <Icon name="arrow" size={16} /></button>
+          <button className="btn" type="button" onClick={() => setSignIn(null)}>Cancel</button>
+        </form>
+      </div>
+    </div>
+  );
+
+  if (!user || !page) {
+    return (
+      <>
+        <Landing signedIn={Boolean(user)} enter={() => enter("dashboard")} theme={theme} setTheme={setTheme} />
+        {dialog}
+      </>
+    );
+  }
 
   return (
-    <div className={`shell ${story ? "with-story" : ""}`}>
-      <p className="banner">
-        <Icon name="flask" size={14} /> Prototype preview · Made-up data · No real payment is made
-      </p>
-      <header className="top">
-        <button className="brand" onClick={() => setPage("overview")} aria-label="FinGuard AI, go to the overview">
-          <Logo size={38} />
-          <span>
-            <strong>FinGuard AI</strong>
-            <small>Financial crime prevention</small>
-          </span>
+    <div className={story ? "with-story" : ""}>
+      <p className="proto-strip"><Icon name="flask" size={13} /> Prototype · synthetic data · no real payment is made · a person confirms every hold</p>
+      <header className="topbar">
+        <div className="topbar-inner">
+        <button className="brand-mark" onClick={() => setPage("dashboard")} aria-label="PaySentinel AI dashboard">
+          <Logo size={34} />
+          <span><strong>PaySentinel AI</strong><small>Real-time fraud defence</small></span>
         </button>
-        <nav aria-label="Sections">
-          {PAGES.filter(entry => !["evidence", "architecture"].includes(entry.id)).map((entry) => (
-            <button key={entry.id} className={`tab ${page === entry.id ? "on" : ""}`} aria-current={page === entry.id ? "page" : undefined} onClick={() => setPage(entry.id)}>
-              {entry.label}
-              {entry.id === "analyst" && cases.some((item) => item.source !== "recorded") && <span className="count mono">{cases.filter((item) => item.source !== "recorded").length}</span>}
+        <nav className="topnav" aria-label="Command centre">
+          {NAV.filter((entry) => !entry.secondary).map((entry) => (
+            <button key={entry.id} className={page === entry.id ? "on" : ""} aria-current={page === entry.id ? "page" : undefined} onClick={() => { if (entry.id !== "lab") setStory(null); if (entry.id === "analyst") setFocus(null); setPage(entry.id); }}>
+              <Icon name={entry.icon} size={15} /> {entry.label}
+              {entry.id === "analyst" && pending > 0 && <span className="badge">{pending}</span>}
             </button>
           ))}
-          <details key={page} className={`more-navigation ${["evidence", "architecture"].includes(page) ? "active" : ""}`}>
-            <summary>Explore ▾</summary><div>
-              <button onClick={() => setPage("evidence")}>Evidence & test results</button>
-              <button onClick={() => setPage("architecture")}>Architecture</button>
-              <button onClick={startStory}>Guided story</button>
-            </div>
-          </details>
         </nav>
-        <div className="top-actions">
-          <button className="icon-button" onClick={() => setTheme(THEME_NEXT[theme])} aria-label={`Colour theme: ${theme}. Press to change.`} title={`Theme: ${theme}`}>
-            <Icon name={theme === "light" ? "sun" : theme === "dark" ? "moon" : "auto"} size={18} />
+        <div className="top-right">
+          <button className="icon-btn" onClick={startStory} aria-label="Play the guided demo" title="Guided demo"><Icon name="play" size={15} /></button>
+          <button className="icon-btn" onClick={() => openCase()} aria-label={`${pending} alerts awaiting review`} title="Alerts">
+            <Icon name="bell" size={16} />{pending > 0 && <span className="ping" />}
           </button>
+          <ThemePicker theme={theme} onChange={setTheme} />
+          <span className="user-chip"><span className="avatar">{user.slice(0, 1).toUpperCase()}</span><span>{user}</span></span>
+          <button className="icon-btn" onClick={signOut} aria-label="Sign out" title="Sign out"><Icon name="logout" size={16} /></button>
+        </div>
         </div>
       </header>
 
-      <main>
-        {page === "overview" && <Overview tryLive={() => setPage("console")} runDemo={startDemo} playStory={startStory} goTo={setPage} />}
-        {page === "console" && <ConsoleArea onReview={() => { setStory(null); setPage("analyst"); }} scenarios={scenarios} onCase={addCase} onArenaCase={addArenaCase} autoplay={autoplay} onFinished={() => { setDemoRun(null); setStory((current) => (current && current.phase === "running" ? { ...current, phase: "showing" } : current)); }} />}
-        {page === "analyst" && <Analyst initialCaseId={reviewCaseId} cases={cases} decide={decide} scenarios={scenarios} onTestCase={(finished) => addCase(finished, "test")} />}
+      <main className="app-main">
+        {page !== "dashboard" && <button className="back-link" onClick={() => setPage("dashboard")}><Icon name="back" size={12} /> Dashboard</button>}
+        {page === "dashboard" && <Dashboard user={user} cases={cases} health={health} refresh={refreshHealth} goTo={(p) => setPage(p)} />}
+        {page === "analyzer" && <Analyzer scenarios={scenarios} onCase={addCase} review={() => openCase()} />}
+        {page === "voice" && <VoiceAI onAnalysed={(result) => setVoice((old) => [result, ...old])} />}
+        {page === "analytics" && <Analytics cases={cases} voice={voice} health={health} refresh={refreshHealth} open={openCase} />}
+        {page === "network" && <Network scenarios={scenarios} onCase={addCase} />}
+        {page === "profile" && <RiskProfile user={user} cases={cases} open={openCase} goAnalyze={() => setPage("analyzer")} />}
+        {page === "geography" && <Geography cases={cases} goAnalyze={() => setPage("analyzer")} />}
+        {page === "analyst" && <Analyst initialCaseId={reviewCaseId} focusId={focus} cases={cases} decide={decide} scenarios={scenarios} onTestCase={(finished) => addCase(finished, undefined, "test")} />}
+        {page === "lab" && (
+          <>
+            <header className="page-head"><div><p className="kicker live"><span className="dot" /> Red team & scenario library</p><h1>Scenario <span className="grad">Lab</span></h1><p className="page-sub">Replay realistic scam and genuine payments against the live engine, or let the red team attack it.</p></div><div className="page-head-side"><button className="btn small" onClick={startDemo}><Icon name="activity" size={14} /> Run a payment demo</button><button className="btn small primary" onClick={startStory}><Icon name="play" size={14} /> Guided demo</button></div></header>
+            <ConsoleArea onReview={() => { setStory(null); openCase(); }} scenarios={scenarios} onCase={(finished) => { addCase(finished); }} onArenaCase={addArenaCase} autoplay={autoplay} onFinished={() => { setDemoRun(null); setStory((current) => (current && current.phase === "running" ? { ...current, phase: "showing" } : current)); }} />
+          </>
+        )}
         {page === "evidence" && <Evidence />}
         {page === "architecture" && <Architecture />}
       </main>
 
-      <footer className="foot">FinGuard AI · built for the Google Cloud AI Builder Cup 2026 · BFSI track</footer>
+      <footer className="app-foot">
+        <span>PaySentinel AI · fraud intelligence command centre</span>
+        <span className="chip-row">
+          <button className="btn link small" onClick={() => setPage("evidence")}>Evaluation evidence</button>
+          <button className="btn link small" onClick={() => setPage("architecture")}>Architecture</button>
+          <span>Recommendations only · synthetic data</span>
+        </span>
+      </footer>
 
       {story && (
-        <aside className="story" role="region" aria-label="Guided story" aria-live="polite">
+        <aside className="story" role="region" aria-label="Guided demo" aria-live="polite">
           {step ? (
             <>
               <div className="story-text">
@@ -200,24 +328,25 @@ export function App() {
                   <button className="ghost small-btn" onClick={() => setStory({ ...story, phase: "paused" })}><Icon name="pause" size={14} /> Pause</button>
                 )}
                 <button className="ghost small-btn" aria-label="Next step" onClick={() => setStory((current) => (current ? advance(current) : current))}><Icon name="next" size={14} /></button>
-                <button className="ghost small-btn" aria-label="Close the story" onClick={() => setStory(null)}><Icon name="close" size={14} /></button>
+                <button className="ghost small-btn" aria-label="Close the guided demo" onClick={() => setStory(null)}><Icon name="close" size={14} /></button>
               </div>
             </>
           ) : (
             <>
               <div className="story-text">
                 <span className="eyebrow">The end</span>
-                <strong>That is FinGuard AI</strong>
-                <p>Payment behaviour, scam signals, and synthetic account links inform a recommendation before money moves. A person stays in charge of every hold. The Evidence page shows what we tested and fixed.</p>
+                <strong>That is PaySentinel AI</strong>
+                <p>Payment behaviour, scam signals and account links inform a recommendation before money moves. A person stays in charge of every hold.</p>
               </div>
               <div className="story-controls">
-                <button className="ghost small-btn" onClick={() => { setStory(null); setPage("evidence"); }}>See the evidence</button>
+                <button className="ghost small-btn" onClick={() => { setStory(null); setPage("analytics"); }}>See the analytics</button>
                 <button className="ghost small-btn" onClick={() => setStory(null)}>Close</button>
               </div>
             </>
           )}
         </aside>
       )}
+      {dialog}
     </div>
   );
 }

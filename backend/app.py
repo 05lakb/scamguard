@@ -1,4 +1,4 @@
-"""The web server for the FinGuard AI prototype.
+"""The web server for the PaySentinel AI prototype.
 
 It serves the web pages and an assessment endpoint that checks a payment.
 It keeps no memory between requests: for the second round of a conversation, the
@@ -31,7 +31,7 @@ from pydantic import BaseModel, Field
 
 from backend import arena as arena_module
 from backend import gemini_client
-from backend.risk import clarify
+from backend.risk import clarify, conversation
 from backend.risk.decision import decide
 from backend.risk.evidence import load_scam_types, read_message
 from backend.service import assess_steps
@@ -77,6 +77,7 @@ class PaymentIn(BaseModel):
     payments_last_24h: int = Field(ge=0, le=50)
     on_live_call: bool
     remote_access_tool_running: bool
+    location_changed: bool = False
     # What the customer did over the last 15 days (all optional).
     payments_last_15d: Optional[int] = Field(default=None, ge=0, le=1000)
     spend_last_15d: Optional[float] = Field(default=None, ge=0, le=10_000_000)
@@ -114,6 +115,11 @@ class AssessIn(BaseModel):
     message: Optional[str] = Field(default=None, max_length=2000)
     questions: Optional[list[str]] = Field(default=None, max_length=2)
     answer: Optional[str] = Field(default=None, max_length=1000)
+
+
+class ConversationIn(BaseModel):
+    """A call transcript or chat pasted, uploaded as text, or captured by the browser's speech recogniser."""
+    transcript: str = Field(min_length=1, max_length=4000)
 
 
 class ArenaIn(BaseModel):
@@ -155,7 +161,7 @@ def visitor_key(request: Request):
 
 
 def create_app(reader=read_message, asker=clarify.ask_questions, arena_writer=None):
-    app = FastAPI(title="FinGuard AI", docs_url=None, redoc_url=None, openapi_url=None)
+    app = FastAPI(title="PaySentinel AI", docs_url=None, redoc_url=None, openapi_url=None)
     visitors = SlidingWindow(PER_VISITOR_PER_MINUTE, PER_VISITOR_PER_HOUR)
     gemini_budget = SlidingWindow(10**9, GEMINI_CALLS_PER_HOUR)  # one shared counter
     scam_types = load_scam_types()
@@ -190,7 +196,22 @@ def create_app(reader=read_message, asker=clarify.ask_questions, arena_writer=No
 
     @app.get("/api/health")
     def health():
-        return {"ok": True}
+        return {"ok": True, "ai_configured": gemini_client.is_configured()}
+
+    @app.post("/api/conversation")
+    def analyse_conversation(body: ConversationIn, request: Request):
+        """Voice AI: score a call transcript for social-engineering patterns."""
+        if not visitors.allow(visitor_key(request)):
+            return JSONResponse({"detail": "Too many requests. Please wait a minute and try again."},
+                                status_code=429)
+        use_ai = gemini_client.is_configured() and gemini_budget.allow("gemini")
+        started = time.monotonic()
+        result = conversation.analyse(body.transcript, reader=reader if use_ai else None, scam_types=scam_types)
+        if not use_ai and "notice" not in result:
+            result["notice"] = "AI reading is not configured or is paused, so this result uses phrase rules only."
+        result["duration_ms"] = int((time.monotonic() - started) * 1000)
+        log.info("conversation level=%s source=%s ms=%d", result["risk_level"], result["source"], result["duration_ms"])
+        return result
 
     def assessment_events(body: AssessIn):
         payment = body.payment.model_dump()

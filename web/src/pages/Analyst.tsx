@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { assessPayment, type AssessRequest } from "../api";
 import { AgentEvidence } from "../components/AgentEvidence";
 import type { FinishedCase, Scenario } from "./Console";
@@ -35,15 +35,23 @@ function partsAsBars(item: CaseItem): Contribution[] {
   ].filter((entry) => entry.points !== 0);
 }
 
-export function Analyst({ cases, decide, scenarios, onTestCase, initialCaseId }: {
+export function Analyst({ cases, decide, scenarios, onTestCase, initialCaseId, focusId }: {
   initialCaseId?: string | null;
+  // Another page asked to open a specific case (changes nonce each time).
+  focusId?: { id: string; nonce: number } | null;
   cases: CaseItem[];
   decide: (id: string, status: CaseStatus) => void;
   scenarios: Scenario[];
   onTestCase: (item: FinishedCase) => string;
 }) {
-  const [filter, setFilter] = useState<Filter>(initialCaseId ? "all" : "review");
-  const [selectedId, setSelectedId] = useState<string | null>(initialCaseId ?? null);
+  const [filter, setFilter] = useState<Filter>(initialCaseId || focusId ? "all" : "review");
+  const [selectedId, setSelectedId] = useState<string | null>(focusId?.id ?? initialCaseId ?? null);
+
+  useEffect(() => {
+    if (!focusId) return;
+    setFilter("all");
+    setSelectedId(focusId.id);
+  }, [focusId?.nonce]);
   const [scenarioId, setScenarioId] = useState("d2");
   const [running, setRunning] = useState(false);
   const [testStatus, setTestStatus] = useState("");
@@ -128,7 +136,7 @@ export function Analyst({ cases, decide, scenarios, onTestCase, initialCaseId }:
                       <span className="muted">{item.id} · {item.when} · {sourceLabel(item.source).toLowerCase()}</span>
                     </span>
                     <span className="case-side">
-                      <span className="mono">{item.amount.toLocaleString()}</span>
+                      <span className="mono">{item.amount.toLocaleString()} {item.currency}</span>
                       <span className={`pill ${item.action}`}>{ACTION_LABEL[item.action]}</span>
                     </span>
                   </button>
@@ -158,6 +166,7 @@ export function Analyst({ cases, decide, scenarios, onTestCase, initialCaseId }:
                     {selected.amount.toLocaleString()} {selected.currency} to {selected.payee}, {SEGMENT_LABEL(selected.segment)}
                   </p>
                   <p className="muted verdict-note">Status: {STATUS_TEXT[selected.status]}</p>
+                  {(selected.device || selected.location) && <p className="muted verdict-note">{[selected.device, selected.location].filter(Boolean).join(" · ")}</p>}
                 </div>
               </div>
 
@@ -207,7 +216,7 @@ export function Analyst({ cases, decide, scenarios, onTestCase, initialCaseId }:
       <section className="card scenario-tester" aria-label="Run one real backend test">
         <div>
           <h2 className="case-title">Run a single backend scenario</h2>
-          <p className="muted small">Choose synthetic input, then run the real FastAPI assessment. FraudShield/MuleNet rules run on the backend; ScamStop uses Gemini, cached Gemini output, or an explicitly labelled fallback.</p>
+          <p className="muted small">Choose synthetic input, then run the real FastAPI assessment. TxnGuard/MuleNet rules run on the backend; ScamStop uses Gemini, cached Gemini output, or an explicitly labelled fallback.</p>
         </div>
         <div className="scenario-controls">
           <label htmlFor="scenario-select">Test scenario</label>

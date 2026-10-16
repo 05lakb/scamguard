@@ -99,3 +99,14 @@ def test_eight_payments_to_one_new_payee_end_in_a_hold():
     last = payment(amount=450, is_new_payee=True, payee_account_age_days=45, payments_last_24h=7,
                    payments_last_15d=7, spend_last_15d=3150, payee_count_15d=7, payee_total_15d=3150)
     assert check_behaviour(last, {"typical_amount": 200, "segment": "family"})["suggestion"] == "hold"
+
+
+def test_unusual_location_adds_a_reason():
+    result = check_behaviour(payment(location_changed=True), CUSTOMER)
+    names = [signal["name"] for signal in result["signals"]]
+    assert names == ["location_change"]
+    assert result["score"] == 10
+
+
+def test_location_is_optional():
+    assert check_behaviour(payment(), CUSTOMER)["score"] == 0

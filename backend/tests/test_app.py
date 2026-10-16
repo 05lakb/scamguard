@@ -45,7 +45,9 @@ def make_client(reader=fake_reader):
 
 
 def test_health_check_answers():
-    assert make_client().get("/api/health").json() == {"ok": True}
+    body = make_client().get("/api/health").json()
+    assert body["ok"] is True
+    assert isinstance(body["ai_configured"], bool)
 
 
 def test_a_thin_note_on_an_unusual_payment_gets_questions():
@@ -123,3 +125,27 @@ def test_fallback_is_explicit_in_provenance():
     result = make_client(reader=broken).post("/api/assess", json=BODY).json()
     assert result["execution"]["message_mode"] == "fallback_payment_only"
     assert result["degraded"] is True
+
+
+def test_conversation_endpoint_uses_rules_without_ai(monkeypatch):
+    monkeypatch.setattr(app_module.gemini_client, "is_configured", lambda: False)
+    client = TestClient(app_module.create_app(reader=fake_reader, asker=fake_asker))
+    reply = client.post("/api/conversation", json={
+        "transcript": "This is your bank. Your account will be blocked. Share the OTP immediately."})
+    assert reply.status_code == 200
+    body = reply.json()
+    assert body["source"] == "rules"
+    assert body["risk_level"] == "high"
+    assert "notice" in body
+
+
+def test_conversation_endpoint_rejects_empty_text():
+    client = TestClient(app_module.create_app(reader=fake_reader, asker=fake_asker))
+    assert client.post("/api/conversation", json={"transcript": ""}).status_code == 422
+
+
+def test_location_change_is_accepted_and_scored():
+    client = TestClient(app_module.create_app(reader=fake_reader, asker=fake_asker))
+    body = {**BODY, "message": None, "payment": {**BODY["payment"], "location_changed": True}}
+    reply = client.post("/api/assess", json=body).json()
+    assert "location_change" in [signal["name"] for signal in reply["audit"]["behaviour_signals"]]

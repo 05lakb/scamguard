@@ -25,6 +25,11 @@ export interface CaseItem {
   parts?: { payment: number; message: number };
   status: CaseStatus;
   trail: { when: string; text: string }[];
+  // Context captured by the Transaction Analyzer (optional for other sources).
+  device?: string;
+  location?: string;
+  channel?: string;
+  timestamp?: number;
 }
 
 interface SeedRow {

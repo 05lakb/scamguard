@@ -58,6 +58,9 @@ export function checkBehaviour(payment: Payment, customer: Customer): BehaviourR
   if (!payment.device_known) {
     add("unknown_device", 10, "The payment came from a device we have not seen before.");
   }
+  if (payment.location_changed) {
+    add("location_change", 10, "The payment came from a location this customer does not usually use.");
+  }
   if (payment.payments_last_24h >= 2) {
     add("many_recent_payments", 10, "Several payments were made in the last 24 hours.");
   }

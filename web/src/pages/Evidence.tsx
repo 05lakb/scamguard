@@ -44,7 +44,7 @@ export function Evidence() {
     <button type="button" className="ghost" onClick={downloadReport}>Download payment-rules baseline</button>
     <section className="evidence-baseline" aria-labelledby="baseline-title">
       <div className="evidence-baseline-heading">
-        <div><p className="eyebrow">Recorded offline run</p><h2 id="baseline-title">FraudShield · Payment rules</h2></div>
+        <div><p className="eyebrow">Recorded offline run</p><h2 id="baseline-title">TxnGuard · Payment rules</h2></div>
         <span className="evidence-scope">Synthetic data only</span>
       </div>
       <p>This snapshot tests payment behaviour rules against {report.total_cases} made-up cases. It does not measure Gemini, MuleNet, follow-up conversations or the combined decision.</p>

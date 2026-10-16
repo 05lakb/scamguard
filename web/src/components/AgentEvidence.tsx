@@ -26,7 +26,7 @@ export function AgentEvidence({ item }: { item: CaseItem }) {
     <section className="agent-evidence" aria-label="Three agent investigation results">
       <h3 className="mini">AI investigation · actual evidence</h3>
       <div className="agent-result">
-        <div className="agent-result-head"><strong>FraudShield · Payment behaviour</strong><span className="pill">{audit.behaviour_score} points</span></div>
+        <div className="agent-result-head"><strong>TxnGuard · Payment behaviour</strong><span className="pill">{audit.behaviour_score} points</span></div>
         <ul className="agent-signal-list">
           {audit.behaviour_signals.length
             ? audit.behaviour_signals.map((signal, i) => <li key={`${signal.name}-${i}`}>{signal.reason} ({signal.points >= 0 ? "+" : ""}{signal.points})</li>)

@@ -47,6 +47,8 @@ def check_behaviour(payment, customer):
         _add(signals, "remote_access", 35, "A remote-control tool was running, so someone else may be guiding or controlling the screen.")
     if not payment["device_known"]:
         _add(signals, "unknown_device", 10, "The payment came from a device we have not seen before.")
+    if payment.get("location_changed"):
+        _add(signals, "location_change", 10, "The payment came from a location this customer does not usually use.")
     if payment["payments_last_24h"] >= 2:
         _add(signals, "many_recent_payments", 10, "Several payments were made in the last 24 hours.")
     if payment["payee_type"] == "crypto_exchange":

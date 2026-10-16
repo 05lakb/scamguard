@@ -73,9 +73,21 @@ def test_results_show_the_decision_but_never_the_persona_or_prompts():
     record = next(event["record"] for event in events if event["type"] == "scenario")
     for key in ("category", "label", "final_action", "reasons", "amount", "payee"):
         assert key in record
-    text = json.dumps(events)
-    for hidden in ("persona", "facts", "voice", "prompt", "You are role-playing"):
-        assert hidden not in text
+    # Hidden fields must never be sent as keys anywhere in the stream. Checking whole keys (not substrings)
+    # avoids false alarms from public text such as an FTC page about "impersonators".
+    def keys(value):
+        if isinstance(value, dict):
+            for key, inner in value.items():
+                yield key
+                yield from keys(inner)
+        elif isinstance(value, list):
+            for inner in value:
+                yield from keys(inner)
+
+    sent_keys = set(keys(events))
+    for hidden in ("persona", "facts", "voice", "prompt"):
+        assert hidden not in sent_keys
+    assert "You are role-playing" not in json.dumps(events)
 
 
 def test_the_summary_counts_add_up():

@@ -26,6 +26,7 @@ export const SIGNAL_LABEL: Record<string, string> = {
   on_live_call: "On a phone call",
   remote_access: "Remote-control tool running",
   unknown_device: "New device",
+  location_change: "Unusual location",
   many_recent_payments: "Several payments in 24 hours",
   crypto_payee: "Paying a crypto exchange",
   heavy_spend_15d: "Heavy spending over 15 days",

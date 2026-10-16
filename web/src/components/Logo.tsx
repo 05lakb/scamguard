@@ -1,9 +1,16 @@
+// PaySentinel AI mark: a shield with a pulse line on a tile filled with the current theme's gradient.
 export function Logo({ size = 40 }: { size?: number }) {
   return (
-    <svg width={size} height={size} viewBox="0 0 512 512" role="img" aria-label="FinGuard AI logo">
-      <path d="M256 36 438 106v144c0 111-73 187-182 226C147 437 74 361 74 250V106Z" fill="#17203A" />
-      <path d="M256 78 399 133v115c0 82-50 145-143 182-93-37-143-100-143-182V133Z" fill="none" stroke="#8FAAFF" strokeWidth="14" />
-      <path d="m161 270 62 62 128-145" fill="none" stroke="#FF9B83" strokeWidth="28" strokeLinecap="round" strokeLinejoin="round" />
+    <svg width={size} height={size} viewBox="0 0 64 64" role="img" aria-label="PaySentinel AI logo">
+      <defs>
+        <linearGradient id="ps-grad" x1="0" y1="0" x2="1" y2="1">
+          <stop offset="0" style={{ stopColor: "var(--accent)" }} />
+          <stop offset="1" style={{ stopColor: "var(--accent-2)" }} />
+        </linearGradient>
+      </defs>
+      <rect x="2" y="2" width="60" height="60" rx="16" fill="url(#ps-grad)" />
+      <path d="M32 12 47 18v12c0 10-6.5 17-15 21-8.5-4-15-11-15-21V18Z" fill="none" stroke="#ffffff" strokeOpacity="0.9" strokeWidth="3" strokeLinejoin="round" />
+      <path d="M19 33h7l3-7 5 13 3-6h8" fill="none" stroke="#ffffff" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" />
     </svg>
   );
 }

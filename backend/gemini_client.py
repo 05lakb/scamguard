@@ -64,6 +64,13 @@ def failure_reason(error):
     return "unavailable"
 
 
+def is_configured():
+    """True when a Gemini key or a Vertex AI project is set, so AI reading can be attempted."""
+    if USE_VERTEX:
+        return bool(os.getenv("GOOGLE_CLOUD_PROJECT"))
+    return bool(os.getenv("GEMINI_API_KEY"))
+
+
 def get_client():
     """Return the shared Gemini client, creating it the first time."""
     global _client

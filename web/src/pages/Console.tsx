@@ -241,7 +241,7 @@ export function Console({ scenarios, onCase, autoplay, onFinished, onReview }: P
     </div>
 
     {(stage === "asked" || (stage === "busy" && first)) && <section className="card simple-followup" aria-labelledby="followup-heading">
-      <p className="eyebrow">One more detail</p><h2 id="followup-heading">FinGuard needs the customer's answer</h2>
+      <p className="eyebrow">One more detail</p><h2 id="followup-heading">PaySentinel needs the customer's answer</h2>
       <p>{first?.questions?.join(" ")}</p>
       <label className="field" htmlFor="answer">Customer's answer</label><textarea id="answer" rows={2} maxLength={1000} value={answer} disabled={stage === "busy"} onChange={event => setAnswer(event.target.value)} />
       <div className="row"><button className="primary" disabled={stage === "busy"} onClick={() => sendAnswer(answer)}>{stage === "busy" ? "Checking answer…" : "Send answer"}</button>
@@ -265,7 +265,7 @@ export function Console({ scenarios, onCase, autoplay, onFinished, onReview }: P
           {sentAnswer !== null && <p className="small">Customer answered: {sentAnswer || "Declined to answer"}</p>}
           <details><summary>Full audit record</summary><pre>{JSON.stringify(result.audit, null, 2)}</pre></details>
         </details>
-      </> : <><h2 id="result-heading">{stage === "asked" ? "Waiting for the customer's answer" : stage === "busy" ? "Assessment in progress" : error ? "No final recommendation received" : "Your recommendation will appear here"}</h2><p className="muted">{error || "FinGuard will explain whether to allow, warn or recommend a hold, and why."}</p></>}
+      </> : <><h2 id="result-heading">{stage === "asked" ? "Waiting for the customer's answer" : stage === "busy" ? "Assessment in progress" : error ? "No final recommendation received" : "Your recommendation will appear here"}</h2><p className="muted">{error || "PaySentinel will explain whether to allow, warn or recommend a hold, and why."}</p></>}
     </section>
 
     <details className="simple-technical"><summary>See live backend activity <span>Stage map · findings · event feed</span></summary>

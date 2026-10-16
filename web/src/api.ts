@@ -197,3 +197,54 @@ export async function streamAssessment(request: AssessRequest, onEvent: (event: 
     if (reader) { try { await reader.cancel(); } catch { /* transport already closed */ } reader.releaseLock(); }
   }
 }
+
+// ---------- Voice AI: call transcript analysis ----------
+
+export interface ConversationIndicator {
+  tactic: string;
+  label: string;
+  points: number;
+}
+
+export interface ConversationResult {
+  scam_likelihood: number;
+  risk_level: "low" | "medium" | "high";
+  tactics: string[];
+  indicators: ConversationIndicator[];
+  suspicious_phrases: string[];
+  explanation: string;
+  recommendation: string;
+  matched_typology: string;
+  orders_found_in_message: string[];
+  source: "gemini" | "rules";
+  notice?: string;
+  duration_ms?: number;
+}
+
+export async function analyseConversation(transcript: string): Promise<ConversationResult> {
+  const response = await fetch("/api/conversation", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ transcript }),
+  });
+  if (response.status === 429) throw new Error("Too many requests from this device. Please wait a minute and try again.");
+  if (!response.ok) throw new Error("The conversation could not be analysed. Please try again.");
+  return (await response.json()) as ConversationResult;
+}
+
+// ---------- service health ----------
+
+export interface Health {
+  ok: boolean;
+  ai_configured?: boolean;
+}
+
+export async function checkHealth(): Promise<Health | null> {
+  try {
+    const response = await fetch("/api/health");
+    if (!response.ok) return null;
+    return (await response.json()) as Health;
+  } catch {
+    return null;
+  }
+}

@@ -15,6 +15,8 @@ export interface Payment {
   payments_last_24h: number;
   on_live_call: boolean;
   remote_access_tool_running: boolean;
+  // Optional: the payment came from a location the customer does not usually use.
+  location_changed?: boolean;
   // What the customer did over the last 15 days (all optional).
   payments_last_15d?: number | null;
   spend_last_15d?: number | null;

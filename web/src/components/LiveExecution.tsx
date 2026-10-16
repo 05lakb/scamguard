@@ -4,13 +4,13 @@ import { Icon, type IconName } from "./Icon";
 
 const STEPS: { stage: AssessmentStage; title: string; role: string; icon: IconName }[] = [
   { stage: "request", title: "Payment received", role: "Validate input", icon: "user" },
-  { stage: "behaviour", title: "FraudShield", role: "Payment rules", icon: "chart" },
+  { stage: "behaviour", title: "TxnGuard", role: "Payment rules", icon: "chart" },
   { stage: "network", title: "MuleNet", role: "Account-link rules", icon: "server" },
   { stage: "message", title: "ScamStop", role: "Gemini analysis", icon: "brain" },
   { stage: "decision", title: "Recommendation", role: "Combine evidence", icon: "shield" },
 ];
 const LABELS = { running: "Running", complete: "Complete", skipped: "Not used", failed: "Unavailable", waiting: "Waiting", stopped: "Interrupted" };
-const names: Record<AssessmentStage, string> = { request: "Request", behaviour: "FraudShield", network: "MuleNet", message: "ScamStop", clarify: "Follow-up", decision: "Decision" };
+const names: Record<AssessmentStage, string> = { request: "Request", behaviour: "TxnGuard", network: "MuleNet", message: "ScamStop", clarify: "Follow-up", decision: "Decision" };
 
 export function LiveExecution({ events, busy, error }: { events: AssessmentEvent[]; busy: boolean; error: string }) {
   const [selection, setSelection] = useState<AssessmentStage | null>(null);

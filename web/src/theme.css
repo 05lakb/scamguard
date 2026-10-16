@@ -2090,8 +2090,14 @@ input, select, textarea {
   .land-nav .actions .btn:not(.primary) { display: none; }
 }
 
-.with-story {
-  padding-bottom: 190px;
+/* Guided demo card: sits above the lab panels and stays under the top bar while scrolling. */
+.story.story-docked {
+  position: sticky;
+  top: 66px;
+  z-index: 25;
+  max-width: none;
+  margin: 0 0 20px;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.18);
 }
 
 /* ---------- colour theme picker ---------- */

@@ -11,7 +11,7 @@ import { Analyst } from "./pages/Analyst";
 import { Analytics } from "./pages/Analytics";
 import { Analyzer, type CaseContext } from "./pages/Analyzer";
 import { Architecture } from "./pages/Architecture";
-import { type Autoplay, type FinishedCase, type Scenario } from "./pages/Console";
+import { type FinishedCase, type Scenario } from "./pages/Console";
 import { ConsoleArea } from "./pages/ConsoleArea";
 import { Dashboard } from "./pages/Dashboard";
 import { Evidence } from "./pages/Evidence";
@@ -73,13 +73,11 @@ export function App() {
   const [health, setHealth] = useState<Health | null | undefined>(undefined);
   const [focus, setFocus] = useState<{ id: string; nonce: number } | null>(null);
   const [story, setStory] = useState<StoryState | null>(null);
-  const [demoRun, setDemoRun] = useState<Autoplay | null>(null);
   const counter = useRef(0);
   const [reviewCaseId, setReviewCaseId] = useState<string | null>(null);
 
   useEffect(() => {
     window.scrollTo(0, 0);
-    if (page !== "lab") setDemoRun(null);
   }, [page]);
 
   useEffect(() => {
@@ -209,19 +207,12 @@ export function App() {
   }
 
   function startStory() {
-    setDemoRun(null);
     setPage("lab");
     setStory({ index: 0, nonce: Date.now(), phase: "running" });
   }
 
-  function startDemo() {
-    setStory(null);
-    setDemoRun({ scenarioId: "d6", autoAnswer: false, nonce: Date.now() });
-    setPage("lab");
-  }
-
   const step = story && story.phase !== "done" ? STORY[story.index] : null;
-  const autoplay = demoRun ?? (step && story ? { scenarioId: step.scenarioId, autoAnswer: step.autoAnswer, nonce: story.nonce } : null);
+  const autoplay = step && story ? { scenarioId: step.scenarioId, autoAnswer: step.autoAnswer, nonce: story.nonce } : null;
   const pending = cases.filter((item) => item.source !== "recorded" && needsReview(item)).length;
 
   const dialog = signIn && (
@@ -252,7 +243,7 @@ export function App() {
   }
 
   return (
-    <div className={story ? "with-story" : ""}>
+    <div>
       <p className="proto-strip"><Icon name="flask" size={13} /> Prototype · synthetic data · no real payment is made · a person confirms every hold</p>
       <header className="topbar">
         <div className="topbar-inner">
@@ -290,8 +281,43 @@ export function App() {
         {page === "analyst" && <Analyst initialCaseId={reviewCaseId} focusId={focus} cases={cases} decide={decide} scenarios={scenarios} onTestCase={(finished) => addCase(finished, undefined, "test")} />}
         {page === "lab" && (
           <>
-            <header className="page-head"><div><p className="kicker live"><span className="dot" /> Red team & scenario library</p><h1>Scenario <span className="grad">Lab</span></h1><p className="page-sub">Replay realistic scam and genuine payments against the live engine, or let the red team attack it.</p></div><div className="page-head-side"><button className="btn small" onClick={startDemo}><Icon name="activity" size={14} /> Run a payment demo</button><button className="btn small primary" onClick={startStory}><Icon name="play" size={14} /> Guided demo</button></div></header>
-            <ConsoleArea onReview={() => { setStory(null); openCase(); }} scenarios={scenarios} onCase={(finished) => { addCase(finished); }} onArenaCase={addArenaCase} autoplay={autoplay} onFinished={() => { setDemoRun(null); setStory((current) => (current && current.phase === "running" ? { ...current, phase: "showing" } : current)); }} />
+            <header className="page-head"><div><p className="kicker live"><span className="dot" /> Red team & scenario library</p><h1>Scenario <span className="grad">Lab</span></h1><p className="page-sub">Replay realistic scam and genuine payments against the live engine, or let the red team attack it.</p></div><div className="page-head-side"><button className="btn small primary" onClick={startStory}><Icon name="play" size={14} /> Guided demo</button></div></header>
+            {story && (
+              <aside className="story story-docked" role="region" aria-label="Guided demo" aria-live="polite">
+                {step ? (
+                  <>
+                    <div className="story-text">
+                      <span className="eyebrow">Step {story.index + 1} of {STORY.length}</span>
+                      <strong>{step.title}</strong>
+                      <p>{step.text}</p>
+                    </div>
+                    <div className="story-controls">
+                      <button className="ghost small-btn" aria-label="Previous step" disabled={story.index === 0} onClick={() => setStory({ index: story.index - 1, nonce: Date.now(), phase: "running" })}><Icon name="back" size={14} /></button>
+                      {story.phase === "paused" ? (
+                        <button className="ghost small-btn" onClick={() => setStory({ ...story, phase: "showing" })}><Icon name="play" size={14} /> Resume</button>
+                      ) : (
+                        <button className="ghost small-btn" onClick={() => setStory({ ...story, phase: "paused" })}><Icon name="pause" size={14} /> Pause</button>
+                      )}
+                      <button className="ghost small-btn" aria-label="Next step" onClick={() => setStory((current) => (current ? advance(current) : current))}><Icon name="next" size={14} /></button>
+                      <button className="ghost small-btn" aria-label="Close the guided demo" onClick={() => setStory(null)}><Icon name="close" size={14} /></button>
+                    </div>
+                  </>
+                ) : (
+                  <>
+                    <div className="story-text">
+                      <span className="eyebrow">The end</span>
+                      <strong>That is PaySentinel AI</strong>
+                      <p>Payment behaviour, scam signals and account links inform a recommendation before money moves. A person stays in charge of every hold.</p>
+                    </div>
+                    <div className="story-controls">
+                      <button className="ghost small-btn" onClick={() => { setStory(null); setPage("analytics"); }}>See the analytics</button>
+                      <button className="ghost small-btn" onClick={() => setStory(null)}>Close</button>
+                    </div>
+                  </>
+                )}
+              </aside>
+            )}
+            <ConsoleArea onReview={() => { setStory(null); openCase(); }} scenarios={scenarios} onCase={(finished) => { addCase(finished); }} onArenaCase={addArenaCase} autoplay={autoplay} onFinished={() => { setStory((current) => (current && current.phase === "running" ? { ...current, phase: "showing" } : current)); }} />
           </>
         )}
         {page === "evidence" && <Evidence />}
@@ -307,41 +333,6 @@ export function App() {
         </span>
       </footer>
 
-      {story && (
-        <aside className="story" role="region" aria-label="Guided demo" aria-live="polite">
-          {step ? (
-            <>
-              <div className="story-text">
-                <span className="eyebrow">Step {story.index + 1} of {STORY.length}</span>
-                <strong>{step.title}</strong>
-                <p>{step.text}</p>
-              </div>
-              <div className="story-controls">
-                <button className="ghost small-btn" aria-label="Previous step" disabled={story.index === 0} onClick={() => setStory({ index: story.index - 1, nonce: Date.now(), phase: "running" })}><Icon name="back" size={14} /></button>
-                {story.phase === "paused" ? (
-                  <button className="ghost small-btn" onClick={() => setStory({ ...story, phase: "showing" })}><Icon name="play" size={14} /> Resume</button>
-                ) : (
-                  <button className="ghost small-btn" onClick={() => setStory({ ...story, phase: "paused" })}><Icon name="pause" size={14} /> Pause</button>
-                )}
-                <button className="ghost small-btn" aria-label="Next step" onClick={() => setStory((current) => (current ? advance(current) : current))}><Icon name="next" size={14} /></button>
-                <button className="ghost small-btn" aria-label="Close the guided demo" onClick={() => setStory(null)}><Icon name="close" size={14} /></button>
-              </div>
-            </>
-          ) : (
-            <>
-              <div className="story-text">
-                <span className="eyebrow">The end</span>
-                <strong>That is PaySentinel AI</strong>
-                <p>Payment behaviour, scam signals and account links inform a recommendation before money moves. A person stays in charge of every hold.</p>
-              </div>
-              <div className="story-controls">
-                <button className="ghost small-btn" onClick={() => { setStory(null); setPage("analytics"); }}>See the analytics</button>
-                <button className="ghost small-btn" onClick={() => setStory(null)}>Close</button>
-              </div>
-            </>
-          )}
-        </aside>
-      )}
       {dialog}
     </div>
   );

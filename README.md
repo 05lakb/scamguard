@@ -156,7 +156,7 @@ Open http://localhost:5173. The website forwards `/api` calls to the API automat
 5. **Cases:** every warning and hold from step 2 is waiting here. Open one and record a decision, or use **Run test scenario** to send a library scenario to the backend.
 6. **Risk Profile:** the overall risk score, why it is that high, and every device, beneficiary and location the customer used.
 7. **Analytics:** totals, top signals, analyst feedback and risk by location update from the transactions you analysed.
-8. **Scenario Lab:** press **Run a payment demo** to watch each backend check stream live, or **Guided demo** for the full story.
+8. **Scenario Lab:** pick a sample case and press **Check**, or press **Guided demo** for the full five-step story. The step card sits above the panels and stays under the top bar as you scroll.
 9. Use the palette button in the top bar to switch between the four colour themes.
 
 All data is synthetic. No money moves, and a person confirms every hold.

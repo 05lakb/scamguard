@@ -2,7 +2,7 @@
 // Everything here is computed from real assessment results; nothing is invented.
 
 import type { CaseItem } from "./cases";
-import { SIGNAL_LABEL } from "./labels";
+import { networkLabel, SIGNAL_LABEL } from "./labels";
 
 export type Level = "high" | "medium" | "low";
 
@@ -37,7 +37,7 @@ export function signalsOf(item: CaseItem): string[] {
   const audit = item.audit;
   if (audit) {
     const labels = audit.behaviour_signals.map((signal) => SIGNAL_LABEL[signal.name] ?? signal.name.replaceAll("_", " "));
-    for (const signal of audit.network_signals ?? []) labels.push(`Mule network: ${signal.name.replaceAll("_", " ")}`);
+    for (const signal of audit.network_signals ?? []) labels.push(`MuleNet: ${networkLabel(signal.name)}`);
     const reading = audit.message_reading;
     if (reading && audit.message_points > 0) {
       for (const tactic of reading.tactics) if (tactic !== "none") labels.push(`Scam tactic: ${tactic.replaceAll("_", " ")}`);

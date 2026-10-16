@@ -48,7 +48,12 @@ export function AgentEvidence({ item }: { item: CaseItem }) {
           </ul>
         ) : <p className="muted small">No account graph was provided for this assessment. No network-risk claim is made.</p>}
       </div>
-      {item.execution && <ExecutionSummary execution={item.execution} />}
+      {item.execution && (
+        <details className="tech-details">
+          <summary>Technical run details</summary>
+          <ExecutionSummary execution={item.execution} />
+        </details>
+      )}
     </section>
   );
 }

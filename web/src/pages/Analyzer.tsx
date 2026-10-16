@@ -8,7 +8,7 @@ import type { AccountNetwork, Payment } from "../core/types";
 import type { CaseItem, CaseStatus } from "../lib/cases";
 import { contributions } from "../lib/contrib";
 import { levelOf, money } from "../lib/insights";
-import { ACTION_LABEL, ACTION_NOTE, SEGMENT_LABEL } from "../lib/labels";
+import { ACTION_LABEL, ACTION_NOTE, networkLabel, SEGMENT_LABEL } from "../lib/labels";
 import type { FinishedCase, Scenario } from "./Console";
 
 export interface CaseContext {
@@ -257,7 +257,6 @@ export function Analyzer({ scenarios, cases, onCase, decide }: Props) {
       <div className="analyzer">
         <section className="panel">
           <PanelHead kicker="Step 01" title="Transaction context" icon="pulse" />
-          <p className="muted small" style={{ marginTop: -8 }}>Provide the signals available at payment time.</p>
 
           <label className="f-label" htmlFor="amount">Transaction amount</label>
           <div className="money-input">
@@ -282,21 +281,18 @@ export function Analyzer({ scenarios, cases, onCase, decide }: Props) {
             <div>
               <label className="f-label" htmlFor="device"><Icon name="device" size={13} /> Device ID</label>
               <input id="device" className="f-input" maxLength={60} value={form.device} onChange={(e) => set("device", e.target.value)} />
-              <span className="f-help">Shown on the risk profile.</span>
             </div>
             <div>
               <label className="f-label" htmlFor="loc"><Icon name="map" size={13} /> Transaction location</label>
               <input id="loc" className="f-input" maxLength={60} value={form.location} onChange={(e) => set("location", e.target.value)} />
-              <span className="f-help">Used for geographic intelligence.</span>
             </div>
             <div>
               <label className="f-label" htmlFor="age">Beneficiary account age (days)</label>
               <input id="age" className="f-input" inputMode="numeric" value={form.accountAge} onChange={(e) => set("accountAge", e.target.value.replace(/\D/g, ""))} />
             </div>
             <div>
-              <label className="f-label" htmlFor="time"><Icon name="moon" size={13} /> Payment time</label>
+              <label className="f-label" htmlFor="time" title="01:00–05:59 counts as a night payment"><Icon name="moon" size={13} /> Payment time</label>
               <input id="time" type="time" className="f-input" value={form.time} onChange={(e) => set("time", e.target.value)} />
-              <span className="f-help">01:00–05:59 counts as a night payment.</span>
             </div>
           </div>
 
@@ -314,13 +310,12 @@ export function Analyzer({ scenarios, cases, onCase, decide }: Props) {
           </div>
 
           <p className="sub-kicker">Receiving account (MuleNet)</p>
-          <label className="f-label" htmlFor="network">Account-network data for this beneficiary</label>
+          <label className="f-label" htmlFor="network">Who this beneficiary has been sending to and receiving from</label>
           <select id="network" className="f-select" value={form.network} onChange={(e) => set("network", e.target.value as NetworkPattern)}>
             <option value="none">{NETWORK_LABEL.none}</option>
             <option value="ring">{NETWORK_LABEL.ring}</option>
             <option value="clean">{NETWORK_LABEL.clean}</option>
           </select>
-          <span className="f-help">In production this comes from the bank's own transfer records. Here you choose a synthetic pattern.</span>
 
           <p className="sub-kicker">Customer profile</p>
           <div className="form-grid">
@@ -336,9 +331,8 @@ export function Analyzer({ scenarios, cases, onCase, decide }: Props) {
               <input id="typical" className="f-input" inputMode="numeric" value={form.typical} onChange={(e) => set("typical", e.target.value.replace(/\D/g, ""))} />
             </div>
             <div className="span-2">
-              <label className="f-label" htmlFor="note"><Icon name="brain" size={13} /> What the customer says this payment is for (optional)</label>
+              <label className="f-label" htmlFor="note"><Icon name="brain" size={13} /> What the customer says this payment is for</label>
               <textarea id="note" className="f-area" style={{ minHeight: 90, fontFamily: "var(--font)" }} maxLength={2000} value={form.note} onChange={(e) => set("note", e.target.value)} placeholder="e.g. Paying my landlord the first month's rent. I met him and signed the agreement." />
-              <span className="f-help">Read by Gemini when configured. The note is data, never an instruction.</span>
             </div>
           </div>
 
@@ -370,10 +364,11 @@ export function Analyzer({ scenarios, cases, onCase, decide }: Props) {
                 </div>
               </div>
 
-              <div className="subscores">
-                <div><span className="muted">Behaviour engine</span><strong className="mono">{shown.audit.behaviour_score}/100</strong></div>
-                <div><span className="muted">Message reading</span><strong className="mono">{shown.audit.message_reading ? `${shown.audit.message_points > 0 ? "+" : ""}${shown.audit.message_points}` : "Not requested"}</strong></div>
-                <div><span className="muted">Decision thresholds</span><strong className="mono">warn {shown.audit.thresholds.warn} · hold {shown.audit.thresholds.hold}</strong></div>
+              <div className="engine-bars" aria-label="Score from each engine">
+                <EngineBar name="TxnGuard" what="Payment behaviour" value={shown.audit.behaviour_score} />
+                <EngineBar name="ScamStop" what="Customer's words" value={shown.audit.message_reading ? shown.audit.message_reading.scam_likelihood : null} empty="No note" />
+                <EngineBar name="MuleNet" what="Receiving account" value={shown.audit.network_available ? shown.audit.network_score ?? 0 : null} empty="No data" />
+                <p className="muted small">Warn from {shown.audit.thresholds.warn} · hold from {shown.audit.thresholds.hold}</p>
               </div>
 
               {result?.notice && <p className="ai-note warn"><Icon name="warn" size={16} /> {result.notice}</p>}
@@ -430,6 +425,17 @@ export function Analyzer({ scenarios, cases, onCase, decide }: Props) {
   );
 }
 
+
+function EngineBar({ name, what, value, empty }: { name: string; what: string; value: number | null; empty?: string }) {
+  const tone = value === null ? "" : value >= 70 ? "red" : value >= 40 ? "amber" : "green";
+  return (
+    <div className="engine-bar">
+      <span><strong>{name}</strong> <span className="muted">{what}</span></span>
+      <strong className="mono">{value === null ? empty : `${value}/100`}</strong>
+      <div className="dist-track"><div className={`dist-fill tone-${tone || "green"}`} style={{ width: `${value ?? 0}%` }} /></div>
+    </div>
+  );
+}
 
 // ---------- everything about this one transaction, on the same page ----------
 
@@ -548,7 +554,6 @@ function Investigation({ result, used, caseId, cases, decide }: {
             {used.remote && <span className="act hold">Remote-access app</span>}
             {!used.locationChanged && !used.newDevice && !used.newPayee && !used.onCall && !used.remote && <span className="act allow">No behavioural flags</span>}
           </div>
-          <p className="muted small" style={{ margin: "12px 0 0" }}>History covers transactions analysed in this browser session.</p>
         </section>
       </div>
 
@@ -558,12 +563,20 @@ function Investigation({ result, used, caseId, cases, decide }: {
         </PanelHead>
         {network ? (
           <div className="net-split">
-            <div><NetworkGraph graph={network} markerId="txn-net-arrow" /></div>
+            <div><NetworkGraph graph={network} markerId="txn-net-arrow" payment={{ label: `This payment · ${money(amount, used.currency)}` }} /></div>
             <div>
+              <p className="sub-kicker" style={{ marginTop: 0 }}>How to read it</p>
+              <ul className="read-guide">
+                <li><span className="node-key you">You</span> The customer making this payment.</li>
+                <li><span className="node-key payee">P</span> The beneficiary being paid.</li>
+                <li><span className="node-key">A</span> Left: who else paid it in the last 24 h. Right: where it sent money on.</li>
+                <li><span className="node-key flagged">!</span> An account already flagged as a mule.</li>
+              </ul>
+              <p className="sub-kicker">What MuleNet found</p>
               <ul className="reason-list">
                 {netSignals.length === 0 && <li className="calm"><Icon name="allow" size={16} /> No mule-network pattern around this beneficiary.</li>}
                 {netSignals.map((signal) => (
-                  <li key={signal.name}><Icon name="warn" size={16} /><span>{signal.name.replaceAll("_", " ")}<br /><small className="muted">{signal.reason}</small></span><span className="pts">+{signal.points}</span></li>
+                  <li key={signal.name}><Icon name="warn" size={16} /><span>{networkLabel(signal.name)}<br /><small className="muted">{signal.reason}</small></span><span className="pts">+{signal.points}</span></li>
                 ))}
               </ul>
               <p className="muted small" style={{ margin: 0 }}>{NETWORK_LABEL[used.network]}. Synthetic test data, not real bank records.</p>

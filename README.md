@@ -14,6 +14,7 @@
 | Transactions | Analyse one account-to-account transfer and see the whole investigation on one page: score and ranked reasons, the analyst decision (approve / hold / escalate) with audit trail, customer, device and location context, and the receiving-account network scored by MuleNet | `POST /api/assess` |
 | Voice AI | Live call detection (browser speech recognition), transcript upload (.txt/.srt/.vtt) or paste; scam-risk score, tactics, suspicious phrases, recommended action | `POST /api/conversation` |
 | Cases | Review queue for every warning and hold, with **Run test scenario** against the real backend | `POST /api/assess` |
+| Risk Profile | One customer's overall risk score with reasons, devices, beneficiaries, locations, transaction history (filter by decision) and fraud alerts | session cases |
 | Analytics | KPIs, risk distribution, decisions, top signals, analyst feedback, risk by location, recent assessments across all transactions | session cases |
 | Scenario Lab | Scenario library with live streamed checks, guided demo and the red-team arena | `POST /api/assess/stream`, `POST /api/arena` |
 | Evidence, Architecture | Evaluation results and how the system fits together (footer links) | – |
@@ -153,9 +154,10 @@ Open http://localhost:5173. The website forwards `/api` calls to the API automat
 3. Choose *Everyday payment* and analyse again. Expect *allow* with no risk signals.
 4. **Voice AI:** choose *Bank OTP call* and press **Analyse for phishing**. Expect high risk, the tactics found and the suspicious sentences. Live microphone detection works in Chrome and Edge.
 5. **Cases:** every warning and hold from step 2 is waiting here. Open one and record a decision, or use **Run test scenario** to send a library scenario to the backend.
-6. **Analytics:** totals, top signals, analyst feedback and risk by location update from the transactions you analysed.
-7. **Scenario Lab:** press **Run a payment demo** to watch each backend check stream live, or **Guided demo** for the full story.
-8. Use the palette button in the top bar to switch between the four colour themes.
+6. **Risk Profile:** the overall risk score, why it is that high, and every device, beneficiary and location the customer used.
+7. **Analytics:** totals, top signals, analyst feedback and risk by location update from the transactions you analysed.
+8. **Scenario Lab:** press **Run a payment demo** to watch each backend check stream live, or **Guided demo** for the full story.
+9. Use the palette button in the top bar to switch between the four colour themes.
 
 All data is synthetic. No money moves, and a person confirms every hold.
 

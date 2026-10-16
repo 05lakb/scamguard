@@ -1,6 +1,6 @@
 // Turns a decision into a ranked list of "what pushed the risk up or down", for the evidence bars.
 
-import { SCAM_TYPE_LABEL, SIGNAL_LABEL } from "./labels";
+import { networkLabel, SCAM_TYPE_LABEL, SIGNAL_LABEL } from "./labels";
 import type { Decision } from "../core/types";
 
 export interface Contribution {
@@ -21,7 +21,7 @@ export function contributions(decision: Pick<Decision, "audit">): Contribution[]
 
   for (const signal of audit.network_signals ?? []) {
     list.push({
-      label: `MuleNet: ${signal.name.replaceAll("_", " ")}`,
+      label: `MuleNet: ${networkLabel(signal.name)}`,
       points: signal.points,
       why: signal.reason,
       kind: "network",

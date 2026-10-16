@@ -18,9 +18,17 @@ const SUITE: { page: Page; icon: IconName; tone: Tone; kicker: string; title: st
   { page: "analyzer", icon: "shield", tone: "teal", kicker: "Real-time engine", title: "Transaction Security", text: "Score a payment and see the whole investigation on one page: behaviour, location, the receiving-account network and the analyst decision.", cta: "Analyse a transaction" },
   { page: "voice", icon: "mic", tone: "violet", kicker: "Social engineering", title: "Voice Phishing AI", text: "Detect OTP requests, impersonation, threats and urgency in a call transcript.", cta: "Open voice scanner" },
   { page: "analyst", icon: "flag", tone: "amber", kicker: "Operations", title: "Cases", text: "Every warning and hold in one queue. Approve, keep on hold or escalate, with an audit trail.", cta: "Open cases" },
+  { page: "profile", icon: "user", tone: "teal", kicker: "User intelligence", title: "User Risk Profile", text: "One customer's payments, devices, beneficiaries and locations, with an overall risk score and the reasons behind it.", cta: "View risk profile" },
   { page: "analytics", icon: "chart", tone: "blue", kicker: "Intelligence", title: "Fraud Analytics", text: "Risk distribution, decisions, top signals, analyst feedback and risk by location across all transactions.", cta: "View analytics" },
   { page: "lab", icon: "flask", tone: "violet", kicker: "Red team", title: "Scenario Lab", text: "Replay realistic scam and genuine scenarios, or let the red team attack the engine live.", cta: "Open scenario lab" },
   { page: "evidence", icon: "list", tone: "green", kicker: "Proof", title: "Evaluation evidence", text: "What was tested, how the engine scored on held-back cases, and the known limits.", cta: "See the evidence" },
+];
+
+const ENGINES: { id: string; icon: IconName; tone: Tone; name: string; role: string; checks: string[] }[] = [
+  { id: "txnguard", icon: "activity", tone: "teal", name: "TxnGuard", role: "Payment behaviour", checks: ["Amount vs the customer's usual", "New beneficiary, device or location", "Night-time, live call, remote-access app"] },
+  { id: "scamstop", icon: "brain", tone: "violet", name: "ScamStop", role: "Customer's words and calls", checks: ["Reads the payment note and answers", "Voice AI: OTP requests, impersonation", "Urgency, secrecy and coaching"] },
+  { id: "mulenet", icon: "network", tone: "amber", name: "MuleNet", role: "Receiving account", checks: ["Links to flagged mule accounts", "Many senders paying one account", "Money moved straight on"] },
+  { id: "decision", icon: "shield", tone: "blue", name: "Decision layer", role: "Combines and explains", checks: ["Warn from 40, hold from 70", "Asks the customer when unsure", "Ranked reasons and audit trail"] },
 ];
 
 export function Dashboard({ user, cases, health, refresh, goTo }: Props) {
@@ -111,13 +119,37 @@ export function Dashboard({ user, cases, health, refresh, goTo }: Props) {
       </div>
 
       <section className="panel" style={{ marginTop: 16 }}>
-        <PanelHead kicker="System status" title="PaySentinel infrastructure">
+        <PanelHead kicker="Under the hood" title="Detection engines and infrastructure">
           <span className={`status-pill ${online ? "" : "off"}`}><span className="dot" /> {online ? "Operational" : "Degraded"}</span>
         </PanelHead>
-        <div className="infra-grid">
-          <div className="infra-item"><Icon name="server" size={18} /><div><small>Assessment API</small><strong className={online ? "ok" : health === undefined ? "wait" : "bad"}>{online ? "Online" : health === undefined ? "Checking" : "Offline"}</strong></div></div>
-          <div className="infra-item"><Icon name="shield" size={18} /><div><small>Risk engine</small><strong className={online ? "ok" : "wait"}>{online ? "Active · rules" : "Unavailable"}</strong></div></div>
-          <div className="infra-item"><Icon name="brain" size={18} /><div><small>Gemini reader</small><strong className={health?.ai_configured ? "ok" : "wait"}>{health?.ai_configured ? "Configured" : "Rule fallback"}</strong></div></div>
+        <div className="engine-grid">
+          {ENGINES.map((engine) => {
+            const state = engine.id === "scamstop"
+              ? (!online ? "bad" : health?.ai_configured ? "ok" : "wait")
+              : online ? "ok" : "bad";
+            const label = engine.id === "scamstop"
+              ? (!online ? "Offline" : health?.ai_configured ? "Gemini on Vertex AI" : "Phrase-rule fallback")
+              : online ? "Active" : "Offline";
+            return (
+              <article className="engine-card" key={engine.id}>
+                <div className="engine-card-head">
+                  <span className={`suite-icon tone-${engine.tone}`}><Icon name={engine.icon} size={18} /></span>
+                  <span className={`status ${state}`}>● {label}</span>
+                </div>
+                <h3>{engine.name}</h3>
+                <p className="role">{engine.role}</p>
+                <ul>{engine.checks.map((check) => <li key={check}>{check}</li>)}</ul>
+              </article>
+            );
+          })}
+        </div>
+        <p className="engine-flow">
+          <strong>Payment</strong> <Icon name="arrow" size={13} /> TxnGuard + ScamStop + MuleNet <Icon name="arrow" size={13} /> <strong>Decision layer</strong> <Icon name="arrow" size={13} /> allow · warn · hold <Icon name="arrow" size={13} /> <strong>Analyst confirms</strong>
+        </p>
+        <div className="infra-grid" style={{ marginTop: 14 }}>
+          <div className="infra-item"><Icon name="server" size={18} /><div><small>Assessment API · FastAPI</small><strong className={online ? "ok" : health === undefined ? "wait" : "bad"}>{online ? "Online" : health === undefined ? "Checking" : "Offline"}</strong></div></div>
+          <div className="infra-item"><Icon name="brain" size={18} /><div><small>Gemini · Vertex AI</small><strong className={health?.ai_configured ? "ok" : "wait"}>{health?.ai_configured ? "Configured" : "Not configured"}</strong></div></div>
+          <div className="infra-item"><Icon name="cloud" size={18} /><div><small>Hosting</small><strong className="ok">Cloud Run ready</strong></div></div>
           <div className="infra-item"><Icon name="lock" size={18} /><div><small>Case store</small><strong className="ok">Browser session</strong></div></div>
         </div>
       </section>

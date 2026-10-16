@@ -34,6 +34,16 @@ export const SIGNAL_LABEL: Record<string, string> = {
   large_total_to_payee: "Large total sent to one payee",
 };
 
+export const NETWORK_SIGNAL_LABEL: Record<string, string> = {
+  flagged_payee: "Receiving account is already flagged",
+  flagged_direct_link: "Direct link to a flagged account",
+  flagged_two_hop_link: "Two steps from a flagged account",
+  many_inbound_senders: "Many people paying this account",
+  rapid_onward_transfer: "Money moved straight on",
+};
+
+export const networkLabel = (name: string) => NETWORK_SIGNAL_LABEL[name] ?? name.replaceAll("_", " ");
+
 export const SCAM_TYPE_LABEL: Record<string, string> = {
   investment: "a fake investment",
   bank_impersonation: "a fake bank or police call",

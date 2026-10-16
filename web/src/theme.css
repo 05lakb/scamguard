@@ -2348,3 +2348,41 @@ input, select, textarea {
 @media (max-width: 900px) {
   .case-file-grid, .case-facts { grid-template-columns: 1fr; }
 }
+
+/* ---------- engine bars, graph guide, engines panel, profile scale ---------- */
+.engine-bars { display: grid; gap: 12px; margin: 18px 0 6px; }
+.engine-bars p { margin: 0; }
+.engine-bar { display: grid; grid-template-columns: 1fr auto; gap: 6px 10px; align-items: baseline; font-size: 0.9rem; }
+.engine-bar .dist-track { grid-column: 1 / -1; margin: 0; }
+.net-graph .node.you circle { fill: color-mix(in srgb, var(--allow) 15%, transparent); stroke: var(--allow); stroke-width: 2.5; }
+.net-graph .node.you .node-glyph { font-size: 10px; }
+.net-graph line.pay { stroke: var(--allow); stroke-width: 2.4; stroke-dasharray: 6 5; }
+.net-graph .pay-label { fill: var(--allow); font-weight: 700; font-size: 12px; }
+.read-guide { list-style: none; margin: 0 0 16px; padding: 0; display: grid; gap: 8px; font-size: 0.86rem; color: var(--ink-2, var(--ink)); }
+.read-guide li { display: flex; gap: 10px; align-items: center; }
+.node-key { flex: none; display: inline-grid; place-items: center; width: 30px; height: 30px; border-radius: 50%; border: 2px solid var(--accent); font-size: 0.68rem; font-weight: 800; background: var(--surface); }
+.node-key.you { border-color: var(--allow); color: var(--allow); }
+.node-key.payee { border-color: var(--accent-2); border-width: 3px; }
+.node-key.flagged { border-color: var(--hold); color: var(--hold); }
+.tech-details { margin-top: 10px; }
+.tech-details summary { cursor: pointer; color: var(--muted); font-size: 0.82rem; padding: 4px 0; }
+.engine-grid { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 12px; }
+.engine-card { border: 1px solid var(--line); border-radius: 14px; padding: 16px; background: var(--surface-2); display: flex; flex-direction: column; gap: 8px; }
+.engine-card-head { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+.engine-card h3 { margin: 0; font-size: 1rem; }
+.engine-card .role { color: var(--muted); font-size: 0.8rem; margin: -4px 0 0; }
+.engine-card ul { margin: 0; padding-left: 18px; font-size: 0.84rem; color: var(--muted); display: grid; gap: 3px; }
+.engine-card .status { font-size: 0.74rem; font-weight: 700; }
+.engine-card .status.ok { color: var(--allow); }
+.engine-card .status.wait { color: var(--warn); }
+.engine-card .status.bad { color: var(--hold); }
+.engine-flow { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; margin: 14px 0 0; color: var(--muted); font-size: 0.84rem; }
+.engine-flow strong { color: var(--ink); }
+.stack-line { margin: 14px 0 0; color: var(--muted); font-size: 0.82rem; }
+.risk-scale { margin-top: 6px; }
+.risk-scale .dist-track { height: 10px; }
+.risk-scale-marks { display: flex; justify-content: space-between; color: var(--muted); font-size: 0.74rem; margin-top: 6px; }
+@media (max-width: 1100px) { .engine-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+@media (max-width: 640px) { .engine-grid { grid-template-columns: 1fr; } }
+.risk-scale-marks { position: relative; height: 16px; display: block; }
+.risk-scale-marks span { position: absolute; top: 0; white-space: nowrap; }

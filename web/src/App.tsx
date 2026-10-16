@@ -16,6 +16,7 @@ import { ConsoleArea } from "./pages/ConsoleArea";
 import { Dashboard } from "./pages/Dashboard";
 import { Evidence } from "./pages/Evidence";
 import { Landing } from "./pages/Landing";
+import { RiskProfile } from "./pages/RiskProfile";
 import { VoiceAI } from "./pages/VoiceAI";
 
 
@@ -284,6 +285,7 @@ export function App() {
         {page === "dashboard" && <Dashboard user={user} cases={cases} health={health} refresh={refreshHealth} goTo={(p) => setPage(p)} />}
         {page === "analyzer" && <Analyzer scenarios={scenarios} cases={cases} onCase={addCase} decide={decide} />}
         {page === "voice" && <VoiceAI onAnalysed={(result) => setVoice((old) => [result, ...old])} />}
+        {page === "profile" && <RiskProfile cases={cases} open={openCase} goAnalyze={() => setPage("analyzer")} />}
         {page === "analytics" && <Analytics cases={cases} voice={voice} health={health} refresh={refreshHealth} open={openCase} />}
         {page === "analyst" && <Analyst initialCaseId={reviewCaseId} focusId={focus} cases={cases} decide={decide} scenarios={scenarios} onTestCase={(finished) => addCase(finished, undefined, "test")} />}
         {page === "lab" && (

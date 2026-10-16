@@ -2307,3 +2307,44 @@ input, select, textarea {
   .net-split { grid-template-columns: 1fr; }
   .ctx-row { grid-template-columns: 1fr; gap: 2px; }
 }
+
+.case-file-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  gap: 22px;
+  align-items: start;
+}
+
+.case-facts {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px;
+}
+
+.case-facts div {
+  padding: 9px 12px;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  background: var(--surface-2);
+}
+
+.case-facts small {
+  display: block;
+  color: var(--muted);
+  font-size: 0.64rem;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+
+.case-facts strong {
+  font-size: 0.86rem;
+}
+
+.case-file .agent-evidence {
+  margin: 0;
+}
+
+@media (max-width: 900px) {
+  .case-file-grid, .case-facts { grid-template-columns: 1fr; }
+}

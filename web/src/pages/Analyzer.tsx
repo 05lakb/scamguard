@@ -1,13 +1,14 @@
 import { useState } from "react";
 import { assessPayment, type AssessRequest, type ServerDecision } from "../api";
 import { Icon, type IconName } from "../components/Icon";
+import { AgentEvidence } from "../components/AgentEvidence";
 import { NetworkGraph } from "../components/NetworkGraph";
 import { EmptyState, PageHead, PanelHead, ScoreRing, Toggle, toneForAction } from "../components/ui";
 import type { AccountNetwork, Payment } from "../core/types";
 import type { CaseItem, CaseStatus } from "../lib/cases";
 import { contributions } from "../lib/contrib";
 import { levelOf, money } from "../lib/insights";
-import { ACTION_LABEL, ACTION_NOTE } from "../lib/labels";
+import { ACTION_LABEL, ACTION_NOTE, SEGMENT_LABEL } from "../lib/labels";
 import type { FinishedCase, Scenario } from "./Console";
 
 export interface CaseContext {
@@ -21,7 +22,6 @@ interface Props {
   cases: CaseItem[];
   onCase: (finished: FinishedCase, context: CaseContext) => string;
   decide: (id: string, status: CaseStatus) => void;
-  review: (id?: string) => void;
 }
 
 type NetworkPattern = "none" | "ring" | "clean";
@@ -160,7 +160,7 @@ function fromScenario(sc: Scenario): Form {
   };
 }
 
-export function Analyzer({ scenarios, cases, onCase, decide, review }: Props) {
+export function Analyzer({ scenarios, cases, onCase, decide }: Props) {
   const [form, setForm] = useState<Form>(BASE);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
@@ -424,7 +424,7 @@ export function Analyzer({ scenarios, cases, onCase, decide, review }: Props) {
       </div>
 
       {result && submitted && caseId && (
-        <Investigation result={result} used={submitted} caseId={caseId} cases={cases} decide={decide} openQueue={() => review(caseId)} />
+        <Investigation result={result} used={submitted} caseId={caseId} cases={cases} decide={decide} />
       )}
     </div>
   );
@@ -440,13 +440,12 @@ const STATUS_TEXT: Record<CaseStatus, string> = {
   escalated: "Escalated for investigation",
 };
 
-function Investigation({ result, used, caseId, cases, decide, openQueue }: {
+function Investigation({ result, used, caseId, cases, decide }: {
   result: ServerDecision;
   used: Form;
   caseId: string;
   cases: CaseItem[];
   decide: (id: string, status: CaseStatus) => void;
-  openQueue: () => void;
 }) {
   const item = cases.find((c) => c.id === caseId);
   const earlier = cases.filter((c) => c.id !== caseId && c.source !== "recorded");
@@ -461,6 +460,8 @@ function Investigation({ result, used, caseId, cases, decide, openQueue }: {
   const netSignals = result.audit.network_signals ?? [];
   const netScore = result.audit.network_score ?? 0;
   const status = item?.status ?? "open";
+  const statusText = status === "open" ? (result.action === "allow" ? "No review needed" : "Awaiting analyst decision") : STATUS_TEXT[status];
+  const statusTone = status === "approved" || (status === "open" && result.action === "allow") ? "allow" : status === "open" ? "warn" : "hold";
 
   const seen = (label: string, list: CaseItem[], value: string) => (
     <div className="ctx-row">
@@ -479,24 +480,54 @@ function Investigation({ result, used, caseId, cases, decide, openQueue }: {
         <h2 id="investigation-title">Everything about this transaction</h2>
       </div>
 
-      <div className="grid-2">
-        <section className="panel">
-          <PanelHead kicker={`Case ${caseId}`} title="Analyst decision" icon="flag">
-            <span className={`act ${status === "approved" ? "allow" : status === "open" ? (result.action === "allow" ? "allow" : "warn") : "hold"}`}>{STATUS_TEXT[status]}</span>
-          </PanelHead>
-          <p className="muted small" style={{ marginTop: -6 }}>
-            {result.action === "allow" ? "The engine allowed this payment. You can still escalate it if something looks wrong." : "The engine recommends a person reviews this payment before any money moves."}
-          </p>
-          <div className="chip-row" style={{ marginBottom: 14 }}>
-            {result.action !== "allow" && <button className="btn small" disabled={status === "approved"} onClick={() => decide(caseId, "approved")}><Icon name="allow" size={14} /> Approve payment</button>}
-            {result.action !== "allow" && <button className="btn small" disabled={status === "held"} onClick={() => decide(caseId, "held")}><Icon name="hold" size={14} /> Keep on hold</button>}
-            <button className="btn small" disabled={status === "escalated"} onClick={() => decide(caseId, "escalated")}><Icon name="flag" size={14} /> Escalate</button>
+      <section className="panel case-file">
+        <PanelHead kicker={`Case ${caseId}`} title="Case file" icon="flag">
+          <span className={`act ${statusTone}`}>{statusText}</span>
+        </PanelHead>
+        <div className="case-file-grid">
+          <div>
+            <div className="case-facts">
+              <div><small>Decision</small><strong className={`lvl ${levelOf(result.score)}`}>{ACTION_LABEL[result.action]} · {result.score}/100</strong></div>
+              <div><small>Amount</small><strong>{money(amount, used.currency)}</strong></div>
+              <div><small>Beneficiary</small><strong>{used.payee.trim() || "Unnamed beneficiary"}</strong></div>
+              <div><small>Beneficiary type</small><strong>{used.payeeType === "crypto_exchange" ? "Crypto exchange" : used.payeeType === "business" ? "Business / merchant" : "Individual"} · account {used.accountAge || 0} days old</strong></div>
+              <div><small>Payment time</small><strong>{used.time || "—"} · {used.channel === "web" ? "Web banking" : "Mobile app"}</strong></div>
+              <div><small>Customer</small><strong>{SEGMENT_LABEL(used.segment)} · {Number(used.recent) || 0} payment{Number(used.recent) === 1 ? "" : "s"} in 24 h</strong></div>
+              <div><small>Device</small><strong>{used.device.trim() || "Not supplied"}</strong></div>
+              <div><small>Location</small><strong>{used.location.trim() || "Not supplied"}</strong></div>
+            </div>
+
+            <p className="sub-kicker">Analyst decision</p>
+            <p className="muted small" style={{ marginTop: -4 }}>
+              {result.action === "allow" ? "The engine allowed this payment. You can still escalate it if something looks wrong." : "The engine recommends a person reviews this payment before any money moves."}
+            </p>
+            <div className="chip-row" style={{ marginBottom: 6 }}>
+              {result.action !== "allow" && <button className="btn small" disabled={status === "approved"} onClick={() => decide(caseId, "approved")}><Icon name="allow" size={14} /> Approve payment</button>}
+              {result.action !== "allow" && <button className="btn small" disabled={status === "held"} onClick={() => decide(caseId, "held")}><Icon name="hold" size={14} /> Keep on hold</button>}
+              <button className="btn small" disabled={status === "escalated"} onClick={() => decide(caseId, "escalated")}><Icon name="flag" size={14} /> Escalate</button>
+            </div>
+
+            <p className="sub-kicker">Audit trail</p>
+            <ol className="audit-trail">
+              {(item?.trail ?? []).map((entry, index) => <li key={`${entry.when}-${index}`}><span className="mono muted">{entry.when}</span> {entry.text}</li>)}
+            </ol>
           </div>
-          <p className="sub-kicker" style={{ marginTop: 0 }}>Audit trail</p>
-          <ol className="audit-trail">
-            {(item?.trail ?? []).map((entry, index) => <li key={`${entry.when}-${index}`}><span className="mono muted">{entry.when}</span> {entry.text}</li>)}
-          </ol>
-          <button className="btn link small" onClick={openQueue}>Open in the full case queue →</button>
+          <div>{item && <AgentEvidence item={item} />}</div>
+        </div>
+      </section>
+
+      <div className="grid-2" style={{ marginTop: 16 }}>
+        <section className="panel">
+          <PanelHead kicker="ScamStop · customer's own words" title="Customer conversation" icon="brain" />
+          <div className="thread">
+            <div className="bubble customer"><span className="who">Customer note</span>{used.note.trim() || <em className="muted">No note written</em>}</div>
+            {item?.questions && <div className="bubble guard"><span className="who">Engine asked</span>{item.questions.join(" ")}</div>}
+            {item?.answer !== undefined && <div className="bubble customer"><span className="who">Customer answered</span>{item.answer || <em className="muted">Declined to answer</em>}</div>}
+          </div>
+          {result.audit.message_reading ? (
+            <p className="ai-note" style={{ marginTop: 14 }}><Icon name="brain" size={16} /> <span><strong>Reading:</strong> {result.audit.message_reading.explanation} {result.audit.message_reading.tactics.filter((t) => t !== "none").length > 0 && <>Tactics: {result.audit.message_reading.tactics.filter((t) => t !== "none").map((t) => t.replaceAll("_", " ")).join(", ")}.</>}</span></p>
+          ) : <p className="muted small" style={{ marginTop: 14 }}>No message reading for this payment{used.note.trim() ? " (the reader was unavailable, so payment checks decided)" : ""}.</p>}
+          {result.customer_warning && <p className="ai-note warn"><Icon name="shield" size={16} /> <span><strong>Warning shown to the customer:</strong> {result.customer_warning}</span></p>}
         </section>
 
         <section className="panel">

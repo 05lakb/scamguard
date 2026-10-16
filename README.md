@@ -151,7 +151,7 @@ Open http://localhost:5173. The website forwards `/api` calls to the API automat
 ### 4. Try it in five minutes
 
 1. **Sign in** with any name (there are no accounts; the name only personalises the workspace).
-2. **Transactions:** choose *Bank-impersonation call* and press **Analyse transaction**. Expect a hold, a high risk score and ranked reasons.
+2. **Transactions:** choose *Bank-impersonation call* and press **Analyse transaction**. Expect a hold, a high risk score and ranked reasons. Scroll down to see the whole investigation for that payment on the same page: the analyst decision (approve, hold or escalate), customer, device and location context, and the receiving-account network scored by MuleNet.
 3. Choose *Everyday payment* and analyse again. Expect *allow* with no risk signals.
 4. **Voice AI:** choose *Bank OTP call* and press **Analyse for phishing**. Expect high risk, the tactics found and the suspicious sentences. Live microphone detection works in Chrome and Edge.
 5. **Network:** press **Assess network risk** on *UPI mule ring*. Click an account to flag or unflag it, then assess again.

@@ -25,18 +25,6 @@ const SUITE: { page: Page; icon: IconName; tone: Tone; kicker: string; title: st
   { page: "lab", icon: "flask", tone: "violet", kicker: "Red team", title: "Scenario Lab", text: "Replay realistic scam and genuine scenarios, or let the red team attack the engine live.", cta: "Open scenario lab" },
 ];
 
-const OPS: { page: Page; icon: IconName; label: string }[] = [
-  { page: "analyzer", icon: "activity", label: "Transactions" },
-  { page: "voice", icon: "mic", label: "Voice AI" },
-  { page: "analytics", icon: "chart", label: "Analytics" },
-  { page: "network", icon: "network", label: "Network" },
-  { page: "profile", icon: "user", label: "Risk profile" },
-  { page: "geography", icon: "map", label: "Geography" },
-  { page: "analyst", icon: "flag", label: "Analyst" },
-  { page: "evidence", icon: "list", label: "Evidence" },
-  { page: "architecture", icon: "cloud", label: "Architecture" },
-];
-
 export function Dashboard({ user, cases, health, refresh, goTo }: Props) {
   const [scope, setScope] = useState<"session" | "all">("session");
   const rows = scope === "session" ? cases.filter((item) => item.source !== "recorded") : cases;
@@ -136,12 +124,6 @@ export function Dashboard({ user, cases, health, refresh, goTo }: Props) {
         </div>
       </section>
 
-      <section className="panel" style={{ marginTop: 16 }}>
-        <PanelHead kicker="Quick access" title="Security operations" />
-        <div className="chip-row">
-          {OPS.map((op) => <button key={op.page} className="chip-btn" onClick={() => goTo(op.page)}><Icon name={op.icon} size={14} /> {op.label}</button>)}
-        </div>
-      </section>
     </div>
   );
 }

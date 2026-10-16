@@ -228,7 +228,20 @@ export async function analyseConversation(transcript: string): Promise<Conversat
     body: JSON.stringify({ transcript }),
   });
   if (response.status === 429) throw new Error("Too many requests from this device. Please wait a minute and try again.");
-  if (!response.ok) throw new Error("The conversation could not be analysed. Please try again.");
+  if (!response.ok) {
+    let detail = "";
+    try {
+      const body = (await response.json()) as { detail?: unknown };
+      if (typeof body.detail === "string") detail = body.detail;
+    } catch {
+      /* no JSON body: usually the API is not running */
+    }
+    if (detail) throw new Error(detail);
+    if (response.status >= 500) {
+      throw new Error("Cannot reach the PaySentinel API. Start it from the project folder with: python -m uvicorn backend.app:app --reload --port 8080");
+    }
+    throw new Error("The conversation could not be analysed. Please try again.");
+  }
   return (await response.json()) as ConversationResult;
 }
 

@@ -1,10 +1,12 @@
 import { useState } from "react";
 import { assessPayment, type AssessRequest, type ServerDecision } from "../api";
 import { Icon, type IconName } from "../components/Icon";
+import { NetworkGraph } from "../components/NetworkGraph";
 import { EmptyState, PageHead, PanelHead, ScoreRing, Toggle, toneForAction } from "../components/ui";
-import type { Payment } from "../core/types";
+import type { AccountNetwork, Payment } from "../core/types";
+import type { CaseItem, CaseStatus } from "../lib/cases";
 import { contributions } from "../lib/contrib";
-import { money } from "../lib/insights";
+import { levelOf, money } from "../lib/insights";
 import { ACTION_LABEL, ACTION_NOTE } from "../lib/labels";
 import type { FinishedCase, Scenario } from "./Console";
 
@@ -16,9 +18,50 @@ export interface CaseContext {
 
 interface Props {
   scenarios: Scenario[];
-  onCase: (finished: FinishedCase, context: CaseContext) => void;
-  review: () => void;
+  cases: CaseItem[];
+  onCase: (finished: FinishedCase, context: CaseContext) => string;
+  decide: (id: string, status: CaseStatus) => void;
+  review: (id?: string) => void;
 }
+
+type NetworkPattern = "none" | "ring" | "clean";
+
+const slug = (text: string) => text.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "").slice(0, 40) || "beneficiary";
+
+// Synthetic receiving-account graphs the analyst can attach so MuleNet scores the beneficiary in the same run.
+function networkFor(pattern: NetworkPattern, payee: string): AccountNetwork | undefined {
+  const id = slug(payee);
+  if (pattern === "ring") {
+    return {
+      payee_account_id: id, flagged_account_ids: ["collector-77"],
+      transfers: [
+        { from_account_id: "victim-anita", to_account_id: id, amount: 12000, hours_ago: 6 },
+        { from_account_id: "victim-farhan", to_account_id: id, amount: 9500, hours_ago: 5 },
+        { from_account_id: "victim-gopal", to_account_id: id, amount: 15000, hours_ago: 4 },
+        { from_account_id: "victim-meera", to_account_id: id, amount: 7000, hours_ago: 3 },
+        { from_account_id: id, to_account_id: "relay-12", amount: 41000, hours_ago: 2 },
+        { from_account_id: "relay-12", to_account_id: "collector-77", amount: 40000, hours_ago: 1 },
+      ],
+    };
+  }
+  if (pattern === "clean") {
+    return {
+      payee_account_id: id, flagged_account_ids: [],
+      transfers: [
+        { from_account_id: "cust-01", to_account_id: id, amount: 450, hours_ago: 20 },
+        { from_account_id: "cust-02", to_account_id: id, amount: 1200, hours_ago: 9 },
+        { from_account_id: id, to_account_id: "wholesale-co", amount: 600, hours_ago: 2 },
+      ],
+    };
+  }
+  return undefined;
+}
+
+const NETWORK_LABEL: Record<NetworkPattern, string> = {
+  none: "No network data",
+  ring: "Mule-ring pattern (synthetic)",
+  clean: "Established merchant (synthetic)",
+};
 
 type Segment = "retiree" | "young_professional" | "small_business_owner" | "student" | "family";
 
@@ -41,6 +84,7 @@ interface Form {
   onCall: boolean;
   remote: boolean;
   note: string;
+  network: NetworkPattern;
 }
 
 const now = () => new Date().toTimeString().slice(0, 5);
@@ -48,7 +92,7 @@ const now = () => new Date().toTimeString().slice(0, 5);
 const BASE: Form = {
   amount: "1500", currency: "INR", segment: "young_professional", typical: "2000", payee: "Ravi Kirana Store",
   payeeType: "business", accountAge: "900", device: "dev-4821 · Pixel 8", location: "Mumbai", channel: "mobile",
-  time: now(), recent: "0", newPayee: false, newDevice: false, locationChanged: false, onCall: false, remote: false, note: "",
+  time: now(), recent: "0", newPayee: false, newDevice: false, locationChanged: false, onCall: false, remote: false, note: "", network: "none",
 };
 
 const PRESETS: { label: string; icon: IconName; form: Partial<Form> }[] = [
@@ -56,7 +100,7 @@ const PRESETS: { label: string; icon: IconName; form: Partial<Form> }[] = [
   {
     label: "Bank-impersonation call", icon: "mic",
     form: { amount: "98500", payee: "Secure Holding A/c 7731", payeeType: "individual", accountAge: "3", newPayee: true, onCall: true, recent: "1",
-      note: "The bank's fraud team called and said my account is compromised. They told me to move my savings to a safe account today and not to tell anyone." },
+      note: "The bank's fraud team called and said my account is compromised. They told me to move my savings to a safe account today and not to tell anyone.", network: "ring" },
   },
   {
     label: "Remote-control refund", icon: "device",
@@ -87,9 +131,11 @@ function toRequest(form: Form, questions?: string[], answer?: string): AssessReq
     remote_access_tool_running: form.remote,
     location_changed: form.locationChanged,
   };
+  const network = networkFor(form.network, payment.payee_name);
   return {
     payment,
     customer: { segment: form.segment, typical_amount: Math.max(1, Math.round(Number(form.typical) || 1)) },
+    ...(network ? { network } : {}),
     message: form.note.trim() || null,
     ...(answer !== undefined ? { questions, answer } : {}),
   };
@@ -110,10 +156,11 @@ function fromScenario(sc: Scenario): Form {
     payee: p.payee_name, payeeType: p.payee_type, accountAge: String(p.payee_account_age_days), channel: (p.channel === "web" ? "web" : "mobile"),
     time: p.timestamp.slice(11, 16), recent: String(p.payments_last_24h), newPayee: p.is_new_payee, newDevice: !p.device_known,
     locationChanged: false, onCall: p.on_live_call, remote: p.remote_access_tool_running, note: sc.message,
+    network: sc.network ? "ring" : "none",
   };
 }
 
-export function Analyzer({ scenarios, onCase, review }: Props) {
+export function Analyzer({ scenarios, cases, onCase, decide, review }: Props) {
   const [form, setForm] = useState<Form>(BASE);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
@@ -121,6 +168,7 @@ export function Analyzer({ scenarios, onCase, review }: Props) {
   const [answer, setAnswer] = useState("");
   const [result, setResult] = useState<ServerDecision | null>(null);
   const [submitted, setSubmitted] = useState<Form | null>(null);
+  const [caseId, setCaseId] = useState<string | null>(null);
 
   const set = <K extends keyof Form>(key: K, value: Form[K]) => setForm((old) => ({ ...old, [key]: value }));
   const amountOk = Number(form.amount) > 0 && Number(form.amount) <= 10_000_000;
@@ -131,16 +179,18 @@ export function Analyzer({ scenarios, onCase, review }: Props) {
     setAsked(null);
     setAnswer("");
     setError("");
+    setCaseId(null);
   }
 
   function finish(decision: ServerDecision, used: Form, questions?: string[], reply?: string) {
     setResult(decision);
     setAsked(null);
     const request = toRequest(used);
-    onCase(
-      { scenario: scenarioOf(used, request), message: used.note.trim() || null, questions, answer: reply, decision },
+    const id = onCase(
+      { scenario: { ...scenarioOf(used, request), ...(request.network ? { network: request.network } : {}) }, message: used.note.trim() || null, questions, answer: reply, decision },
       { device: used.device.trim(), location: used.location.trim(), channel: used.channel },
     );
+    setCaseId(id);
   }
 
   async function analyse() {
@@ -150,6 +200,7 @@ export function Analyzer({ scenarios, onCase, review }: Props) {
     setError("");
     setResult(null);
     setAsked(null);
+    setCaseId(null);
     setSubmitted(used);
     try {
       const decision = await assessPayment(toRequest(used));
@@ -262,6 +313,15 @@ export function Analyzer({ scenarios, onCase, review }: Props) {
             </div>
           </div>
 
+          <p className="sub-kicker">Receiving account (MuleNet)</p>
+          <label className="f-label" htmlFor="network">Account-network data for this beneficiary</label>
+          <select id="network" className="f-select" value={form.network} onChange={(e) => set("network", e.target.value as NetworkPattern)}>
+            <option value="none">{NETWORK_LABEL.none}</option>
+            <option value="ring">{NETWORK_LABEL.ring}</option>
+            <option value="clean">{NETWORK_LABEL.clean}</option>
+          </select>
+          <span className="f-help">In production this comes from the bank's own transfer records. Here you choose a synthetic pattern.</span>
+
           <p className="sub-kicker">Customer profile</p>
           <div className="form-grid">
             <div>
@@ -355,7 +415,6 @@ export function Analyzer({ scenarios, onCase, review }: Props) {
 
               {result && (
                 <div className="form-actions">
-                  {result.action !== "allow" && <button className="btn primary" onClick={review}><Icon name="flag" size={16} /> Open in analyst center</button>}
                   <details style={{ flex: 1 }}><summary className="muted small" style={{ cursor: "pointer", paddingTop: 10 }}>Full audit record</summary><pre style={{ maxHeight: 260, overflow: "auto", fontSize: "0.72rem" }}>{JSON.stringify(result.audit, null, 2)}</pre></details>
                 </div>
               )}
@@ -363,6 +422,126 @@ export function Analyzer({ scenarios, onCase, review }: Props) {
           )}
         </section>
       </div>
+
+      {result && submitted && caseId && (
+        <Investigation result={result} used={submitted} caseId={caseId} cases={cases} decide={decide} openQueue={() => review(caseId)} />
+      )}
     </div>
+  );
+}
+
+
+// ---------- everything about this one transaction, on the same page ----------
+
+const STATUS_TEXT: Record<CaseStatus, string> = {
+  open: "Awaiting analyst decision",
+  approved: "Approved by analyst",
+  held: "Kept on hold by analyst",
+  escalated: "Escalated for investigation",
+};
+
+function Investigation({ result, used, caseId, cases, decide, openQueue }: {
+  result: ServerDecision;
+  used: Form;
+  caseId: string;
+  cases: CaseItem[];
+  decide: (id: string, status: CaseStatus) => void;
+  openQueue: () => void;
+}) {
+  const item = cases.find((c) => c.id === caseId);
+  const earlier = cases.filter((c) => c.id !== caseId && c.source !== "recorded");
+  const sameLocation = used.location.trim() ? earlier.filter((c) => c.location === used.location.trim()) : [];
+  const sameDevice = used.device.trim() ? earlier.filter((c) => c.device === used.device.trim()) : [];
+  const samePayee = earlier.filter((c) => c.payee === (used.payee.trim() || "Unnamed beneficiary"));
+  const worst = (list: CaseItem[]) => list.reduce((max, c) => Math.max(max, c.score), 0);
+  const amount = Number(used.amount);
+  const usual = Math.max(1, Number(used.typical) || 1);
+  const ratio = amount / usual;
+  const network = networkFor(used.network, used.payee.trim() || "Unnamed beneficiary");
+  const netSignals = result.audit.network_signals ?? [];
+  const netScore = result.audit.network_score ?? 0;
+  const status = item?.status ?? "open";
+
+  const seen = (label: string, list: CaseItem[], value: string) => (
+    <div className="ctx-row">
+      <span className="muted">{label}</span>
+      <strong>{value || "Not supplied"}</strong>
+      <span className={`lvl ${list.length ? levelOf(worst(list)) : "low"}`}>
+        {list.length ? `Seen ${list.length}× before · worst ${worst(list)}` : value ? "First time in this session" : "—"}
+      </span>
+    </div>
+  );
+
+  return (
+    <section className="investigation" aria-labelledby="investigation-title">
+      <div className="section-title" style={{ marginTop: 26 }}>
+        <p className="kicker">Step 03 · complete investigation</p>
+        <h2 id="investigation-title">Everything about this transaction</h2>
+      </div>
+
+      <div className="grid-2">
+        <section className="panel">
+          <PanelHead kicker={`Case ${caseId}`} title="Analyst decision" icon="flag">
+            <span className={`act ${status === "approved" ? "allow" : status === "open" ? (result.action === "allow" ? "allow" : "warn") : "hold"}`}>{STATUS_TEXT[status]}</span>
+          </PanelHead>
+          <p className="muted small" style={{ marginTop: -6 }}>
+            {result.action === "allow" ? "The engine allowed this payment. You can still escalate it if something looks wrong." : "The engine recommends a person reviews this payment before any money moves."}
+          </p>
+          <div className="chip-row" style={{ marginBottom: 14 }}>
+            {result.action !== "allow" && <button className="btn small" disabled={status === "approved"} onClick={() => decide(caseId, "approved")}><Icon name="allow" size={14} /> Approve payment</button>}
+            {result.action !== "allow" && <button className="btn small" disabled={status === "held"} onClick={() => decide(caseId, "held")}><Icon name="hold" size={14} /> Keep on hold</button>}
+            <button className="btn small" disabled={status === "escalated"} onClick={() => decide(caseId, "escalated")}><Icon name="flag" size={14} /> Escalate</button>
+          </div>
+          <p className="sub-kicker" style={{ marginTop: 0 }}>Audit trail</p>
+          <ol className="audit-trail">
+            {(item?.trail ?? []).map((entry, index) => <li key={`${entry.when}-${index}`}><span className="mono muted">{entry.when}</span> {entry.text}</li>)}
+          </ol>
+          <button className="btn link small" onClick={openQueue}>Open in the full case queue →</button>
+        </section>
+
+        <section className="panel">
+          <PanelHead kicker="Behaviour, device and geography" title="Context for this customer" icon="user" />
+          <div className="ctx-amount">
+            <div className="dist-head"><span>This payment vs usual amount</span><strong className="mono">{ratio >= 10 ? Math.round(ratio) : ratio.toFixed(1)}×</strong></div>
+            <div className="dist-track"><div className={`dist-fill tone-${ratio >= 5 ? "red" : ratio >= 3 ? "amber" : "green"}`} style={{ width: `${Math.min(100, (ratio / 10) * 100)}%` }} /></div>
+            <small className="muted">{money(amount, used.currency)} now · usually about {money(usual, used.currency)}</small>
+          </div>
+          {seen("Location", sameLocation, used.location.trim())}
+          {seen("Device", sameDevice, used.device.trim())}
+          {seen("Beneficiary", samePayee, used.payee.trim())}
+          <div className="tag-row" style={{ marginTop: 12 }}>
+            {used.locationChanged && <span className="act hold">Unusual location</span>}
+            {used.newDevice && <span className="act hold">New device</span>}
+            {used.newPayee && <span className="act warn">New beneficiary</span>}
+            {used.onCall && <span className="act hold">On a live call</span>}
+            {used.remote && <span className="act hold">Remote-access app</span>}
+            {!used.locationChanged && !used.newDevice && !used.newPayee && !used.onCall && !used.remote && <span className="act allow">No behavioural flags</span>}
+          </div>
+          <p className="muted small" style={{ margin: "12px 0 0" }}>History covers transactions analysed in this browser session.</p>
+        </section>
+      </div>
+
+      <section className="panel" style={{ marginTop: 16 }}>
+        <PanelHead kicker="Receiving account · MuleNet" title="Where the money would go" icon="network">
+          {network && <span className={`act ${netScore >= 70 ? "hold" : netScore >= 40 ? "warn" : "allow"}`}>Network score {netScore}/100</span>}
+        </PanelHead>
+        {network ? (
+          <div className="net-split">
+            <div><NetworkGraph graph={network} markerId="txn-net-arrow" /></div>
+            <div>
+              <ul className="reason-list">
+                {netSignals.length === 0 && <li className="calm"><Icon name="allow" size={16} /> No mule-network pattern around this beneficiary.</li>}
+                {netSignals.map((signal) => (
+                  <li key={signal.name}><Icon name="warn" size={16} /><span>{signal.name.replaceAll("_", " ")}<br /><small className="muted">{signal.reason}</small></span><span className="pts">+{signal.points}</span></li>
+                ))}
+              </ul>
+              <p className="muted small" style={{ margin: 0 }}>{NETWORK_LABEL[used.network]}. Synthetic test data, not real bank records.</p>
+            </div>
+          </div>
+        ) : (
+          <EmptyState icon="network" title="No account-network data for this run" text="Choose a pattern under “Receiving account (MuleNet)” in the form and analyse again to check where the money would go next." />
+        )}
+      </section>
+    </section>
   );
 }

@@ -1,6 +1,7 @@
 import { useMemo, useState } from "react";
 import { assessPayment, type ServerDecision } from "../api";
 import { Icon } from "../components/Icon";
+import { NetworkGraph, layoutNetwork } from "../components/NetworkGraph";
 import { EmptyState, PageHead, PanelHead, StatCard } from "../components/ui";
 import type { AccountNetwork } from "../core/types";
 import { levelOf, money } from "../lib/insights";
@@ -54,18 +55,6 @@ function builtIns(): Scenario[] {
   ];
 }
 
-interface NodePos { id: string; x: number; y: number }
-
-function layout(graph: AccountNetwork): NodePos[] {
-  const payee = graph.payee_account_id;
-  const ids = [...new Set(graph.transfers.flatMap((t) => [t.from_account_id, t.to_account_id]).concat(payee))];
-  const inbound = ids.filter((id) => id !== payee && graph.transfers.some((t) => t.from_account_id === id && t.to_account_id === payee));
-  const outbound = ids.filter((id) => id !== payee && !inbound.includes(id) && graph.transfers.some((t) => t.from_account_id === payee && t.to_account_id === id));
-  const rest = ids.filter((id) => id !== payee && !inbound.includes(id) && !outbound.includes(id));
-  const column = (list: string[], x: number) => list.map((id, i) => ({ id, x, y: ((i + 1) * 440) / (list.length + 1) }));
-  return [{ id: payee, x: 340, y: 220 }, ...column(inbound, 90), ...column(outbound, 560), ...column(rest, 760)];
-}
-
 export function Network({ scenarios, onCase }: Props) {
   const samples = useMemo(() => [...builtIns(), ...scenarios.filter((s) => s.network)], [scenarios]);
   const [id, setId] = useState(samples[0].id);
@@ -78,14 +67,11 @@ export function Network({ scenarios, onCase }: Props) {
 
   const original = sample.network as AccountNetwork;
   const graph: AccountNetwork = { ...original, flagged_account_ids: flags[sample.id] ?? original.flagged_account_ids };
-  const nodes = layout(graph);
-  const pos = (account: string) => nodes.find((n) => n.id === account)!;
+  const nodes = layoutNetwork(graph);
   const flagged = new Set(graph.flagged_account_ids);
   const total = graph.transfers.reduce((sum, t) => sum + t.amount, 0);
   const inbound = graph.transfers.filter((t) => t.to_account_id === graph.payee_account_id).length;
   const outbound = graph.transfers.filter((t) => t.from_account_id === graph.payee_account_id).length;
-  const match = query.trim().toLowerCase();
-  const width = nodes.some((n) => n.x > 700) ? 840 : 660;
 
   function choose(next: string) {
     setId(next);
@@ -159,36 +145,7 @@ export function Network({ scenarios, onCase }: Props) {
             <Icon name="search" size={15} />
             <input value={query} onChange={(e) => setQuery(e.target.value)} placeholder="Account ID, e.g. relay or victim" aria-label="Search accounts" />
           </div>
-          <svg className="net-graph" viewBox={`0 0 ${width} 440`} role="img" aria-label="Synthetic account graph. The adjacent panel lists every transfer.">
-            <defs>
-              <marker id="net-arrow" viewBox="0 0 10 10" refX="28" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path className="arrow-head" d="M0 0 10 5 0 10z" /></marker>
-            </defs>
-            {graph.transfers.map((t, i) => {
-              const a = pos(t.from_account_id);
-              const b = pos(t.to_account_id);
-              const hot = flagged.has(t.from_account_id) || flagged.has(t.to_account_id);
-              return <line key={i} className={hot ? "hot" : ""} x1={a.x} y1={a.y} x2={b.x} y2={b.y} markerEnd="url(#net-arrow)" />;
-            })}
-            {nodes.map((n) => {
-              const isPayee = n.id === graph.payee_account_id;
-              const dim = match && !n.id.toLowerCase().includes(match);
-              const kind = flagged.has(n.id) ? "flagged" : isPayee ? "payee" : "";
-              return (
-                <g key={n.id} className={`node ${kind} ${dim ? "dim" : ""}`} role="button" tabIndex={0} aria-label={`${n.id}${flagged.has(n.id) ? ", flagged" : ""}. Press to toggle flag.`}
-                  onClick={() => toggleFlag(n.id)} onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); toggleFlag(n.id); } }} style={{ cursor: "pointer" }}>
-                  <circle cx={n.x} cy={n.y} r={isPayee ? 26 : 20} />
-                  <text className="node-glyph" x={n.x} y={n.y + 5} textAnchor="middle">{flagged.has(n.id) ? "!" : isPayee ? "P" : "A"}</text>
-                  <text x={n.x} y={n.y + (isPayee ? 44 : 36)} textAnchor="middle">{n.id}</text>
-                </g>
-              );
-            })}
-          </svg>
-          <div className="legend">
-            <span><i style={{ borderColor: "var(--accent-2)" }} /> Payment recipient</span>
-            <span><i style={{ borderColor: "var(--hold)" }} /> Flagged account</span>
-            <span><i style={{ borderColor: "var(--accent)" }} /> Other account</span>
-            <span>Arrows show transfer direction</span>
-          </div>
+          <NetworkGraph graph={graph} markerId="net-arrow" query={query} onToggle={toggleFlag} />
         </section>
 
         <div className="stack">

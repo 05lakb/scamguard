@@ -285,7 +285,7 @@ export function App() {
       <main className="app-main">
         {page !== "dashboard" && <button className="back-link" onClick={() => setPage("dashboard")}><Icon name="back" size={12} /> Dashboard</button>}
         {page === "dashboard" && <Dashboard user={user} cases={cases} health={health} refresh={refreshHealth} goTo={(p) => setPage(p)} />}
-        {page === "analyzer" && <Analyzer scenarios={scenarios} onCase={addCase} review={() => openCase()} />}
+        {page === "analyzer" && <Analyzer scenarios={scenarios} cases={cases} onCase={addCase} decide={decide} review={(id) => openCase(id)} />}
         {page === "voice" && <VoiceAI onAnalysed={(result) => setVoice((old) => [result, ...old])} />}
         {page === "analytics" && <Analytics cases={cases} voice={voice} health={health} refresh={refreshHealth} open={openCase} />}
         {page === "network" && <Network scenarios={scenarios} onCase={addCase} />}

@@ -2257,3 +2257,53 @@ input, select, textarea {
 @media (max-width: 900px) {
   .blind-grid { grid-template-columns: 1fr; }
 }
+
+/* ---------- transaction investigation (same page) ---------- */
+
+.audit-trail {
+  display: grid;
+  gap: 6px;
+  margin: 0 0 12px;
+  padding: 0;
+  list-style: none;
+  font-size: 0.84rem;
+}
+
+.audit-trail li {
+  padding: 6px 0;
+  border-bottom: 1px solid var(--line);
+}
+
+.ctx-amount {
+  display: grid;
+  gap: 6px;
+  margin-bottom: 10px;
+}
+
+.ctx-row {
+  display: grid;
+  grid-template-columns: 96px minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 0;
+  border-bottom: 1px solid var(--line);
+  font-size: 0.86rem;
+}
+
+.ctx-row strong {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.net-split {
+  display: grid;
+  grid-template-columns: minmax(0, 1.4fr) minmax(0, 1fr);
+  gap: 18px;
+  align-items: start;
+}
+
+@media (max-width: 900px) {
+  .net-split { grid-template-columns: 1fr; }
+  .ctx-row { grid-template-columns: 1fr; gap: 2px; }
+}

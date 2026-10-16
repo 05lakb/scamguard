@@ -247,9 +247,9 @@ export function App() {
       <p className="proto-strip"><Icon name="flask" size={13} /> Prototype · synthetic data · no real payment is made · a person confirms every hold</p>
       <header className="topbar">
         <div className="topbar-inner">
-        <button className="brand-mark" onClick={() => setPage("dashboard")} aria-label="PaySentinel AI dashboard">
+        <button className="brand-mark" onClick={() => setPage("dashboard")} aria-label="Last Mile Guard dashboard">
           <Logo size={34} />
-          <span><strong>PaySentinel AI</strong><small>Real-time fraud defence</small></span>
+          <span><strong>Last Mile Guard</strong><small>Real-time fraud defence</small></span>
         </button>
         <nav className="topnav" aria-label="Command centre">
           {NAV.filter((entry) => !entry.secondary).map((entry) => (
@@ -306,7 +306,7 @@ export function App() {
                   <>
                     <div className="story-text">
                       <span className="eyebrow">The end</span>
-                      <strong>That is PaySentinel AI</strong>
+                      <strong>That is Last Mile Guard</strong>
                       <p>Payment behaviour, scam signals and account links inform a recommendation before money moves. A person stays in charge of every hold.</p>
                     </div>
                     <div className="story-controls">
@@ -325,7 +325,7 @@ export function App() {
       </main>
 
       <footer className="app-foot">
-        <span>PaySentinel AI · fraud intelligence command centre</span>
+        <span>Last Mile Guard · fraud intelligence command centre</span>
         <span className="chip-row">
           <button className="btn link small" onClick={() => setPage("evidence")}>Evaluation evidence</button>
           <button className="btn link small" onClick={() => setPage("architecture")}>Architecture</button>

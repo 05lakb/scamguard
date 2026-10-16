@@ -216,7 +216,7 @@ export function Analyst({ cases, decide, scenarios, onTestCase, initialCaseId, f
       <section className="card scenario-tester" aria-label="Run one real backend test">
         <div>
           <h2 className="case-title">Run a single backend scenario</h2>
-          <p className="muted small">Choose synthetic input, then run the real FastAPI assessment. TxnGuard/MuleNet rules run on the backend; ScamStop uses Gemini, cached Gemini output, or an explicitly labelled fallback.</p>
+          <p className="muted small">Choose synthetic input, then run the real FastAPI assessment. FraudShield/MuleNet rules run on the backend; ScamStop uses Gemini, cached Gemini output, or an explicitly labelled fallback.</p>
         </div>
         <div className="scenario-controls">
           <label htmlFor="scenario-select">Test scenario</label>

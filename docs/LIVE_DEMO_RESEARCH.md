@@ -1,4 +1,4 @@
-# FinGuard: visible execution demo
+# Last Mile Guard: visible execution demo
 
 ## Research, 15 October 2026
 
@@ -9,7 +9,7 @@ Reviewed the organizer's results and the teams' written submissions. These are e
 - SalesShortcut describes an end-to-end lead discovery, research, proposal and outreach workflow: https://devpost.com/software/salesshortcut
 - Google's Gemini competition selected Jayu as best overall, highlighting its visible interaction with application interfaces: https://developers.googleblog.com/en/announcing-the-winners-of-the-gemini-api-developer-competition/
 
-Our inference: a strong FinGuard demo should make the problem, each check's contribution, and the final human action visible in one workflow.
+Our inference: a strong Last Mile Guard demo should make the problem, each check's contribution, and the final human action visible in one workflow.
 
 ## Implemented
 

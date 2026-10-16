@@ -133,7 +133,7 @@ export function VoiceAI({ onAnalysed }: Props) {
       </PageHead>
 
       <section className="panel live-panel">
-        <PanelHead kicker="Microphone speech → PaySentinel analysis" title="Live call detection" icon="mic">
+        <PanelHead kicker="Microphone speech → Last Mile Guard analysis" title="Live call detection" icon="mic">
           <span className={`act ${listening ? "hold" : "allow"}`}>{listening ? "Listening" : "Ready"}</span>
         </PanelHead>
         {supported ? (

@@ -1,6 +1,6 @@
-# FinGuard AI homepage: first-visit product walkthrough
+# Last Mile Guard homepage: first-visit product walkthrough
 
-This update is based on the `develop` branch archive at commit `6096413` (Refresh FinGuard AI branding and colors). It changes the homepage and adds no backend/API features.
+This update is based on the `develop` branch archive at commit `6096413` (Refresh Last Mile Guard branding and colors). It changes the homepage and adds no backend/API features.
 
 ## Visitor flow
 

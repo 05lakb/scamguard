@@ -1,6 +1,6 @@
-# FinGuard AI: judge walkthrough and runtime checks
+# Last Mile Guard: judge walkthrough and runtime checks
 
-FinGuard is a payment-fraud prototype. FraudShield and MuleNet use explainable rules;
+Last Mile Guard is a payment-fraud prototype. FraudShield and MuleNet use explainable rules;
 ScamStop uses Gemini for structured message analysis. All sample payments and account
 links are synthetic. The application recommends an action; it does not move or hold real money.
 
@@ -65,7 +65,7 @@ The local improvements do not deploy or change cloud capacity.
 ## Short judge narrative
 
 - **Problem:** A customer can authorize a payment while being manipulated. A payment
-  pattern alone may not explain the scam. FinGuard combines the customer's story
+  pattern alone may not explain the scam. Last Mile Guard combines the customer's story
   with payment and optional account-link evidence for an analyst to inspect.
 - **Live example:** Start the homepage demo, show the payment and customer note, then
   watch the backend checks. Point out which checks use rules and which use Gemini.

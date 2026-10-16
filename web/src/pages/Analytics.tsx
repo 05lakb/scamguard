@@ -34,7 +34,7 @@ export function Analytics({ cases, voice, health, refresh, open }: Props) {
       <div className="net-banner" style={{ padding: "12px 18px" }}>
         <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
           <span className="stat-icon tone-teal"><Icon name="shield" size={18} /></span>
-          <div><strong style={{ fontSize: "0.95rem", letterSpacing: 0 }}>PaySentinel AI engine</strong><span className="muted small">Analytics recompute instantly as each assessment completes.</span></div>
+          <div><strong style={{ fontSize: "0.95rem", letterSpacing: 0 }}>Last Mile Guard engine</strong><span className="muted small">Analytics recompute instantly as each assessment completes.</span></div>
         </div>
         <span className={`status-pill ${health?.ok ? "" : "off"}`}><span className="dot" /> {health?.ok ? "Online" : "Offline"}</span>
       </div>

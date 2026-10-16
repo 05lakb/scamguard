@@ -238,7 +238,7 @@ export async function analyseConversation(transcript: string): Promise<Conversat
     }
     if (detail) throw new Error(detail);
     if (response.status >= 500) {
-      throw new Error("Cannot reach the PaySentinel API. Start it from the project folder with: python -m uvicorn backend.app:app --reload --port 8080");
+      throw new Error("Cannot reach the Last Mile Guard API. Start it from the project folder with: python -m uvicorn backend.app:app --reload --port 8080");
     }
     throw new Error("The conversation could not be analysed. Please try again.");
   }

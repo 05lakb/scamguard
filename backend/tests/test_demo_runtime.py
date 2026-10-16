@@ -14,7 +14,7 @@ from backend.tests.test_app import BODY, fake_asker, fake_reader
 @pytest.fixture
 def static_client(tmp_path, monkeypatch):
     (tmp_path / "assets").mkdir()
-    (tmp_path / "index.html").write_text("<h1>FinGuard AI</h1>", encoding="utf-8")
+    (tmp_path / "index.html").write_text("<h1>Last Mile Guard</h1>", encoding="utf-8")
     (tmp_path / "assets" / "index-aB34_678.js").write_text("export {};", encoding="utf-8")
     (tmp_path / "assets" / "unversioned.js").write_text("export {};", encoding="utf-8")
     monkeypatch.setattr(app_module, "WEB_DIST", tmp_path)

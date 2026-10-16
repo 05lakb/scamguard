@@ -1,4 +1,4 @@
-"""The web server for the PaySentinel AI prototype.
+"""The web server for the Last Mile Guard prototype.
 
 It serves the web pages and an assessment endpoint that checks a payment.
 It keeps no memory between requests: for the second round of a conversation, the
@@ -161,7 +161,7 @@ def visitor_key(request: Request):
 
 
 def create_app(reader=read_message, asker=clarify.ask_questions, arena_writer=None):
-    app = FastAPI(title="PaySentinel AI", docs_url=None, redoc_url=None, openapi_url=None)
+    app = FastAPI(title="Last Mile Guard", docs_url=None, redoc_url=None, openapi_url=None)
     visitors = SlidingWindow(PER_VISITOR_PER_MINUTE, PER_VISITOR_PER_HOUR)
     gemini_budget = SlidingWindow(10**9, GEMINI_CALLS_PER_HOUR)  # one shared counter
     scam_types = load_scam_types()

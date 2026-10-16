@@ -1,4 +1,4 @@
-# FinGuard deployment verification — 15 October 2026
+# Last Mile Guard deployment verification — 15 October 2026
 
 Public URL: https://last-mile-guard-lcjgzaksea-uc.a.run.app/
 
@@ -16,7 +16,7 @@ Public URL: https://last-mile-guard-lcjgzaksea-uc.a.run.app/
 | HTML caching / first paint | No Cache-Control header observed; root div empty in initial HTML |
 
 The public app is reachable and returned a fresh message reading. It is an older
-build than the local FinGuard app. The response does not establish which Gemini
+build than the local Last Mile Guard app. The response does not establish which Gemini
 model, API provider, runtime identity, IAM permissions or Cloud Run revision it uses.
 
 ## Local status

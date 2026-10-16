@@ -8,7 +8,7 @@ interface Props {
 }
 
 const CHECKS = [
-  { number: "01", name: "TxnGuard", tag: "Transaction behaviour", text: "Look for unusual amounts, unfamiliar payees and changes in customer payment history." },
+  { number: "01", name: "FraudShield", tag: "Transaction behaviour", text: "Look for unusual amounts, unfamiliar payees and changes in customer payment history." },
   { number: "02", name: "ScamStop", tag: "Customer context", text: "Look for social engineering and ask a neutral follow-up when more evidence is needed." },
   { number: "03", name: "MuleNet", tag: "Synthetic account links", text: "Analyze suspicious connections in an optional demo account graph—not a live banking network." },
 ];
@@ -108,7 +108,7 @@ export function OverviewDetails({ tryLive, goTo }: Props) {
       <section className="research-stats-section" aria-labelledby="why-title">
         <div className="research-stats-header">
           <div><p className="eyebrow">The evidence behind the problem</p><h2 id="why-title">The cost of scams is real.</h2></div>
-          <p>Reported industry figures from public regulatory sources—not PaySentinel AI results.</p>
+          <p>Reported industry figures from public regulatory sources—not Last Mile Guard results.</p>
         </div>
         <div className="research-stats-grid">
           {INDUSTRY_STATS.map((stat) => (

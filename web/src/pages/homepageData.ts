@@ -2,7 +2,7 @@ import type { IconName } from "../components/Icon";
 
 /**
  * The transaction and risk findings on this page are synthetic examples, NOT
- * claims about real payments or observed PaySentinel AI performance.
+ * claims about real payments or observed Last Mile Guard performance.
  */
 export interface JourneyStep {
   id: string;
@@ -24,7 +24,7 @@ export const JOURNEY: JourneyStep[] = [
     icon: "list", signal: "PAYMENT CREATED", labelValue: "₹50,000",
   },
   {
-    id: "behaviour", label: "TxnGuard", title: "Spot unusual transaction behaviour",
+    id: "behaviour", label: "FraudShield", title: "Spot unusual transaction behaviour",
     description: "Explainable checks compare the amount, payee and supplied history with the customer's usual payment activity.",
     evidence: "Sample signal: an unfamiliar payee and unusually high transfer amount",
     icon: "chart", signal: "BEHAVIOURAL CHECK", labelValue: "Unusual",
@@ -112,7 +112,7 @@ export const PREVIEW_TABS = [
   },
   {
     id: "signals", label: "02 · Signals",
-    eyebrow: "TxnGuard + ScamStop + MuleNet", title: "The story reveals what the transaction cannot",
+    eyebrow: "FraudShield + ScamStop + MuleNet", title: "The story reveals what the transaction cannot",
     quote: "The caller said not to tell anyone. They called it a temporary safety account.",
     lines: ["Impersonation and secrecy indicators", "Unfamiliar receiving account", "Synthetic network link supplied for this scenario"],
   },

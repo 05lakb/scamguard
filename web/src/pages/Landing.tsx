@@ -25,9 +25,9 @@ const FEATURES: { icon: IconName; title: string; text: string }[] = [
   { icon: "network", title: "Mule-network detection", text: "Flagged links, fan-in from many senders and fast onward transfers around the receiving account." },
 ];
 
-// The three places a scam shows itself, and which PaySentinel check looks there.
+// The three places a scam shows itself, and which Last Mile Guard check looks there.
 const BLIND_SPOTS: { icon: IconName; where: string; title: string; text: string; answer: string }[] = [
-  { icon: "activity", where: "In the payment", title: "An unusual transaction", text: "A much larger amount than usual, a brand-new payee, a new device or location, a night-time transfer or a remote-access app running.", answer: "TxnGuard behaviour checks" },
+  { icon: "activity", where: "In the payment", title: "An unusual transaction", text: "A much larger amount than usual, a brand-new payee, a new device or location, a night-time transfer or a remote-access app running.", answer: "FraudShield behaviour checks" },
   { icon: "mic", where: "In the customer's words", title: "A coached or pressured customer", text: "Urgency, secrecy, a caller asking for an OTP, threats of arrest or account blocking, or a reason that sounds rehearsed.", answer: "ScamStop note reading and Voice AI" },
   { icon: "network", where: "In the receiving account", title: "A mule account", text: "Money arriving from many unrelated senders and leaving again within hours, or links to accounts already flagged.", answer: "MuleNet network checks" },
 ];
@@ -50,9 +50,9 @@ export function Landing({ signedIn, enter, theme, setTheme }: Props) {
     <>
     <nav className="land-nav" aria-label="Main">
       <div className="land-nav-inner">
-        <button className="brand-mark" onClick={() => window.scrollTo({ top: 0, behavior: "smooth" })} aria-label="PaySentinel AI, back to top">
+        <button className="brand-mark" onClick={() => window.scrollTo({ top: 0, behavior: "smooth" })} aria-label="Last Mile Guard, back to top">
           <Logo size={34} />
-          <span><strong>PaySentinel AI</strong><small>Fraud intelligence</small></span>
+          <span><strong>Last Mile Guard</strong><small>Fraud intelligence</small></span>
         </button>
         <div className="links">
           <a href="#problem">The problem</a>
@@ -73,7 +73,7 @@ export function Landing({ signedIn, enter, theme, setTheme }: Props) {
           <span className="badge-pill"><Icon name="pulse" size={14} /> Real-time protection for account-to-account payments</span>
           <h1>Stop fraud <span className="grad">before money moves.</span></h1>
           <p className="lead">
-            PaySentinel AI checks account-to-account transfers (UPI, IMPS, NEFT) before the money leaves, using the payment,
+            Last Mile Guard checks account-to-account transfers (UPI, IMPS, NEFT) before the money leaves, using the payment,
             the customer's own words and the receiving account's links, then explains exactly why a transfer looks risky.
           </p>
           <div className="hero-cta">
@@ -134,7 +134,7 @@ export function Landing({ signedIn, enter, theme, setTheme }: Props) {
         </div>
         <p className="problem-note">
           Each warning sign lives in a different place. Looking at only one either misses the scam or stops genuine customers.
-          <strong> PaySentinel AI combines all three before the payment settles, and a person confirms every hold.</strong>
+          <strong> Last Mile Guard combines all three before the payment settles, and a person confirms every hold.</strong>
         </p>
       </section>
 
@@ -191,7 +191,7 @@ export function Landing({ signedIn, enter, theme, setTheme }: Props) {
       </section>
 
       <footer className="land-foot">
-        <span>PaySentinel AI · synthetic-data prototype · no real payment is made</span>
+        <span>Last Mile Guard · synthetic-data prototype · no real payment is made</span>
         <span>Gemini on Vertex AI · Cloud Run · FastAPI · React</span>
       </footer>
     </div>

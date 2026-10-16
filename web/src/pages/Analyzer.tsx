@@ -238,7 +238,7 @@ export function Analyzer({ scenarios, cases, onCase, decide }: Props) {
 
   return (
     <div>
-      <PageHead kicker="Real-time fraud engine" title="Transaction Risk" accent="Analyzer" text="Enter the transaction context. PaySentinel evaluates behaviour, device, beneficiary, location, timing and the customer's own words before the payment completes.">
+      <PageHead kicker="Real-time fraud engine" title="Transaction Risk" accent="Analyzer" text="Enter the transaction context. Last Mile Guard evaluates behaviour, device, beneficiary, location, timing and the customer's own words before the payment completes.">
         <span className="status-pill"><span className="dot" /> Engine online</span>
       </PageHead>
 
@@ -365,7 +365,7 @@ export function Analyzer({ scenarios, cases, onCase, decide }: Props) {
               </div>
 
               <div className="engine-bars" aria-label="Score from each engine">
-                <EngineBar name="TxnGuard" what="Payment behaviour" value={shown.audit.behaviour_score} />
+                <EngineBar name="FraudShield" what="Payment behaviour" value={shown.audit.behaviour_score} />
                 <EngineBar name="ScamStop" what="Customer's words" value={shown.audit.message_reading ? shown.audit.message_reading.scam_likelihood : null} empty="No note" />
                 <EngineBar name="MuleNet" what="Receiving account" value={shown.audit.network_available ? shown.audit.network_score ?? 0 : null} empty="No data" />
                 <p className="muted small">Warn from {shown.audit.thresholds.warn} · hold from {shown.audit.thresholds.hold}</p>
@@ -373,7 +373,7 @@ export function Analyzer({ scenarios, cases, onCase, decide }: Props) {
 
               {result?.notice && <p className="ai-note warn"><Icon name="warn" size={16} /> {result.notice}</p>}
               {result?.customer_warning && <p className="ai-note"><Icon name="shield" size={16} /> {result.customer_warning}</p>}
-              {!result?.customer_warning && result?.action === "allow" && <p className="ai-note"><Icon name="allow" size={16} /> PaySentinel AI detected a low-risk transaction pattern. No major fraud indicators were identified.</p>}
+              {!result?.customer_warning && result?.action === "allow" && <p className="ai-note"><Icon name="allow" size={16} /> Last Mile Guard detected a low-risk transaction pattern. No major fraud indicators were identified.</p>}
 
               {asked && (
                 <div className="ask-box">

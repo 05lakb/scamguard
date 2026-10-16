@@ -1,7 +1,7 @@
-// PaySentinel AI mark: a shield with a pulse line on a tile filled with the current theme's gradient.
+// Last Mile Guard mark: a shield with a pulse line on a tile filled with the current theme's gradient.
 export function Logo({ size = 40 }: { size?: number }) {
   return (
-    <svg width={size} height={size} viewBox="0 0 64 64" role="img" aria-label="PaySentinel AI logo">
+    <svg width={size} height={size} viewBox="0 0 64 64" role="img" aria-label="Last Mile Guard logo">
       <defs>
         <linearGradient id="ps-grad" x1="0" y1="0" x2="1" y2="1">
           <stop offset="0" style={{ stopColor: "var(--accent)" }} />

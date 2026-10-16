@@ -18,7 +18,7 @@ export function PairedEvidence() {
   return <section className="paired-evidence" aria-labelledby="paired-title">
     <div className="paired-heading"><div><p className="eyebrow">Same cases · Two approaches</p>
       <h2 id="paired-title">What changes when we add Gemini?</h2></div>
-      <a className="primary paired-download" href={reportUrl} download="finguard-paired-evaluation.json">Download full run</a>
+      <a className="primary paired-download" href={reportUrl} download="last-mile-guard-paired-evaluation.json">Download full run</a>
     </div>
     <p>We sent the same {report.total_cases} synthetic cases through payment rules and the complete first-round assessment. That assessment adds Gemini message analysis, message safeguards and follow-up questions.</p>
     <p className="paired-caveat">Development benchmark · Existing cases with unverified independence. This measures this run, not real-world fraud accuracy.</p>
@@ -44,7 +44,7 @@ export function PairedEvidence() {
       </tbody></table></div>
       <h3>Earlier quota-limited run retained</h3>
       <p>The first unpaced run completed 9 assessments with fresh Gemini readings and hit provider quota limits on 41 of 50 cases. The repeat uses 15-second minimum spacing between cases; this is not evidence of production throughput.</p>
-      <a href={initialReportUrl} download="finguard-initial-quota-run.json">Download the earlier run, including all fallbacks</a>
+      <a href={initialReportUrl} download="last-mile-guard-initial-quota-run.json">Download the earlier run, including all fallbacks</a>
     </details>
   </section>;
 }

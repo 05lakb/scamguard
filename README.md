@@ -1,6 +1,6 @@
-# PaySentinel AI
+# Last Mile Guard
 
-**Real-time fraud intelligence before money moves.** PaySentinel AI checks a payment's behaviour, the customer's own words or call transcript, and the receiving account's network, then recommends **allow**, **warn/ask** or **hold for human review** with ranked, explainable reasons.
+**Real-time fraud intelligence before money moves.** Last Mile Guard checks a payment's behaviour, the customer's own words or call transcript, and the receiving account's network, then recommends **allow**, **warn/ask** or **hold for human review** with ranked, explainable reasons.
 
 - **Stage:** synthetic-data prototype. No real bank or payment rail is connected; no money is ever moved.
 - **Pitch:** [idea](docs/PITCH_IDEA.md) · **Palette:** [colours](docs/COLOR_PALETTE.md)
@@ -23,7 +23,7 @@ Sign-in asks only for a display name (kept in this browser); there are no accoun
 
 ## What each part does
 
-1. **TxnGuard — transaction fraud:** Check amount, timing, device, location change, payee, payment frequency, and recent payment history.
+1. **FraudShield — transaction fraud:** Check amount, timing, device, location change, payee, payment frequency, and recent payment history.
 2. **ScamStop — customer manipulation:** Read the customer's note for pressure, secrecy, or coaching; ask one follow-up round when evidence is unclear.
 3. **MuleNet — receiving-account risk:** Check account links, many recent senders, and rapid onward transfers.
 4. **Risk decision and explanation:** Combine the available evidence, rank the reasons, and recommend an action. A bank would make the final payment-control decision.
@@ -32,7 +32,7 @@ Sign-in asks only for a display name (kept in this browser); there are no accoun
 
 ```mermaid
 flowchart TB
-    P["Customer starts payment"] --> F["TxnGuard: transaction checks"]
+    P["Customer starts payment"] --> F["FraudShield: transaction checks"]
     P --> S["ScamStop: note and optional follow-up"]
     P --> M["MuleNet: account-network checks"]
     F --> D["Risk decision and explanation"]
@@ -43,12 +43,12 @@ flowchart TB
     D --> H["High risk: recommend hold and analyst review"]
 ```
 
-- **Current implementation:** One FastAPI service. TxnGuard and MuleNet use explainable rules; ScamStop uses Gemini for structured message reading and question writing. Rules choose the recommendation.
+- **Current implementation:** One FastAPI service. FraudShield and MuleNet use explainable rules; ScamStop uses Gemini for structured message reading and question writing. Rules choose the recommendation.
 - **Target architecture:** A bank supplies trusted payment and account data, then controls warnings, holds, analyst review, and payment release. The diagram shows this intended decision flow; it does not imply a live bank integration.
 
 ## What works today
 
-- **TxnGuard:** Rule-based transaction and request-supplied history scoring in `backend/risk/behaviour.py`.
+- **FraudShield:** Rule-based transaction and request-supplied history scoring in `backend/risk/behaviour.py`.
 - **ScamStop:** Gemini-assisted note reading and one follow-up round; deterministic decision rules in `backend/risk/`.
 - **MuleNet:** Rule-based checks on an optional, bounded **synthetic** transfer graph in `backend/risk/network.py`.
 - **Voice AI:** `backend/risk/conversation.py` scores a call transcript with Gemini when configured, or with transparent phrase rules (OTP/PIN requests, impersonation, threats, urgency, secrecy, remote-access apps, off-platform payment) when it is not. The response always says which reader ran.

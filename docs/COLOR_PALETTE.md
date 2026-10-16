@@ -1,6 +1,6 @@
-# PaySentinel AI colour themes
+# Last Mile Guard colour themes
 
-PaySentinel AI ships with four themes. Pick one from the palette button in the top bar (or on the landing page); the choice is remembered in the browser. **Clean White + Indigo** is the default. Tokens live at the top of `web/src/styles.css`; the picker is `web/src/components/ThemePicker.tsx`.
+Last Mile Guard ships with four themes. Pick one from the palette button in the top bar (or on the landing page); the choice is remembered in the browser. **Clean White + Indigo** is the default. Tokens live at the top of `web/src/styles.css`; the picker is `web/src/components/ThemePicker.tsx`.
 
 | Theme | Background | Cards | Text | Accent gradient | Feel |
 | --- | --- | --- | --- | --- | --- |

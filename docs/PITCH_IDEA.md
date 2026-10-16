@@ -1,8 +1,8 @@
-# PaySentinel AI: stop financial crime before payment settlement
+# Last Mile Guard: stop financial crime before payment settlement
 
-**Product:** PaySentinel AI — Agentic Financial Crime Prevention Platform
+**Product:** Last Mile Guard — Agentic Financial Crime Prevention Platform
 
-**Three parts:** TxnGuard + ScamStop + MuleNet
+**Three parts:** FraudShield + ScamStop + MuleNet
 **Track:** Banking, financial services and insurance
 **Stage:** Synthetic-data prototype
 
@@ -12,9 +12,9 @@ A payment can be authorised by its customer and still be part of a scam. Transac
 
 ## The combined idea
 
-PaySentinel AI investigates a payment before it settles through three complementary checks:
+Last Mile Guard investigates a payment before it settles through three complementary checks:
 
-1. **TxnGuard** scores transaction anomalies: amount, timing, device, payee, payment frequency, and recent behaviour.
+1. **FraudShield** scores transaction anomalies: amount, timing, device, payee, payment frequency, and recent behaviour.
 2. **ScamStop** looks for social-engineering signs in the customer's note and, when useful, asks one round of short follow-up questions. Gemini extracts structured facts; rules retain control of the recommendation.
 3. **MuleNet** investigates the destination account's connections and movement of money to identify possible mule-network evidence.
 
@@ -22,7 +22,7 @@ A risk decision and explanation layer combines the available evidence, shows wha
 
 ## Target demo story
 
-A customer starts a payment through a simulated banking screen. TxnGuard checks the transaction, ScamStop reads the customer's explanation, and MuleNet inspects synthetic links around the receiving account. The decision layer displays the risk level, the strongest evidence from each check, and a recommended action. An analyst can review a high-risk case before a simulated payment is released.
+A customer starts a payment through a simulated banking screen. FraudShield checks the transaction, ScamStop reads the customer's explanation, and MuleNet inspects synthetic links around the receiving account. The decision layer displays the risk level, the strongest evidence from each check, and a recommended action. An analyst can review a high-risk case before a simulated payment is released.
 
 ## What the repository currently demonstrates
 

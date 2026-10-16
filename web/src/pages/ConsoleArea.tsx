@@ -16,7 +16,7 @@ export function ConsoleArea({ scenarios, onCase, onArenaCase, autoplay, onFinish
   const [mode, setMode] = useState<"single" | "arena">("single");
   const shown = autoplay ? "single" : mode;
   return <div>
-    <header className="simple-demo-heading"><div><h1>{shown === "single" ? "See a payment check, from start to finish." : "Test PaySentinel against generated cases."}</h1>
+    <header className="simple-demo-heading"><div><h1>{shown === "single" ? "See a payment check, from start to finish." : "Test Last Mile Guard against generated cases."}</h1>
       <p className="muted">{shown === "single" ? "Choose a case, watch the checks, then review the recommendation." : "Advanced testing with synthetic scam and genuine-payment scenarios."}</p></div>
       <button className="ghost small-btn" onClick={() => setMode(shown === "single" ? "arena" : "single")} disabled={Boolean(autoplay)}>{shown === "single" ? "Advanced: red-team tests" : "Back to payment demo"}</button>
     </header>

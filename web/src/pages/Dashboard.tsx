@@ -25,7 +25,7 @@ const SUITE: { page: Page; icon: IconName; tone: Tone; kicker: string; title: st
 ];
 
 const ENGINES: { id: string; icon: IconName; tone: Tone; name: string; role: string; checks: string[] }[] = [
-  { id: "txnguard", icon: "activity", tone: "teal", name: "TxnGuard", role: "Payment behaviour", checks: ["Amount vs the customer's usual", "New beneficiary, device or location", "Night-time, live call, remote-access app"] },
+  { id: "fraudshield", icon: "activity", tone: "teal", name: "FraudShield", role: "Payment behaviour", checks: ["Amount vs the customer's usual", "New beneficiary, device or location", "Night-time, live call, remote-access app"] },
   { id: "scamstop", icon: "brain", tone: "violet", name: "ScamStop", role: "Customer's words and calls", checks: ["Reads the payment note and answers", "Voice AI: OTP requests, impersonation", "Urgency, secrecy and coaching"] },
   { id: "mulenet", icon: "network", tone: "amber", name: "MuleNet", role: "Receiving account", checks: ["Links to flagged mule accounts", "Many senders paying one account", "Money moved straight on"] },
   { id: "decision", icon: "shield", tone: "blue", name: "Decision layer", role: "Combines and explains", checks: ["Warn from 40, hold from 70", "Asks the customer when unsure", "Ranked reasons and audit trail"] },
@@ -41,7 +41,7 @@ export function Dashboard({ user, cases, health, refresh, goTo }: Props) {
     <div>
       <header className="page-head">
         <div>
-          <p className="kicker live"><span className="dot" /> PaySentinel security operations centre</p>
+          <p className="kicker live"><span className="dot" /> Last Mile Guard security operations centre</p>
           <h1>Welcome, <span className="grad">{user}</span><br />Fraud Intelligence <span className="grad">Command Centre</span></h1>
           <p className="page-sub">Real-time transaction monitoring, AI-powered risk analysis and coordinated fraud intelligence.</p>
         </div>
@@ -144,7 +144,7 @@ export function Dashboard({ user, cases, health, refresh, goTo }: Props) {
           })}
         </div>
         <p className="engine-flow">
-          <strong>Payment</strong> <Icon name="arrow" size={13} /> TxnGuard + ScamStop + MuleNet <Icon name="arrow" size={13} /> <strong>Decision layer</strong> <Icon name="arrow" size={13} /> allow · warn · hold <Icon name="arrow" size={13} /> <strong>Analyst confirms</strong>
+          <strong>Payment</strong> <Icon name="arrow" size={13} /> FraudShield + ScamStop + MuleNet <Icon name="arrow" size={13} /> <strong>Decision layer</strong> <Icon name="arrow" size={13} /> allow · warn · hold <Icon name="arrow" size={13} /> <strong>Analyst confirms</strong>
         </p>
         <div className="infra-grid" style={{ marginTop: 14 }}>
           <div className="infra-item"><Icon name="server" size={18} /><div><small>Assessment API · FastAPI</small><strong className={online ? "ok" : health === undefined ? "wait" : "bad"}>{online ? "Online" : health === undefined ? "Checking" : "Offline"}</strong></div></div>

@@ -1,4 +1,4 @@
-/* PaySentinel AI themes. Clean White + Indigo is the default; the theme picker switches data-theme on <html>. */
+/* Last Mile Guard themes. Clean White + Indigo is the default; the theme picker switches data-theme on <html>. */
 :root,
 :root[data-theme="indigo"] {
   color-scheme: light;

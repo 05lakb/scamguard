@@ -2,7 +2,7 @@ import { useState } from "react";
 import { Icon, type IconName } from "../components/Icon";
 
 const CHECKS: { name: string; role: string; detail: string; icon: IconName; tone: string }[] = [
-  { name: "TxnGuard", role: "Payment rules", detail: "Amount, device, location, payee and recent payment history.", icon: "chart", tone: "blue" },
+  { name: "FraudShield", role: "Payment rules", detail: "Amount, device, location, payee and recent payment history.", icon: "chart", tone: "blue" },
   { name: "ScamStop", role: "Gemini + rules", detail: "Pressure, secrecy and impersonation in the customer's story.", icon: "brain", tone: "violet" },
   { name: "MuleNet", role: "Network rules", detail: "Suspicious account links and rapid onward transfers.", icon: "server", tone: "teal" },
 ];
@@ -21,7 +21,7 @@ export function Architecture() {
     <div className="architecture">
       <header className="architecture-heading">
         <div>
-          <p className="eyebrow">Inside PaySentinel AI</p>
+          <p className="eyebrow">Inside Last Mile Guard</p>
           <h1>Three checks.<br /><span>One explainable decision.</span></h1>
           <p className="architecture-intro">Follow the evidence from a payment request to a recommendation an analyst can inspect.</p>
         </div>

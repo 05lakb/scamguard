@@ -9,7 +9,7 @@ const checks: { stage: AssessmentStage; title: string; explanation: string; icon
 
 export function SimpleExecution({ events, busy, error }: { events: AssessmentEvent[]; busy: boolean; error: string }) {
   return <section className="card simple-checks" aria-labelledby="simple-checks-title">
-    <p className="eyebrow">2 · Watch the checks</p><h2 id="simple-checks-title">What is PaySentinel checking?</h2>
+    <p className="eyebrow">2 · Watch the checks</p><h2 id="simple-checks-title">What is Last Mile Guard checking?</h2>
     <p className="muted small">These statuses come from the backend as each check runs.</p>
     <ol>{checks.map(check => {
       const event = events.filter(item => item.stage === check.stage).at(-1);

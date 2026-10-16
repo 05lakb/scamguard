@@ -1,33 +1,52 @@
-# Last Mile Guard: stop financial crime before payment settlement
+# Last Mile Guard: stop account-to-account scams before the money leaves
 
-**Product:** Last Mile Guard — Agentic Financial Crime Prevention Platform
-
-**Three parts:** FraudShield + ScamStop + MuleNet
+**Product:** Last Mile Guard, a fraud intelligence command centre for banks
+**Three engines:** FraudShield + ScamStop + MuleNet, combined by an explainable decision layer
 **Track:** Banking, financial services and insurance
-**Stage:** Synthetic-data prototype
+**Stage:** Synthetic-data prototype. No real bank, payment rail or money is involved.
 
 ## The problem
 
-A payment can be authorised by its customer and still be part of a scam. Transaction anomalies, a coached customer, and a suspicious receiving-account network may each be visible in different places. Looking at only one of them can miss the risk or create unnecessary friction.
+In authorised account-to-account scams, the victim logs in on their own phone, passes every security check and sends a UPI, IMPS or NEFT transfer themselves, because a fake bank officer, "police" caller, investment adviser or online partner told them to. Password, OTP and device checks all pass, so traditional fraud systems see a normal payment. Within minutes the money moves on through mule accounts.
 
-## The combined idea
+**Problem statement:** detect social-engineering scams in account-to-account transfers in real time, before the money leaves the account, explain the decision clearly, and avoid blocking genuine customers.
 
-Last Mile Guard investigates a payment before it settles through three complementary checks:
+The warning signs live in three different places. Looking at only one either misses the scam or stops genuine customers:
 
-1. **FraudShield** scores transaction anomalies: amount, timing, device, payee, payment frequency, and recent behaviour.
-2. **ScamStop** looks for social-engineering signs in the customer's note and, when useful, asks one round of short follow-up questions. Gemini extracts structured facts; rules retain control of the recommendation.
-3. **MuleNet** investigates the destination account's connections and movement of money to identify possible mule-network evidence.
+| Where the sign shows | What it looks like | Engine |
+| --- | --- | --- |
+| In the payment | Amount far above usual, new payee, new device or location, night-time, live call, remote-access app | **FraudShield** |
+| In the customer's words | Urgency, secrecy, OTP requests, threats, a rehearsed reason | **ScamStop** and **Voice AI** |
+| In the receiving account | Many unrelated senders, money moved straight on, links to flagged mule accounts | **MuleNet** |
 
-A risk decision and explanation layer combines the available evidence, shows what raised or lowered risk, and recommends **proceed**, **warn or ask**, or **hold for human review**. The bank remains responsible for any real payment action.
+## The idea
 
-## Target demo story
+Last Mile Guard checks every transfer with all three engines before it settles:
 
-A customer starts a payment through a simulated banking screen. FraudShield checks the transaction, ScamStop reads the customer's explanation, and MuleNet inspects synthetic links around the receiving account. The decision layer displays the risk level, the strongest evidence from each check, and a recommended action. An analyst can review a high-risk case before a simulated payment is released.
+1. **FraudShield** scores payment behaviour against the customer's normal pattern.
+2. **ScamStop** reads the customer's note (Gemini on Vertex AI when configured, phrase rules otherwise) and, when the evidence is thin, asks one short question before deciding. **Voice AI** applies the same reading to call transcripts.
+3. **MuleNet** looks at the receiving account's transfer graph for mule-ring patterns.
 
-## What the repository currently demonstrates
+The **decision layer** combines the scores (warn from 40, hold from 70), ranks the reasons and recommends **allow**, **warn or ask**, or **hold for human review**. Gemini extracts facts; rules make the recommendation; a person confirms every hold.
 
-The existing ScamGuard/Last Mile Guard code has a live web console, a FastAPI assessment service, explainable transaction rules, Gemini-assisted scam-message reading and follow-up, an analyst-view simulation, and synthetic red-team tests. A first MuleNet slice now accepts a small synthetic transfer graph and scores flagged links, multiple inbound senders, and rapid onward transfers. No bank-owned account graph, real payment rail, persistent case store, or final human-hold workflow is connected.
+## What the prototype shows today
+
+- **Transactions:** analyse one transfer and see everything on one page: the overall score, a score bar per engine, ranked reasons, a case file with Approve / Keep on hold / Escalate and an audit trail, the customer conversation, context (amount vs usual, device, location, beneficiary seen before) and the MuleNet graph showing where the money would go.
+- **Voice AI:** paste, upload or speak a call transcript to spot OTP requests, impersonation, threats and pressure.
+- **Cases and Risk Profile:** an analyst queue for every warning and hold, and a customer view with an overall risk score, reasons, devices, beneficiaries, locations and alerts.
+- **Dashboard and Analytics:** live totals, risk distribution, top signals, analyst feedback, risk by location, and the status of each detection engine.
+- **Scenario Lab:** replay realistic scam and genuine payments, a five-step guided demo, and a red-team arena that attacks the engine.
+- **Proof:** synthetic scenario evaluations, red-team tests, backend tests and web unit tests, with results on the Evidence page.
+
+## Demo story (two minutes)
+
+1. **Landing:** state the problem: the customer approves the payment, the scammer wrote the script.
+2. **Transactions:** run *Bank-impersonation call*. The payment is held at a high score. Show the three engine bars, the ranked reasons, then scroll to the case file and the MuleNet graph (four victims pay one account, which forwards to a flagged collector).
+3. Run *Everyday payment*: allowed, no friction for a genuine customer.
+4. **Voice AI:** analyse the *Bank OTP call* transcript.
+5. **Cases** and **Risk Profile:** record a human decision and show the customer's overall risk.
+6. **Scenario Lab:** start the guided demo, or let the red team attack.
 
 ## What must follow
 
-Source payment and network evidence from trusted bank systems; validate the three modules on representative held-back cases; calibrate combined risk and customer friction; add authenticated analyst review and a durable audit record; and integrate with a payment workflow only after security, privacy, and operational review.
+Source payment and account-network data from trusted bank systems instead of the request; validate and calibrate the three engines on representative held-back cases; add authenticated analyst review, durable case and audit storage, and bank-controlled hold and release; and integrate with a payment workflow (Pub/Sub ingestion, governed BigQuery history) only after security, privacy and operational review.

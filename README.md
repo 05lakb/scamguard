@@ -1,22 +1,22 @@
 # Last Mile Guard
 
-**Real-time fraud intelligence before money moves.** Last Mile Guard checks a payment's behaviour, the customer's own words or call transcript, and the receiving account's network, then recommends **allow**, **warn/ask** or **hold for human review** with ranked, explainable reasons.
+**Real-time protection for account-to-account transfers (UPI, IMPS, NEFT) before money moves.** Last Mile Guard checks a payment's behaviour, the customer's own words or call transcript, and the receiving account's network, then recommends **allow**, **warn/ask** or **hold for human review** with ranked, explainable reasons.
 
 - **Stage:** synthetic-data prototype. No real bank or payment rail is connected; no money is ever moved.
-- **Pitch:** [idea](docs/PITCH_IDEA.md) · **Palette:** [colours](docs/COLOR_PALETTE.md)
+- **Pitch:** [idea](docs/PITCH_IDEA.md)
 
 ## The command centre
 
 | Page | What it does | Backend |
 | --- | --- | --- |
-| Landing | Problem statement, product story, example decision, sign-in | – |
-| Dashboard | Security overview, risk distribution, actions, top signals, module cards, live API/AI status | `GET /api/health` |
-| Transactions | Analyse one account-to-account transfer and see the whole investigation on one page: score and ranked reasons, the analyst decision (approve / hold / escalate) with audit trail, customer, device and location context, and the receiving-account network scored by MuleNet | `POST /api/assess` |
+| Landing | The problem (authorised account-to-account scams), features, how it works, why it matters, **Get started** | – |
+| Dashboard | Security overview, risk distribution, actions, top signals, the fraud intelligence suite, and the detection engines (FraudShield, ScamStop, MuleNet, decision layer) with live API/Gemini status | `GET /api/health` |
+| Transactions | Analyse one account-to-account transfer and see the whole investigation on one page: overall score, a score bar per engine, ranked reasons, the analyst decision (approve / hold / escalate) with audit trail, customer, device and location context, and the receiving-account network drawn by MuleNet (this payment shown going into the beneficiary) | `POST /api/assess` |
 | Voice AI | Live call detection (browser speech recognition), transcript upload (.txt/.srt/.vtt) or paste; scam-risk score, tactics, suspicious phrases, recommended action | `POST /api/conversation` |
 | Cases | Review queue for every warning and hold, with **Run test scenario** against the real backend | `POST /api/assess` |
 | Risk Profile | One customer's overall risk score with reasons, devices, beneficiaries, locations, transaction history (filter by decision) and fraud alerts | session cases |
 | Analytics | KPIs, risk distribution, decisions, top signals, analyst feedback, risk by location, recent assessments across all transactions | session cases |
-| Scenario Lab | Scenario library with live streamed checks, guided demo and the red-team arena | `POST /api/assess/stream`, `POST /api/arena` |
+| Scenario Lab | Scenario library with live streamed checks, a five-step guided demo and the red-team arena | `POST /api/assess/stream`, `POST /api/arena` |
 | Evidence, Architecture | Evaluation results and how the system fits together (footer links) | – |
 
 Sign-in asks only for a display name (kept in this browser); there are no accounts or passwords.
@@ -53,7 +53,7 @@ flowchart TB
 - **MuleNet:** Rule-based checks on an optional, bounded **synthetic** transfer graph in `backend/risk/network.py`.
 - **Voice AI:** `backend/risk/conversation.py` scores a call transcript with Gemini when configured, or with transparent phrase rules (OTP/PIN requests, impersonation, threats, urgency, secrecy, remote-access apps, off-platform payment) when it is not. The response always says which reader ran.
 - **API:** `POST /api/assess` returns a recommendation, score, ranked reasons, audit breakdown and execution provenance; `POST /api/assess/stream` streams each pipeline stage live; `POST /api/conversation` scores a transcript; `GET /api/health` reports service health and whether AI reading is configured.
-- **Demo:** React command centre (dashboard, transaction analyzer, voice AI, analytics, network, risk profile, geography), analyst queue with **Run test scenario** calling the real backend, three-agent audit panels, execution trace, scenario lab with red-team arena, architecture and evidence views.
+- **Demo:** React command centre with seven tabs (Dashboard, Transactions, Voice AI, Cases, Risk Profile, Analytics, Scenario Lab), a full per-transaction investigation (case file, three-engine evidence, customer conversation, context and MuleNet graph), analyst queue with **Run test scenario** calling the real backend, guided demo, red-team arena, Evidence and Architecture pages, and four colour themes.
 - **Evaluation:** Synthetic scenarios, Python evaluations, red-team tools, Pytest, and web unit tests.
 
 ## Google technology
@@ -156,7 +156,7 @@ Open http://localhost:5173. The website forwards `/api` calls to the API automat
 5. **Cases:** every warning and hold from step 2 is waiting here. Open one and record a decision, or use **Run test scenario** to send a library scenario to the backend.
 6. **Risk Profile:** the overall risk score, why it is that high, and every device, beneficiary and location the customer used.
 7. **Analytics:** totals, top signals, analyst feedback and risk by location update from the transactions you analysed.
-8. **Scenario Lab:** pick a sample case and press **Check**, or press **Guided demo** for the full five-step story. The step card sits above the panels and stays under the top bar as you scroll.
+8. **Scenario Lab:** pick a sample case and press **Check this payment**, or press **Guided demo** for the full five-step story. The step card sits above the panels and stays under the top bar as you scroll.
 9. Use the palette button in the top bar to switch between the four colour themes.
 
 All data is synthetic. No money moves, and a person confirms every hold.

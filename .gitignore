@@ -38,3 +38,7 @@ data/randomdummy*
 
 # Output of the testing agent
 redteam/output/
+
+# Local scratch output
+outputs/
+Claude outputs/

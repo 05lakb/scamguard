@@ -83,6 +83,7 @@ export const KIND_LABEL: Record<string, string> = {
   real_obvious: "Public-report scam (obvious)",
   real_quiet: "Public-report scam (quiet)",
   real_coached: "Public-report scam (coached)",
+  custom: "Your own scenario",
 };
 
 export const sourceLabel = (source: CaseItem["source"]) =>

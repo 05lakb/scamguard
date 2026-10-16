@@ -1,0 +1,39 @@
+{
+  "scenes": [
+    {
+      "id": "scene1",
+      "kind": "animated",
+      "text": "Many of today's biggest scams don't hack anyone's account. The scammer talks you into sending the money yourself. A fake bank call. A fake investment. A romance that ends with an emergency. The payment is approved by the real customer, from their real phone, so most fraud tools see nothing wrong. Australia alone reported over two billion dollars lost to scams in a year, and regulators are now making banks pay for it."
+    },
+    {
+      "id": "scene2",
+      "kind": "animated",
+      "text": "Last Mile Guard is a second look, right before the money moves. First, it looks at the payment: a new payee, an unusual amount, a phone call going on right now. Second, it reads what the customer wrote, using Gemini, and spots pressure and secrecy. Third, if it is unsure, it asks one polite question. Then it decides: allow, warn, or hold. A real person confirms every hold, and the system never moves money by itself."
+    },
+    {
+      "id": "scene3",
+      "kind": "screen",
+      "text": "Here is the live site. A customer is paying a new payee, and the note is short, so the guard doesn't accuse. It asks a neutral question. The answer gives nothing away, so the guard holds the payment for a person, and shows ranked reasons in plain words. Now I'll try my own scenario. I describe a situation, set the payment details, and press play. A simulated customer, played by Gemini, writes the note and answers. The guard never sees my description. And an honest customer with an ordinary payment goes straight through, because wrongly stopping people is a cost too."
+    },
+    {
+      "id": "scene4",
+      "kind": "screen",
+      "text": "To test it, a red agent plays a victim. It prepares a made-up case, modelled on a real fraud pattern from public advice pages, and every case links to its source. It makes the call. The bank's guard reads the payment, the history and the words, and decides. Scam stopped before any money moved. And when a case slips through, we show that too, because that's the honest picture."
+    },
+    {
+      "id": "scene5",
+      "kind": "animated",
+      "text": "We measured it, including the bad news. On a held-back test, run once, every scam was flagged. But two honest small businesses were wrongly held, because the guard misread 'our supplier'. We fixed that, and on a fresh test, all nineteen scams were still caught, with one honest customer given a warning. It isn't perfect. A calm, coached victim paying something ordinary can still get through, and our samples are small. All of it is on the Evidence page."
+    },
+    {
+      "id": "scene6",
+      "kind": "animated",
+      "text": "It runs on Google Cloud. Cloud Run serves the app, and Gemini on Vertex AI reads the messages, through a service identity, with no keys in the code. There are rate limits and a cost guard, and every hold is confirmed by a person. All the data is made up."
+    },
+    {
+      "id": "scene7",
+      "kind": "animated",
+      "text": "Last Mile Guard. A second look before the money moves."
+    }
+  ]
+}

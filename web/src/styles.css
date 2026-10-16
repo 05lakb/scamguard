@@ -2488,3 +2488,53 @@ thead th {
 .paired-metadata div { display: grid; grid-template-columns: 150px 1fr; gap: 10px; padding: 7px 0; }
 .paired-metadata dd { margin: 0; overflow-wrap: anywhere; }
 @media (max-width: 650px) { .paired-heading { align-items: flex-start; flex-direction: column; } .paired-facts { grid-template-columns: 1fr; } .paired-metadata div { grid-template-columns: 1fr; } }
+/* ---------- your own scenario ---------- */
+
+.custom {
+  display: grid;
+  gap: 16px;
+}
+
+.custom textarea,
+.custom input[type="text"],
+.custom input[type="number"],
+.custom select {
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.custom .examples {
+  flex-wrap: wrap;
+  margin: 8px 0 12px;
+}
+
+.form-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(210px, 1fr));
+  gap: 12px 16px;
+  margin-bottom: 8px;
+}
+
+.checks,
+.who {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px 20px;
+  margin: 8px 0 14px;
+}
+
+.who {
+  border: 0;
+  padding: 0;
+}
+
+.who legend {
+  margin-bottom: 4px;
+}
+
+.check {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 0.92rem;
+}

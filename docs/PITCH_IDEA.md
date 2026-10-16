@@ -1,6 +1,6 @@
-# Last Mile Guard: stop account-to-account scams before the money leaves
+# Last Mile Guard: a second look before the money moves
 
-**Product:** Last Mile Guard, a fraud intelligence command centre for banks
+**Product:** Last Mile Guard, a pre-payment check for scams and financial crime
 **Three engines:** FraudShield + ScamStop + MuleNet, combined by an explainable decision layer
 **Track:** Banking, financial services and insurance
 **Stage:** Synthetic-data prototype. No real bank, payment rail or money is involved.
@@ -23,11 +23,11 @@ The warning signs live in three different places. Looking at only one either mis
 
 Last Mile Guard checks every transfer with all three engines before it settles:
 
-1. **FraudShield** scores payment behaviour against the customer's normal pattern.
-2. **ScamStop** reads the customer's note (Gemini on Vertex AI when configured, phrase rules otherwise) and, when the evidence is thin, asks one short question before deciding. **Voice AI** applies the same reading to call transcripts.
+1. **FraudShield** scores payment behaviour against the customer's normal pattern: amount, timing, device, location, payee, payment frequency and recent history.
+2. **ScamStop** reads the customer's note (Gemini on Vertex AI when configured, phrase rules otherwise) and, when the evidence is thin, asks one short question before deciding. Links in the note are checked as text only, never opened. **Voice AI** applies the same reading to call transcripts.
 3. **MuleNet** looks at the receiving account's transfer graph for mule-ring patterns.
 
-The **decision layer** combines the scores (warn from 40, hold from 70), ranks the reasons and recommends **allow**, **warn or ask**, or **hold for human review**. Gemini extracts facts; rules make the recommendation; a person confirms every hold.
+The **decision layer** combines the scores (warn from 40, hold from 70), ranks the reasons and recommends **allow**, **warn or ask**, or **hold for human review**. The customer's warning can be shown in their own language. Gemini extracts facts; rules make the recommendation; a person confirms every hold.
 
 ## What the prototype shows today
 
@@ -35,8 +35,11 @@ The **decision layer** combines the scores (warn from 40, hold from 70), ranks t
 - **Voice AI:** paste, upload or speak a call transcript to spot OTP requests, impersonation, threats and pressure.
 - **Cases and Risk Profile:** an analyst queue for every warning and hold, and a customer view with an overall risk score, reasons, devices, beneficiaries, locations and alerts.
 - **Dashboard and Analytics:** live totals, risk distribution, top signals, analyst feedback, risk by location, and the status of each detection engine.
-- **Scenario Lab:** replay realistic scam and genuine payments, a five-step guided demo, and a red-team arena that attacks the engine.
-- **Proof:** synthetic scenario evaluations, red-team tests, backend tests and web unit tests, with results on the Evidence page.
+- **Scenario Lab:** replay realistic scam and genuine payments, a five-step guided demo, a red-team arena that attacks the engine, and a form to describe your own made-up scenario and watch a red agent play it against the guard.
+- **Live console extras:** a link check that never opens links, and the customer's warning translated into their own language (the English stays the record; translation never changes the decision).
+- **Proof:** red-team and evaluation cases modelled on public advice pages (FTC consumer alerts, Scamwatch), each credited to its source, with half held back for one final score; plus backend tests and web unit tests, with results on the Evidence page.
+
+No bank-owned account graph, real payment rail, persistent case store or final human-hold workflow is connected.
 
 ## Demo story (two minutes)
 
@@ -45,7 +48,7 @@ The **decision layer** combines the scores (warn from 40, hold from 70), ranks t
 3. Run *Everyday payment*: allowed, no friction for a genuine customer.
 4. **Voice AI:** analyse the *Bank OTP call* transcript.
 5. **Cases** and **Risk Profile:** record a human decision and show the customer's overall risk.
-6. **Scenario Lab:** start the guided demo, or let the red team attack.
+6. **Scenario Lab:** start the guided demo, or describe your own scenario and let the red agent attack.
 
 ## What must follow
 

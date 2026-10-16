@@ -72,6 +72,7 @@ export interface Reading {
   explanation: string;
   from_cache?: boolean;
   orders_found_in_message: string[];
+  suspicious_links_found?: { link: string; why: string }[];
 }
 
 export interface Signal {

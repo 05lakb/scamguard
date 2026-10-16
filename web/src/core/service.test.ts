@@ -197,3 +197,27 @@ describe("a claimed history is checked against what the bank knows", () => {
     expect(result.reasons.join(" ")).not.toContain("no record of ever paying them");
   });
 });
+
+describe("risky links in the message", () => {
+  const link = [{ link: "bit.ly/3xYz", why: "a shortened link, which hides where it really goes" }];
+  const calm = () => payment({ amount: 100, payee_account_age_days: 500, device_known: true, is_new_payee: false });
+
+  it("adds 25 points and leads the reasons, the same as the Python version", () => {
+    const plain = decide(calm(), customer, reading(10));
+    const linked = decide(calm(), customer, reading(10, { suspicious_links_found: link }));
+    expect(linked.score).toBe(plain.score + 25);
+    expect(linked.reasons[0]).toBe("The message contains a link that looks risky: a shortened link, which hides where it really goes.");
+  });
+
+  it("makes a calm new-payee payment at least a warning", () => {
+    const newPayee = payment({ amount: 100, payee_account_age_days: 500, device_known: true });
+    expect(decide(newPayee, customer, reading(5)).action).toBe("allow");
+    expect(["warn", "hold"]).toContain(decide(newPayee, customer, reading(5, { suspicious_links_found: link })).action);
+  });
+
+  it("leaves readings without the field unchanged", () => {
+    const plain = decide(calm(), customer, reading(30));
+    const empty = decide(calm(), customer, reading(30, { suspicious_links_found: [] }));
+    expect([empty.action, empty.score, empty.reasons]).toEqual([plain.action, plain.score, plain.reasons]);
+  });
+});

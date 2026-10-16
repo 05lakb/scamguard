@@ -42,3 +42,6 @@ redteam/output/
 # Local scratch output
 outputs/
 Claude outputs/
+# Video project: installed packages and rendered clips
+video/node_modules/
+video/out/

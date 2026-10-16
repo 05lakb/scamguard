@@ -7,6 +7,7 @@ never sees the answer key. Each result is sent to the page the moment it is deci
 import json
 import random
 from collections import namedtuple
+from datetime import date
 from pathlib import Path
 
 from backend.service import assess
@@ -99,9 +100,27 @@ def public(record, scenario):
     return shown
 
 
+def custom_scenario(story, role, coached, customer, payment):
+    """Build one scenario from a visitor's own description. The visitor's story is what the simulated customer believes."""
+    genuine = role == "genuine"
+    full_payment = {"currency": "USD", "channel": "web", "timestamp": f"{date.today().isoformat()}T14:30:00", **payment}
+    return {
+        "id": "CUSTOM", "label": "legit" if genuine else "scam", "category": "custom", "difficulty": "custom",
+        "customer": customer, "payment": full_payment,
+        "persona": {"role": "genuine" if genuine else "victim", "voice": "plain and brief, like a normal message to a bank",
+                    "coached": bool(coached) and not genuine, "refuses": False, "contradicts": False,
+                    "injection": None, "writes_note": True, "facts": story},
+        "expected_actions": ["allow", "warn"] if genuine else ["warn", "hold"],
+    }
+
+
 def stream_run(count, seed, writer, reader, asker, scam_types):
     """Yield one event at a time: the start, a notice before each scenario, each result, then the summary."""
-    scenarios = pick_scenarios(count, seed)
+    yield from stream_scenarios(pick_scenarios(count, seed), writer, reader, asker, scam_types)
+
+
+def stream_scenarios(scenarios, writer, reader, asker, scam_types):
+    """Play the given scenarios one at a time and yield the same events as a live run."""
     yield {"type": "start", "total": len(scenarios)}
     site = LocalSite(reader, asker, scam_types)
     records = []

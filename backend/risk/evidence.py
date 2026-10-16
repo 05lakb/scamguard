@@ -16,6 +16,7 @@ from typing import Literal
 from pydantic import BaseModel, Field
 
 from backend import gemini_client
+from backend.risk.links import check_links
 
 ROOT = Path(__file__).resolve().parents[2]
 CACHE_DIR = ROOT / "eval" / "output" / "cache"
@@ -142,6 +143,7 @@ def read_message(message, scam_types, model=None):
     orders = find_orders_in_message(message)
     result = reading.model_dump()
     result["orders_found_in_message"] = orders
+    result["suspicious_links_found"] = check_links(message)  # reads the link text only, never opens a link
     if orders:
         # A real customer does not write orders to a checker, so this is suspicious by itself.
         result["scam_likelihood"] = max(result["scam_likelihood"], 85)

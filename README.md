@@ -93,25 +93,86 @@ flowchart TB
 
 For an exact local test walkthrough, synthetic scenario selection, Gemini cache/fallback labels, and an independent PowerShell API test, see [Analyst backend demo](docs/ANALYST_DEMO.md). The backend returns a request ID and timing for every payment assessment, which the application displays next to the scored evidence.
 
-## Run locally
+## Run and test locally
 
-1. Copy `.env.example` to an ignored `.env`; set `GEMINI_API_KEY` if you want Gemini message reading.
-2. Start the API from the repository root:
+You need **Python 3.12+** and **Node.js 20+ (LTS)**. A Gemini key is optional: without one, message reading and Voice AI fall back to transparent rules and the screen says so.
 
-   ```bash
-   python -m pip install -r backend/requirements.txt
-   python -m uvicorn backend.app:app --reload --port 8080
-   ```
+Run every command from the repository root (the folder that contains `backend/` and `web/`), unless a step says `cd web`.
 
-3. Start the web app in another terminal:
+### 1. Install
 
-   ```bash
-   cd web
-   npm ci
-   npm run dev
-   ```
+**Windows (PowerShell)**
 
-4. Run the tests: `python -m pytest backend/tests`; from `web/`, run `npm test`.
+```powershell
+python -m pip install -r backend\requirements.txt
+cd web
+npm.cmd ci
+cd ..
+```
+
+PowerShell blocks `npm` by default; `npm.cmd` runs the same tool without changing security settings.
+
+**macOS / Linux**
+
+```bash
+python3 -m pip install -r backend/requirements.txt
+cd web && npm ci && cd ..
+```
+
+Optional: copy `.env.example` to `.env` and set `GEMINI_API_KEY` to enable Gemini reading. Never commit `.env`.
+
+### 2. Run the automated tests
+
+| Check | Windows | macOS / Linux | Expected |
+| --- | --- | --- | --- |
+| Backend | `python -m pytest backend\tests` | `python3 -m pytest backend/tests` | all tests pass (211 at the time of writing) |
+| Web build (type check + bundle) | `cd web; npm.cmd run build` | `cd web && npm run build` | build completes with no errors |
+| Web unit tests | `cd web; npm.cmd test` | `cd web && npm test` | all Vitest suites pass |
+
+No test calls the internet or Gemini; the backend tests use fake readers.
+
+### 3. Start the app
+
+Use two terminals, both starting at the repository root.
+
+```bash
+# Terminal 1 - API on http://localhost:8080
+python -m uvicorn backend.app:app --reload --port 8080
+```
+
+```bash
+# Terminal 2 - website on http://localhost:5173
+cd web
+npm run dev        # Windows PowerShell: npm.cmd run dev
+```
+
+Open http://localhost:5173. The website forwards `/api` calls to the API automatically.
+
+### 4. Try it in five minutes
+
+1. **Sign in** with any name (there are no accounts; the name only personalises the workspace).
+2. **Transactions:** choose *Bank-impersonation call* and press **Analyse transaction**. Expect a hold, a high risk score and ranked reasons.
+3. Choose *Everyday payment* and analyse again. Expect *allow* with no risk signals.
+4. **Voice AI:** choose *Bank OTP call* and press **Analyse for phishing**. Expect high risk, the tactics found and the suspicious sentences. Live microphone detection works in Chrome and Edge.
+5. **Network:** press **Assess network risk** on *UPI mule ring*. Click an account to flag or unflag it, then assess again.
+6. **Analyst:** open a held case and choose *Approve*, *Keep on hold* or *Escalate*. The **Dashboard**, **Analytics**, **Risk Profile** and **Geography** pages update from these results.
+7. **Scenario Lab:** press **Run a payment demo** to watch each backend check stream live, or **Guided demo** for the full story.
+8. Use the palette button in the top bar to switch between the four colour themes.
+
+All data is synthetic. No money moves, and a person confirms every hold.
+
+### Troubleshooting
+
+| Problem | Fix |
+| --- | --- |
+| `npm ... cannot be loaded because running scripts is disabled` | Use `npm.cmd` instead of `npm` in PowerShell. |
+| `npm ci` fails with `EPERM ... unlink` | Stop `npm run dev` (Ctrl+C) and close editors that have `web/` open, then run `npm ci` again. |
+| `'tsc' / 'vitest' is not recognized` | `npm ci` did not finish. Run it again from `web/`. |
+| `npm run build` builds a different project | You ran it from the wrong folder. Run it from `web/`. |
+| `No module named pytest` or `httpx` | Re-run `python -m pip install -r backend/requirements.txt`. |
+| `pytest` finds no tests | Run it from the repository root, not from a parent folder. |
+| Website shows "API offline" | Start the API (terminal 1) on port 8080. |
+| Voice AI says "phrase rules only" | Expected without a Gemini key. Add `GEMINI_API_KEY` to `.env` and restart the API. |
 
 ## Deploy the synthetic demo
 

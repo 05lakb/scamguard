@@ -5,3 +5,4 @@ pydantic
 fastapi
 uvicorn
 pytest
+httpx

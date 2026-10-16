@@ -15,14 +15,12 @@ interface Props {
 }
 
 const SUITE: { page: Page; icon: IconName; tone: Tone; kicker: string; title: string; text: string; cta: string }[] = [
-  { page: "analyzer", icon: "shield", tone: "teal", kicker: "Real-time engine", title: "Transaction Security", text: "Score a payment on amount, beneficiary, device, location and timing before it settles.", cta: "Analyse a transaction" },
+  { page: "analyzer", icon: "shield", tone: "teal", kicker: "Real-time engine", title: "Transaction Security", text: "Score a payment and see the whole investigation on one page: behaviour, location, the receiving-account network and the analyst decision.", cta: "Analyse a transaction" },
   { page: "voice", icon: "mic", tone: "violet", kicker: "Social engineering", title: "Voice Phishing AI", text: "Detect OTP requests, impersonation, threats and urgency in a call transcript.", cta: "Open voice scanner" },
-  { page: "analytics", icon: "chart", tone: "blue", kicker: "Intelligence", title: "Fraud Analytics", text: "Risk distribution, recommended actions, top signals and analyst feedback.", cta: "View analytics" },
-  { page: "network", icon: "network", tone: "red", kicker: "Mule detection", title: "Fraud Network", text: "Follow money through linked accounts and spot fan-in and rapid onward transfers.", cta: "Explore network" },
-  { page: "profile", icon: "user", tone: "amber", kicker: "Customer view", title: "User Risk Profile", text: "Devices, beneficiaries, locations and the reasons behind the customer's risk.", cta: "View risk profile" },
-  { page: "geography", icon: "map", tone: "green", kicker: "Location intelligence", title: "Geographic Fraud", text: "Where assessed payments come from and which locations carry the most risk.", cta: "Open geography" },
-  { page: "analyst", icon: "flag", tone: "teal", kicker: "Operations", title: "Fraud Analyst Center", text: "Review warnings and holds, then approve, keep on hold or escalate with an audit trail.", cta: "Open analyst center" },
+  { page: "analyst", icon: "flag", tone: "amber", kicker: "Operations", title: "Cases", text: "Every warning and hold in one queue. Approve, keep on hold or escalate, with an audit trail.", cta: "Open cases" },
+  { page: "analytics", icon: "chart", tone: "blue", kicker: "Intelligence", title: "Fraud Analytics", text: "Risk distribution, decisions, top signals, analyst feedback and risk by location across all transactions.", cta: "View analytics" },
   { page: "lab", icon: "flask", tone: "violet", kicker: "Red team", title: "Scenario Lab", text: "Replay realistic scam and genuine scenarios, or let the red team attack the engine live.", cta: "Open scenario lab" },
+  { page: "evidence", icon: "list", tone: "green", kicker: "Proof", title: "Evaluation evidence", text: "What was tested, how the engine scored on held-back cases, and the known limits.", cta: "See the evidence" },
 ];
 
 export function Dashboard({ user, cases, health, refresh, goTo }: Props) {

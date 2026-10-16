@@ -15,10 +15,7 @@ import { type Autoplay, type FinishedCase, type Scenario } from "./pages/Console
 import { ConsoleArea } from "./pages/ConsoleArea";
 import { Dashboard } from "./pages/Dashboard";
 import { Evidence } from "./pages/Evidence";
-import { Geography } from "./pages/Geography";
 import { Landing } from "./pages/Landing";
-import { Network } from "./pages/Network";
-import { RiskProfile } from "./pages/RiskProfile";
 import { VoiceAI } from "./pages/VoiceAI";
 
 
@@ -230,14 +227,14 @@ export function App() {
     <div className="modal-back" role="presentation" onClick={() => setSignIn(null)}>
       <div className="modal" role="dialog" aria-modal="true" aria-labelledby="signin-title" onClick={(event) => event.stopPropagation()}>
         <Logo size={44} />
-        <h2 id="signin-title">Sign in</h2>
+        <h2 id="signin-title">Get started</h2>
         <p>Enter your name to open the command centre. It only personalises the workspace and stays in this browser.</p>
         <form onSubmit={completeSignIn}>
           <div>
             <label className="f-label" htmlFor="analyst-name">Your name</label>
             <input id="analyst-name" className="f-input" autoFocus maxLength={40} value={nameDraft} onChange={(event) => setNameDraft(event.target.value)} placeholder="Enter your name" />
           </div>
-          <button className="btn primary" type="submit" disabled={!nameDraft.trim()}>Sign in <Icon name="arrow" size={16} /></button>
+          <button className="btn primary" type="submit" disabled={!nameDraft.trim()}>Continue <Icon name="arrow" size={16} /></button>
           <button className="btn" type="button" onClick={() => setSignIn(null)}>Cancel</button>
         </form>
       </div>
@@ -288,9 +285,6 @@ export function App() {
         {page === "analyzer" && <Analyzer scenarios={scenarios} cases={cases} onCase={addCase} decide={decide} review={(id) => openCase(id)} />}
         {page === "voice" && <VoiceAI onAnalysed={(result) => setVoice((old) => [result, ...old])} />}
         {page === "analytics" && <Analytics cases={cases} voice={voice} health={health} refresh={refreshHealth} open={openCase} />}
-        {page === "network" && <Network scenarios={scenarios} onCase={addCase} />}
-        {page === "profile" && <RiskProfile user={user} cases={cases} open={openCase} goAnalyze={() => setPage("analyzer")} />}
-        {page === "geography" && <Geography cases={cases} goAnalyze={() => setPage("analyzer")} />}
         {page === "analyst" && <Analyst initialCaseId={reviewCaseId} focusId={focus} cases={cases} decide={decide} scenarios={scenarios} onTestCase={(finished) => addCase(finished, undefined, "test")} />}
         {page === "lab" && (
           <>

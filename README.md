@@ -9,16 +9,14 @@
 
 | Page | What it does | Backend |
 | --- | --- | --- |
-| Landing | Product story, example decision, entry to the workspace | – |
-| Dashboard | Security overview, risk distribution, actions, top signals, module suite, live API/AI status | `GET /api/health` |
-| Transactions | Transaction Risk Analyzer: amount, beneficiary, device, location, time, toggles (new payee, new device, location changed, live call, remote-access app) and an optional customer note; one follow-up question round | `POST /api/assess` |
+| Landing | Problem statement, product story, example decision, sign-in | – |
+| Dashboard | Security overview, risk distribution, actions, top signals, module cards, live API/AI status | `GET /api/health` |
+| Transactions | Analyse one account-to-account transfer and see the whole investigation on one page: score and ranked reasons, the analyst decision (approve / hold / escalate) with audit trail, customer, device and location context, and the receiving-account network scored by MuleNet | `POST /api/assess` |
 | Voice AI | Live call detection (browser speech recognition), transcript upload (.txt/.srt/.vtt) or paste; scam-risk score, tactics, suspicious phrases, recommended action | `POST /api/conversation` |
-| Analytics | KPIs, risk distribution, AI decisions, top risk signals, human-review feedback, recent assessments | session cases |
-| Network | Mule-network graph; click accounts to flag or unflag, search, then run the engine | `POST /api/assess` with `network` |
-| Risk Profile | Overall risk, devices, beneficiaries, locations, why-this-score, filterable history, alerts | session cases |
-| Geography | Locations observed, risk by place, location-change count | session cases |
-| Analyst | Review queue: approve, keep on hold or escalate, with audit trail | browser state |
-| Scenario Lab | Scenario library, guided demo and the live red-team arena | `POST /api/assess`, `POST /api/arena` |
+| Cases | Review queue for every warning and hold, with **Run test scenario** against the real backend | `POST /api/assess` |
+| Analytics | KPIs, risk distribution, decisions, top signals, analyst feedback, risk by location, recent assessments across all transactions | session cases |
+| Scenario Lab | Scenario library with live streamed checks, guided demo and the red-team arena | `POST /api/assess/stream`, `POST /api/arena` |
+| Evidence, Architecture | Evaluation results and how the system fits together (footer links) | – |
 
 Sign-in asks only for a display name (kept in this browser); there are no accounts or passwords.
 
@@ -150,12 +148,12 @@ Open http://localhost:5173. The website forwards `/api` calls to the API automat
 
 ### 4. Try it in five minutes
 
-1. **Sign in** with any name (there are no accounts; the name only personalises the workspace).
+1. Press **Get started** and enter any name (there are no accounts; the name only personalises the workspace).
 2. **Transactions:** choose *Bank-impersonation call* and press **Analyse transaction**. Expect a hold, a high risk score and ranked reasons. Scroll down to see the whole investigation for that payment on the same page: the analyst decision (approve, hold or escalate), customer, device and location context, and the receiving-account network scored by MuleNet.
 3. Choose *Everyday payment* and analyse again. Expect *allow* with no risk signals.
 4. **Voice AI:** choose *Bank OTP call* and press **Analyse for phishing**. Expect high risk, the tactics found and the suspicious sentences. Live microphone detection works in Chrome and Edge.
-5. **Network:** press **Assess network risk** on *UPI mule ring*. Click an account to flag or unflag it, then assess again.
-6. **Analyst:** open a held case and choose *Approve*, *Keep on hold* or *Escalate*. The **Dashboard**, **Analytics**, **Risk Profile** and **Geography** pages update from these results.
+5. **Cases:** every warning and hold from step 2 is waiting here. Open one and record a decision, or use **Run test scenario** to send a library scenario to the backend.
+6. **Analytics:** totals, top signals, analyst feedback and risk by location update from the transactions you analysed.
 7. **Scenario Lab:** press **Run a payment demo** to watch each backend check stream live, or **Guided demo** for the full story.
 8. Use the palette button in the top bar to switch between the four colour themes.
 

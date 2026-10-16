@@ -62,7 +62,7 @@ export function Landing({ signedIn, enter, theme, setTheme }: Props) {
         </div>
         <div className="actions">
           <ThemePicker theme={theme} onChange={setTheme} />
-          <button className="btn small primary" onClick={enter}>{signedIn ? "Open command centre" : "Sign in"}</button>
+          <button className="btn small primary" onClick={enter}>{signedIn ? "Open command centre" : "Get started"}</button>
         </div>
       </div>
     </nav>

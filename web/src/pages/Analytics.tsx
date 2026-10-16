@@ -3,7 +3,7 @@ import type { ConversationResult, Health } from "../api";
 import { Icon } from "../components/Icon";
 import { DistRow, EmptyState, PageHead, PanelHead, StatCard } from "../components/ui";
 import { sourceLabel, type CaseItem } from "../lib/cases";
-import { insights, levelOf, money } from "../lib/insights";
+import { groupBy, insights, levelOf, money } from "../lib/insights";
 
 interface Props {
   cases: CaseItem[];
@@ -18,6 +18,8 @@ export function Analytics({ cases, voice, health, refresh, open }: Props) {
   const rows = scope === "session" ? cases.filter((item) => item.source !== "recorded") : cases;
   const stats = insights(rows);
   const voiceHigh = voice.filter((v) => v.risk_level === "high").length;
+  const places = groupBy(rows, (item) => item.location);
+  const changed = rows.filter((item) => item.audit?.behaviour_signals.some((signal) => signal.name === "location_change")).length;
 
   return (
     <div>
@@ -89,6 +91,27 @@ export function Analytics({ cases, voice, health, refresh, open }: Props) {
           </div>
         </section>
       </div>
+
+      <section className="panel" style={{ marginTop: 16 }}>
+        <PanelHead kicker="Location intelligence" title="Risk by location" icon="map">
+          <span className="muted small">{places.length} location{places.length === 1 ? "" : "s"} · {changed} unusual-location flag{changed === 1 ? "" : "s"}</span>
+        </PanelHead>
+        {places.length ? (
+          <div className="geo-map">
+            {places.map((place) => (
+              <article className={`geo-tile ${levelOf(place.worst)}`} key={place.key}>
+                <strong><Icon name="map" size={14} /> {place.key}</strong>
+                <span className="muted small">{place.total} payment{place.total === 1 ? "" : "s"} · worst {place.worst}/100</span>
+                <div className="meter" aria-label={`${place.high} high, ${place.medium} medium, ${place.low} low`}>
+                  <i style={{ width: `${(place.high / place.total) * 100}%` }} />
+                  <i style={{ width: `${(place.medium / place.total) * 100}%` }} />
+                  <i style={{ width: `${(place.low / place.total) * 100}%` }} />
+                </div>
+              </article>
+            ))}
+          </div>
+        ) : <EmptyState icon="map" title="No locations yet" text="Locations come from the Transactions page. Analyse a payment with a location to see risk by place." />}
+      </section>
 
       <section className="panel" style={{ marginTop: 16 }}>
         <PanelHead kicker="Activity" title="Recent assessments" icon="list" />

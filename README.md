@@ -33,7 +33,7 @@ Sign-in asks only for a display name (kept in this browser); there are no accoun
 ```mermaid
 flowchart TB
     P["Customer starts payment"] --> F["FraudShield: transaction checks"]
-    P --> S["ScamStop: note and optional follow-up"]
+    P --> S["ScamStop: note, links and optional follow-up"]
     P --> M["MuleNet: account-network checks"]
     F --> D["Risk decision and explanation"]
     S --> D
@@ -43,8 +43,8 @@ flowchart TB
     D --> H["High risk: recommend hold and analyst review"]
 ```
 
-- **Current implementation:** One FastAPI service. FraudShield and MuleNet use explainable rules; ScamStop uses Gemini for structured message reading and question writing. Rules choose the recommendation.
-- **Target architecture:** A bank supplies trusted payment and account data, then controls warnings, holds, analyst review, and payment release. The diagram shows this intended decision flow; it does not imply a live bank integration.
+- **Current implementation:** One FastAPI service. FraudShield and MuleNet use explainable rules; ScamStop uses Gemini for structured message reading and question writing. Plain, testable rules choose the recommendation. Gemini never approves or holds a payment.
+- **Target architecture:** A bank supplies trusted payment and account data, then controls warnings, holds, analyst review, and payment release. The diagram shows the intended flow; it does not imply a live bank integration.
 
 ## What works today
 
@@ -55,37 +55,48 @@ flowchart TB
 - **API:** `POST /api/assess` returns a recommendation, score, ranked reasons, audit breakdown and execution provenance; `POST /api/assess/stream` streams each pipeline stage live; `POST /api/conversation` scores a transcript; `GET /api/health` reports service health and whether AI reading is configured.
 - **Demo:** React command centre (dashboard, transaction analyzer, voice AI, analytics, network, risk profile, geography), analyst queue with **Run test scenario** calling the real backend, three-agent audit panels, execution trace, scenario lab with red-team arena, architecture and evidence views.
 - **Evaluation:** Synthetic scenarios, Python evaluations, red-team tools, Pytest, and web unit tests.
+- **Live console extras:** a link check that reads risky-looking links as text and never opens them (`backend/risk/links.py`), the customer's warning shown in Hindi, Spanish, French, Portuguese or Arabic with the English kept as the record, and a form to describe your own scenario and watch the red agent play it.
+
+## Testing against public fraud patterns
+
+The scam cases in the live arena and the evaluation are modelled on fraud patterns described on public advice pages: the US Federal Trade Commission's consumer alerts and Australia's Scamwatch (ACCC). A careful reader (`redteam/intel/reports.py`) contacts only those named sites over https, follows each site's `robots.txt`, refuses redirects off the list, paces itself, and stops at a hard limit. It runs in Cloud Shell only and never saves page text. Gemini then writes an invented customer for each pattern, with made-up names and amounts, and each case records the page it was modelled on. The site shows that source and a link. UK Action Fraud is not used because its `robots.txt` asks automated readers to stay away. Scamwatch content is used under its Creative Commons Attribution licence.
+
+Half of those cases are held back in a locked test set and run once. The results, including the weak ones and the faults we found and fixed in our own test data and in the message reader, are on the Evidence page. They are small samples and do not establish performance on bank data. MuleNet has unit tests and one demo scenario, but no measured evaluation yet.
 
 ## Google technology
 
-- **Gemini via Vertex AI — implemented when configured:** Extract structured scam signals from notes and answers; draft up to two neutral questions. Gemini does not approve or hold payments.
-- **Cloud Run — deployment included:** Serve the FastAPI API and React build in one container.
-- **Cloud Build — deployment included:** Build the container during `gcloud run deploy --source`.
-- **Cloud service account — deployment supported:** Give Cloud Run access to Vertex AI without a key file in the service.
-- **Pub/Sub — planned:** Receive authenticated payment events from a bank workflow.
-- **BigQuery — planned:** Provide governed transaction, payee, and account-link history for scoring and evaluation.
+- **Gemini via Vertex AI (implemented when configured):** Extract structured scam signals from notes and answers, draft up to two neutral questions, and translate the customer's warning. Gemini does not approve or hold payments.
+- **Cloud Run (deployment included):** Serve the FastAPI API and React build in one container.
+- **Cloud Build (deployment included):** Build the container during `gcloud run deploy --source`.
+- **Cloud service account (deployment supported):** Give Cloud Run access to Vertex AI without a key file in the service.
+- **Cloud Text-to-Speech (video only):** Narrate the explainer video in `video/`. Not in the payment path.
+- **Pub/Sub (planned):** Receive authenticated payment events from a bank workflow.
+- **BigQuery (planned):** Provide governed transaction, payee, and account-link history for scoring and evaluation.
 
 ## Tech stack
 
 - **Web:** React, TypeScript, Vite, Vitest (`web/`).
 - **API:** Python, FastAPI, Pydantic, Uvicorn (`backend/`).
 - **AI:** Google Gen AI Python SDK and Gemini via Vertex AI (`backend/`).
-- **Risk engine:** Explainable Python behaviour, scam, network, and decision rules (`backend/risk/`).
+- **Risk engine:** Explainable Python behaviour, scam, link, network, and decision rules (`backend/risk/`).
 - **Deployment:** Docker and Cloud Run source deployment (`infra/`).
+- **Video:** Remotion scenes and a Text-to-Speech script, built in Cloud Shell (`video/`).
 
-## Current limits
+## Safety and current limits
 
-- The demo uses made-up payments, customer stories, and account links. The MuleNet graph arrives in the demo request; a production bank must source and bind it to the authenticated destination account.
-- The analyst queue exists only in browser state. No persistent case store, bank identity integration, or live payment hold/release mechanism exists.
-- The API returns audit details but does not persist them.
-- Gemini can be unavailable; the API then falls back to transaction and network rules. Input limits and request/model-call limits protect the demo.
-- Synthetic evaluation does not establish performance on real bank data.
+- The demo uses made-up payments, customer stories, and account links. The MuleNet graph arrives in the demo request; a production bank must source it from trusted records and bind it to the authenticated destination account. MuleNet only adds risk, so a supplied graph can never clear a payment.
+- Customer text is untrusted. Model output is constrained to a schema, and scoring and action thresholds stay in testable code. Emails and card numbers are blocked before anything is sent to the model.
+- The link check reads link text only and never opens or fetches a link. Translation applies only to the warning our rules wrote, never to the customer's words, and never changes the decision.
+- A visitor's own scenario has its own limits (one a minute and a few an hour for each visitor), checks input in the browser and on the server, and never logs or returns the story text.
+- The analyst queue exists only in browser state. No persistent case store, bank identity integration, or live payment hold or release mechanism exists. The API returns audit details but does not persist them.
+- Gemini can be unavailable; the API then falls back to payment and network rules. Input limits, request limits and a Gemini call budget protect the demo.
+- A calm, coached victim paying something ordinary can still get through. Synthetic and red-team results do not establish performance on real bank data.
 
 ## Next priorities
 
 1. Bind each payment to trusted bank transaction and account-network data; replace request-supplied evidence in the production path.
 2. Validate and calibrate combined scoring on held-back fraud, scam, mule, and legitimate cases.
-3. Add authenticated analyst review, durable case/audit storage, and bank-controlled hold/release.
+3. Add authenticated analyst review, durable case and audit storage, and bank-controlled hold and release.
 4. Add Pub/Sub ingestion, governed BigQuery lookups, monitoring, and automated CI checks.
 
 ## Live backend-verified analyst demonstration
@@ -174,8 +185,25 @@ All data is synthetic. No money moves, and a person confirms every hold.
 | Website shows "API offline" | Start the API (terminal 1) on port 8080. |
 | Voice AI says "phrase rules only" | Expected without a Gemini key. Add `GEMINI_API_KEY` to `.env` and restart the API. |
 
+Our own team runs installs, cloud commands and server tests in Cloud Shell, not on laptops.
+
 ## Deploy the synthetic demo
 
 - Configure the Google Cloud project, required APIs, and the `lmg-runtime` service account for Vertex AI.
 - Run `PROJECT_ID=your-project-id bash infra/deploy.sh`.
 - Review the script's public access, region, resource caps, and cost settings before deployment. This is a public synthetic-data demo, not a bank production system.
+
+## Repository layout
+
+| Path | Contents |
+| --- | --- |
+| `backend/` | API, Gemini client, risk engine, and backend tests |
+| `web/` | The React demo and web tests |
+| `data/` | Synthetic scenarios, the scam-pattern guide, and the dev half of the public-pattern cases |
+| `eval/` | Behaviour, message, flow, blind, and parity evaluations |
+| `redteam/` | Synthetic attacker, customer, reader of public pages, and reporting tools |
+| `infra/` | Cloud Run deployment and result-export scripts (`save_results.sh` checks files for secrets before saving) |
+| `docs/` | Pitch, colour palette, and design assets |
+| `video/` | The explainer video: narration, a Text-to-Speech script and animated scenes, built in Cloud Shell |
+
+`frontend/` is a placeholder directory; the active interface is in `web/`.

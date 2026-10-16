@@ -15,3 +15,6 @@ data/*.json
 data/randomdummy*
 __pycache__
 *.pyc
+
+# The video project is built in Cloud Shell and is not part of the website image.
+video/

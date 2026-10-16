@@ -15,7 +15,7 @@ set -euo pipefail
 RESULTS_REPO="${RESULTS_REPO:-git@github.com:05lakb/scamguard-results.git}"
 KEY_FILE="${RESULTS_KEY:-$HOME/.ssh/lmg_results}"
 CLONE_DIR="${RESULTS_DIR:-$HOME/scamguard-results}"
-MAX_BYTES=$((5 * 1024 * 1024))
+MAX_BYTES="${RESULTS_MAX_BYTES:-$((5 * 1024 * 1024))}"  # 5 MB unless a bigger limit is asked for, for example video clips
 
 SECRET_PATTERNS='-----BEGIN|AIza[0-9A-Za-z_-]{20,}|ghp_[A-Za-z0-9]{20,}|gho_[A-Za-z0-9]{20,}|github_pat_|AKIA[0-9A-Z]{12,}|ya29\.[0-9A-Za-z_-]{20,}|[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}'
 BAD_NAMES='(^|/)(\.env|.*\.pem|.*\.key|id_[a-z0-9]+|.*secret.*|.*token.*|.*credential.*)$'
@@ -52,7 +52,7 @@ for file in "${files[@]}"; do
   if [ ! -f "$file" ]; then echo "Not a file: $file" >&2; exit 1; fi
   if echo "$file" | grep -Eiq "$BAD_NAMES"; then echo "Refusing: the name of $file sounds like a secret." >&2; exit 1; fi
   size=$(wc -c < "$file")
-  if [ "$size" -gt "$MAX_BYTES" ]; then echo "Refusing: $file is larger than 5 MB." >&2; exit 1; fi
+  if [ "$size" -gt "$MAX_BYTES" ]; then echo "Refusing: $file is larger than $((MAX_BYTES / 1024 / 1024)) MB." >&2; exit 1; fi
   # grep answers 0 when it finds a match, 1 when it finds none, and 2 or more when it fails.
   # A failure must count as "refuse", never as "nothing found".
   found=0

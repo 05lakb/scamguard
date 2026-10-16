@@ -8,6 +8,7 @@ import { Icon } from "../components/Icon";
 import type { AccountNetwork, Customer, Payment } from "../core/types";
 import { contributions } from "../lib/contrib";
 import { SEGMENT_LABEL } from "../lib/labels";
+import { LANGUAGES, isRightToLeft } from "../lib/languages";
 
 export interface Scenario {
   id: string;
@@ -66,12 +67,13 @@ function chipsFor(p: Payment): { text: string; level: "risk" | "plain" }[] {
   return chips;
 }
 
-function requestFor(sc: Scenario, note: string, questions?: string[], answer?: string): AssessRequest {
+function requestFor(sc: Scenario, note: string, language: string, questions?: string[], answer?: string): AssessRequest {
   return {
     payment: sc.payment,
     ...(sc.network ? { network: sc.network } : {}),
     customer: sc.customer,
     message: note.trim() || null,
+    ...(language !== "en" ? { language } : {}),
     ...(answer !== undefined ? { questions, answer } : {}),
   };
 }
@@ -80,6 +82,7 @@ export function Console({ scenarios, onCase, autoplay, onFinished, onReview }: P
   const [selectedId, setSelectedId] = useState(scenarios[0].id);
   const scenario = scenarios.find((item) => item.id === selectedId) ?? scenarios[0];
   const [note, setNote] = useState(scenario.message);
+  const [language, setLanguage] = useState("en"); // the language the customer's warning is shown in
   const [answer, setAnswer] = useState("");
   const [stage, setStage] = useState<Stage>("idle");
   const [first, setFirst] = useState<ServerDecision | null>(null);
@@ -141,7 +144,7 @@ export function Console({ scenarios, onCase, autoplay, onFinished, onReview }: P
     setFirst(null);
     setSentAnswer(null);
     try {
-      const r1 = await execute(requestFor(sc, text), id);
+      const r1 = await execute(requestFor(sc, text, language), id);
       if (id !== runId.current) return;
       if (r1.action !== "ask") {
         finish(sc, text, null, null, r1);
@@ -170,7 +173,7 @@ export function Console({ scenarios, onCase, autoplay, onFinished, onReview }: P
     setStage("busy");
     setError("");
     try {
-      const r2 = await execute(requestFor(sc, text, asked.questions, reply), id);
+      const r2 = await execute(requestFor(sc, text, language, asked.questions, reply), id);
       if (id !== runId.current) return;
       setSentAnswer(reply);
       finish(sc, text, asked, reply, r2);
@@ -227,6 +230,10 @@ export function Console({ scenarios, onCase, autoplay, onFinished, onReview }: P
         </select>
         <p className="muted small">{scenario.blurb}</p>
         <div className="simple-payment-amount"><strong>{p.amount.toLocaleString()} <small>{p.currency}</small></strong><span>To {p.payee_name}</span></div>
+        <label className="field" htmlFor="language">Customer's language, for the warning</label>
+        <select id="language" value={language} onChange={event => setLanguage(event.target.value)} disabled={stage === "busy"}>
+          {LANGUAGES.map(item => <option key={item.code} value={item.code}>{item.label}</option>)}
+        </select>
         <label className="field" htmlFor="note">Customer's message <span className="muted">· you can edit it</span></label>
         <textarea id="note" rows={3} maxLength={2000} value={note} disabled={stage === "busy"} onChange={event => { setNote(event.target.value); if (stage !== "idle") reset(); }} />
         {stage !== "asked" && <button className="primary simple-run" disabled={stage === "busy"} onClick={startManual}>{stage === "busy" ? "Checking payment…" : stage === "done" ? "Check again" : "Check this payment"}</button>}
@@ -261,7 +268,17 @@ export function Console({ scenarios, onCase, autoplay, onFinished, onReview }: P
         <details className="simple-result-details"><summary>Scores, evidence & execution details</summary>
           <p className="muted small">Rule-based risk score: {result.score}/100. This is not a calibrated fraud probability.</p>
           <EvidenceBars items={items} />{result.execution && <ExecutionSummary execution={result.execution} />}
-          {result.customer_warning && <p className="warning">{result.customer_warning}</p>}
+          {result.customer_warning && (result.customer_warning_translated ? (
+            <>
+              <p className="warning" lang={result.warning_language} dir={isRightToLeft(result.warning_language) ? "rtl" : "ltr"}>{result.customer_warning_translated}</p>
+              <details><summary>Show the English original (the record)</summary><p className="warning">{result.customer_warning}</p></details>
+            </>
+          ) : (
+            <>
+              <p className="warning">{result.customer_warning}</p>
+              {language !== "en" && result.warning_language === "en" && <p className="muted small">The translation was not available, so this is the English warning.</p>}
+            </>
+          ))}
           {sentAnswer !== null && <p className="small">Customer answered: {sentAnswer || "Declined to answer"}</p>}
           <details><summary>Full audit record</summary><pre>{JSON.stringify(result.audit, null, 2)}</pre></details>
         </details>

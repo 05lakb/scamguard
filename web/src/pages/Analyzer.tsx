@@ -419,7 +419,11 @@ export function Analyzer({ scenarios, cases, onCase, decide, openCase, onStartCa
                 <HoldNotification amount={Number(used.amount)} currency={used.currency} reference={caseReference(result.execution?.request_id)}
                   onCall={canCall ? startCall : undefined} />
               )}
-              {canCall && <CallResult verification={currentCase?.verification} onCall={startCall} onOpenCase={() => openCase?.(caseId!)} />}
+              {/* A held payment already offers the call on the customer's notification; the box below is for the result,
+                  or for a warned payment, which has no notification. */}
+              {canCall && (callDone || result?.action !== "hold") && (
+                <CallResult verification={currentCase?.verification} onCall={startCall} onOpenCase={() => openCase?.(caseId!)} />
+              )}
               {!result?.customer_warning && result?.action === "allow" && <p className="ai-note"><Icon name="allow" size={16} /> Last Mile Guard detected a low-risk transaction pattern. No major fraud indicators were identified.</p>}
 
               {asked && (

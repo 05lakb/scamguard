@@ -37,6 +37,9 @@ export function HoldNotification({ amount, currency, reference, onCall }: {
           onCall?.();
         }}><Icon name="user" size={14} /> Call fraud team</button>
       )}
+      {onCall && !calling && (
+        <p className="muted small" style={{ margin: "8px 0 0" }}>Next step: the call opens on the Voice AI page, where the AI agent asks two questions.</p>
+      )}
     </div>
   );
 }

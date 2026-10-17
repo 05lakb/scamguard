@@ -275,10 +275,18 @@ async function takeScreenshots(browser) {
     await shot("voice-phishing");
   });
   await attempt("red team", async () => {
+    // Four scenarios keep the run short. Skip the replay animation so the results appear as soon as they are ready.
     await goTo(page, "#/lab");
+    await page.getByLabel(/Scenarios/).selectOption("4");
     await click(page, page.getByRole("button", { name: /Start a live run/ }));
-    await sleep(45000); // a few cases finish while Gemini plays the customer
+    await sleep(4000);
+    await page.getByRole("button", { name: /Skip animation/ }).click().catch(() => {});
+    await page.getByText(/This run in summary/).waitFor({ timeout: 180000 });
+    await sleep(1000);
+    await page.getByText(/Live feed/i).first().scrollIntoViewIfNeeded();
     await shot("red-team");
+    await page.getByText(/This run in summary/).scrollIntoViewIfNeeded();
+    await shot("red-team-summary");
   });
   await attempt("evidence", async () => { await goTo(page, "#/evidence"); await sleep(1500); await shot("evidence"); });
   await attempt("architecture", async () => { await goTo(page, "#/architecture"); await sleep(1800); await shot("architecture"); });

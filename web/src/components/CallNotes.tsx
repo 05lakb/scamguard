@@ -40,11 +40,11 @@ export function CallNotes({ item, onAdd }: { item: CaseItem; onAdd: (kind: NoteK
 
   return (
     <div className="call-notes">
-      <h3 className="mini"><Icon name="mic" size={15} /> Call with the customer</h3>
+      <h3 className="mini"><Icon name="mic" size={15} /> Analyst's call with the customer</h3>
       <p className="muted small">
         {called
           ? "The customer called the fraud team about this payment."
-          : "No call from the customer yet. When they call and quote the reference, record what they say here."}
+          : "When the customer calls and quotes the reference, record what they say here."}
       </p>
       {notes.length > 0 && (
         <ul className="call-log">

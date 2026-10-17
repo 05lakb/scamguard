@@ -1,11 +1,11 @@
 import { useEffect, useRef, useState, type FormEvent } from "react";
 import demo from "./data/demo.json";
-import { addCaseNote, checkHealth, listSavedCases, saveDecision, type ArenaRecord, type CaseNote, type ConversationResult, type Health, type NoteKind } from "./api";
+import { addCaseNote, checkHealth, listSavedCases, saveDecision, type ArenaRecord, type CaseNote, type ConversationResult, type Health, type NoteKind, type Verification } from "./api";
 import { CUSTOMER_CALL_EVENT } from "./components/HoldNotification";
 import { Icon } from "./components/Icon";
 import { Logo } from "./components/Logo";
 import { ThemePicker, isTheme, type Theme } from "./components/ThemePicker";
-import { caseFromArena, findByReference, mergeSaved, needsReview, noteTrailText, recordedCases, type CaseItem, type CaseStatus } from "./lib/cases";
+import { caseFromArena, findByReference, mergeSaved, needsReview, noteTrailText, recordedCases, verificationTrailText, type CaseItem, type CaseStatus } from "./lib/cases";
 import { NAV, type Page } from "./lib/pages";
 import { STORY, STORY_PAUSE_MS } from "./lib/story";
 import { Analyst } from "./pages/Analyst";
@@ -229,6 +229,16 @@ export function App() {
     }
   }
 
+  // The customer was verified after a hold: the case takes the re-check's decision, reasons and transcript.
+  function verified(id: string, verification: Verification) {
+    const outcome = verification.outcome;
+    if (!outcome) return;
+    setCases((old) => old.map((item) => (item.id === id
+      ? { ...item, action: outcome.action, score: outcome.score, reasons: outcome.reasons, verification,
+          trail: [...item.trail, { when: clock(), text: verificationTrailText(verification) }] }
+      : item)));
+  }
+
   function decide(id: string, status: CaseStatus) {
     setCases((old) =>
       old.map((item) => (item.id === id ? { ...item, status, trail: [...item.trail, { when: clock(), text: STATUS_TRAIL[status] }] } : item)),
@@ -319,7 +329,7 @@ export function App() {
       <main className="app-main">
         {page !== "dashboard" && <button className="back-link" onClick={() => setPage("dashboard")}><Icon name="back" size={12} /> Dashboard</button>}
         {page === "dashboard" && <Dashboard user={user} cases={cases} health={health} refresh={refreshHealth} goTo={(p) => setPage(p)} />}
-        {page === "analyzer" && <Analyzer scenarios={scenarios} cases={cases} onCase={addCase} decide={decide} />}
+        {page === "analyzer" && <Analyzer scenarios={scenarios} cases={cases} onCase={addCase} decide={decide} onVerified={verified} openCase={openCase} />}
         {page === "voice" && <VoiceAI onAnalysed={(result) => setVoice((old) => [result, ...old])} />}
         {page === "profile" && <RiskProfile cases={cases} open={openCase} goAnalyze={() => setPage("analyzer")} />}
         {page === "analytics" && <Analytics cases={cases} voice={voice} health={health} refresh={refreshHealth} open={openCase} />}

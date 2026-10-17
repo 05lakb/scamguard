@@ -15,6 +15,7 @@ Safety built in:
   - the server never logs what customers wrote.
 """
 
+import hmac
 import json
 import logging
 import os
@@ -27,8 +28,10 @@ from collections import defaultdict, deque
 from pathlib import Path
 from typing import Annotated, Literal, Optional
 
-from fastapi import FastAPI, Request
-from fastapi.responses import JSONResponse, StreamingResponse
+from urllib.parse import parse_qsl
+
+from fastapi import BackgroundTasks, FastAPI, Request
+from fastapi.responses import JSONResponse, Response, StreamingResponse
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel, Field
 
@@ -39,8 +42,9 @@ from backend.risk.callback import callback_brief
 from backend.risk.decision import decide
 from backend.risk.evidence import load_scam_types, read_message
 from backend.risk.translate import translate_warning
-from backend.service import assess_steps
-from backend.store import case_record, note_record, owner_of, store_from_environment
+from backend import verification as verify
+from backend.service import assess, assess_steps
+from backend.store import case_record, note_record, owner_of, public_case, store_from_environment
 
 log = logging.getLogger("lmg")
 logging.basicConfig(level=logging.INFO, format="%(message)s")
@@ -60,6 +64,9 @@ FALLBACK_REASONS = {
 }
 
 MAX_BODY_BYTES = 20_000
+# Verification calls after a hold (Twilio): a few per visitor, and a hard cap for the whole demo.
+CALLS_PER_VISITOR_PER_HOUR = int(os.getenv("LMG_CALLS_PER_VISITOR_HOUR", "4"))
+CALLS_PER_HOUR = int(os.getenv("LMG_CALLS_PER_HOUR", "20"))
 SESSION_HEADER = "x-lmg-session"
 PER_VISITOR_PER_MINUTE = int(os.getenv("LMG_RATE_PER_MINUTE", "12"))
 PER_VISITOR_PER_HOUR = int(os.getenv("LMG_RATE_PER_HOUR", "100"))
@@ -145,6 +152,16 @@ class NoteIn(BaseModel):
     author: str = Field(default="analyst", min_length=1, max_length=40)
 
 
+class VerificationIn(BaseModel):
+    """Start a verification after a hold: an AI call to the customer's own number, or typed answers."""
+    mode: Literal["phone", "typed"]
+    phone: Optional[str] = Field(default=None, max_length=16)
+
+
+class AnswersIn(BaseModel):
+    answers: list[Annotated[str, Field(max_length=verify.MAX_ANSWER_CHARS)]] = Field(min_length=1, max_length=2)
+
+
 class CallbackIn(BaseModel):
     """A warned or held case, sent so the analyst can get call-back questions before phoning the customer."""
     action: Literal["warn", "hold"]
@@ -220,8 +237,12 @@ def visitor_key(request: Request):
 
 
 def create_app(reader=read_message, asker=clarify.ask_questions, arena_writer=None, translator=translate_warning,
-               store=None, callback_writer=None):
+               store=None, callback_writer=None, twilio=None, call_placer=None):
     store = store if store is not None else store_from_environment()
+    twilio = twilio if twilio is not None else verify.TwilioConfig()
+    place_call = call_placer or verify.place_call
+    call_visitors = SlidingWindow(2, CALLS_PER_VISITOR_PER_HOUR)  # verification calls cost money: a few per visitor
+    call_total = SlidingWindow(10**9, CALLS_PER_HOUR)
     app = FastAPI(title="Last Mile Guard", docs_url=None, redoc_url=None, openapi_url=None)
     visitors = SlidingWindow(PER_VISITOR_PER_MINUTE, PER_VISITOR_PER_HOUR)
     gemini_budget = SlidingWindow(10**9, GEMINI_CALLS_PER_HOUR)  # one shared counter
@@ -368,7 +389,7 @@ def create_app(reader=read_message, asker=clarify.ask_questions, arena_writer=No
         }
         # Save the case. A failed save is reported, never allowed to change the recommendation.
         outcome["execution"]["saved"] = store.save_case(case_record(
-            request_id, payment, customer, body.message, body.questions, body.answer, outcome, owner))
+            request_id, payment, customer, body.message, body.questions, body.answer, outcome, owner, network))
 
         log.info("assess request_id=%s action=%s score=%s round=%s mode=%s degraded=%s ms=%d",
                  outcome["execution"]["request_id"], outcome["action"], outcome["score"],
@@ -443,9 +464,200 @@ def create_app(reader=read_message, asker=clarify.ask_questions, arena_writer=No
         log.info("note case=%s kind=%s", case_id, body.kind)  # the note itself is never logged
         return saved
 
+    # ---------- verification after a hold: an AI call the customer asks for, or typed answers ----------
+
+    def own_case(case_id, request):
+        """This browser's live case, or an error response."""
+        if store.kind == "off":
+            return None, JSONResponse({"detail": "Case storage is switched off on this server."}, status_code=503)
+        owner = owner_of(request.headers.get(SESSION_HEADER))
+        if owner is None:
+            return None, JSONResponse({"detail": "A session key is required."}, status_code=401)
+        case = store.get_case(case_id)
+        if case is None or case.get("owner") != owner:
+            return None, JSONResponse({"detail": "The case was not found."}, status_code=404)
+        return case, None
+
+    def verified_case(case):
+        """The case as its browser sees it, with the verification but never the call token."""
+        shown = public_case(case)
+        shown["verification"] = verify.public_verification(case.get("verification"))
+        return shown
+
+    def recheck(case_id):
+        """Check the held payment again with the customer's answers, and save the result on the case."""
+        case = store.get_case(case_id)
+        if case is None or not case.get("verification"):
+            return None
+        state = dict(case["verification"])
+        reply = verify.answer_text(state["questions"], state["answers"])
+        customer = {"id": "web", **case["customer"]}
+        try:
+            if not (gemini_client.is_configured() and gemini_budget.allow("gemini")):
+                raise RuntimeError("budget")
+            outcome = assess(case["payment"], customer, case.get("message"), questions=state["questions"],
+                             answer=reply, reader=reader, asker=asker, scam_types=scam_types, network=case.get("network"))
+        except Exception as error:
+            # Gemini unavailable: the answers cannot be read, so they cannot lower the risk.
+            # The original decision stands for a person; an outage never releases a hold.
+            log.warning("verification recheck fallback: %s", type(error).__name__)
+            outcome = decide(case["payment"], customer, None, scam_types, asked=True, network=case.get("network"))
+            outcome.update(action=case["action"], score=max(case["score"], outcome["score"]), degraded=True,
+                           reasons=["The answers could not be read automatically, so the original decision stands."]
+                           + case.get("reasons", [])[:3])
+        summary = verify.summarise_outcome(case, outcome, verify.hard_hold_reason(case.get("audit")))
+        # Voice AI also scans what was said, the same check as the Voice AI page: OTP requests,
+        # impersonation, secrecy, pressure, remote access. It explains; the rules above decide.
+        spoken = " ".join(answer for answer in state["answers"] if answer.strip())
+        if spoken:
+            try:
+                use_ai = gemini_client.is_configured() and gemini_budget.allow("gemini")
+                voice = conversation.analyse(spoken[:4000], reader=reader if use_ai else None, scam_types=scam_types)
+                summary["voice"] = {"risk_level": voice["risk_level"], "scam_likelihood": voice["scam_likelihood"],
+                                    "tactics": voice.get("tactics", [])[:6], "source": voice.get("source")}
+            except Exception as error:
+                log.warning("verification voice check failed: %s", type(error).__name__)
+        state.update(status="done", outcome=summary)
+        store.update_case(case_id, {"verification": state, "action": summary["action"], "score": summary["score"],
+                                    "reasons": summary["reasons"]})
+        log.info("verification done case=%s action=%s kept=%s", case_id, summary["action"], bool(summary["kept_hold"]))
+        return state
+
+    @app.post("/api/cases/{case_id}/verification")
+    def start_verification(case_id: CaseId, body: VerificationIn, request: Request):
+        """Start a verification on a warned or held case: call the customer's own number, or show typed questions."""
+        if not visitors.allow(visitor_key(request)):
+            return JSONResponse({"detail": "Too many requests. Please wait a minute and try again."}, status_code=429)
+        case, problem = own_case(case_id, request)
+        if problem:
+            return problem
+        if case.get("action") not in ("warn", "hold"):
+            return JSONResponse({"detail": "Only a warned or held payment needs verifying."}, status_code=409)
+        current = case.get("verification") or {}
+        if current.get("status") in verify.ACTIVE:
+            return JSONResponse({"detail": "A verification is already in progress for this payment."}, status_code=409)
+        phone = (body.phone or "").replace(" ", "")
+        if body.mode == "phone":
+            if not twilio.configured:
+                return JSONResponse({"detail": "Phone calls are not set up on this server. Please type the answers instead."},
+                                    status_code=503)
+            if not verify.PHONE.fullmatch(phone):
+                return JSONResponse({"detail": "Enter the number with its country code, for example +919812345678."},
+                                    status_code=422)
+            if not call_visitors.allow(visitor_key(request)) or not call_total.allow("calls"):
+                return JSONResponse({"detail": "Verification calls are paused for now to keep costs low. Please type the answers."},
+                                    status_code=429)
+        use_ai = gemini_client.is_configured() and gemini_budget.allow("gemini")
+        brief = callback_brief({**case["payment"], "action": case["action"], "score": case["score"],
+                                "typology": ((case.get("audit") or {}).get("message_reading") or {}).get("matched_typology"),
+                                "reasons": case.get("reasons", []), "message": case.get("message"),
+                                "questions": case.get("questions"), "answer": case.get("answer")},
+                               ask=callback_writer, use_ai=use_ai)
+        state = verify.new_verification(body.mode, verify.choose_questions(brief["questions"]), phone or None)
+        if body.mode == "phone":
+            query = f"case={case_id}&t={state['token']}"
+            try:
+                state["call_sid"] = place_call(twilio, phone, f"{twilio.public_url}/api/twilio/voice?{query}&step=0",
+                                               f"{twilio.public_url}/api/twilio/status?{query}")
+            except Exception as error:
+                log.warning("verification call failed: %s", type(error).__name__)  # the number is never logged
+                return JSONResponse({"detail": "The call could not be placed. Please type the answers instead."}, status_code=502)
+        if not store.update_case(case_id, {"verification": state}):
+            return JSONResponse({"detail": "The verification could not be saved."}, status_code=503)
+        log.info("verification started case=%s mode=%s", case_id, body.mode)
+        return verified_case({**case, "verification": state})
+
+    @app.post("/api/cases/{case_id}/verification/answers")
+    def typed_answers(case_id: CaseId, body: AnswersIn, request: Request):
+        """The typed fallback: the customer's answers to the same questions, then the same re-check."""
+        if not visitors.allow(visitor_key(request)):
+            return JSONResponse({"detail": "Too many requests. Please wait a minute and try again."}, status_code=429)
+        case, problem = own_case(case_id, request)
+        if problem:
+            return problem
+        state = case.get("verification")
+        if not state or state.get("status") in ("done", "checking"):
+            return JSONResponse({"detail": "Start a verification first."}, status_code=409)
+        clean = [re.sub(r"[\x00-\x08\x0b-\x1f]", " ", answer).strip() for answer in body.answers]
+        state = {**state, "mode": "typed", "answers": clean, "status": "checking"}
+        store.update_case(case_id, {"verification": state})
+        recheck(case_id)
+        return verified_case(store.get_case(case_id) or case)
+
+    @app.get("/api/cases/{case_id}")
+    def get_case(case_id: CaseId, request: Request):
+        """One of this browser's cases, with its verification. The page polls this during a call."""
+        case, problem = own_case(case_id, request)
+        return problem or verified_case(case)
+
+    # ---------- Twilio webhooks: only Twilio, signed with the account's token, and only for a live call token ----------
+
+    async def twilio_request(request):
+        params = dict(parse_qsl((await request.body()).decode("utf-8", "replace"), keep_blank_values=True))
+        url = f"{twilio.public_url}{request.url.path}" + (f"?{request.url.query}" if request.url.query else "")
+        if not twilio.configured or not verify.valid_signature(url, params, twilio.auth_token,
+                                                                request.headers.get("x-twilio-signature", "")):
+            return None, None, None
+        case_id, token = request.query_params.get("case", ""), request.query_params.get("t", "")
+        case = store.get_case(case_id) if re.fullmatch(r"[0-9a-f]{12}", case_id) else None
+        state = (case or {}).get("verification") or {}
+        if not token or not hmac.compare_digest(state.get("token", ""), token):
+            return None, None, None
+        return case, state, params
+
+    def twiml(xml):
+        return Response(content=xml, media_type="application/xml")
+
+    @app.post("/api/twilio/voice")
+    async def twilio_voice(request: Request):
+        case, state, _ = await twilio_request(request)
+        if case is None:
+            return Response(status_code=403)
+        state = {**state, "status": "in_call"}
+        store.update_case(case["id"], {"verification": state})
+        action = f"{twilio.public_url}/api/twilio/answer?case={case['id']}&t={state['token']}&step=0"
+        return twiml(verify.twiml_question(state["questions"][0], action, intro=verify.call_intro(case)))
+
+    @app.post("/api/twilio/answer")
+    async def twilio_answer(request: Request, background: BackgroundTasks):
+        case, state, params = await twilio_request(request)
+        if case is None:
+            return Response(status_code=403)
+        step = int(request.query_params.get("step", "0")) if request.query_params.get("step", "0").isdigit() else 0
+        answers = list(state.get("answers", []))
+        if len(answers) == step:  # Twilio may retry a request; record each answer once
+            answers.append(re.sub(r"[\x00-\x08\x0b-\x1f]", " ", params.get("SpeechResult", "")).strip()[:verify.MAX_ANSWER_CHARS])
+        state = {**state, "answers": answers}
+        if step + 1 < len(state["questions"]):
+            store.update_case(case["id"], {"verification": state})
+            action = f"{twilio.public_url}/api/twilio/answer?case={case['id']}&t={state['token']}&step={step + 1}"
+            return twiml(verify.twiml_question(state["questions"][step + 1], action))
+        store.update_case(case["id"], {"verification": {**state, "status": "checking"}})
+        background.add_task(recheck, case["id"])
+        return twiml(verify.twiml_goodbye(verify.GOODBYE))
+
+    @app.post("/api/twilio/status")
+    async def twilio_status(request: Request, background: BackgroundTasks):
+        case, state, params = await twilio_request(request)
+        if case is None:
+            return Response(status_code=403)
+        call_status = params.get("CallStatus", "")
+        update = {**state, "call_status": call_status}
+        if call_status == "ringing" and state.get("status") == "calling":
+            update["status"] = "ringing"
+        if call_status in ("busy", "no-answer", "failed", "canceled"):
+            update["status"] = "no_answer"
+        elif call_status == "completed" and state.get("status") in ("calling", "ringing", "in_call"):
+            # The customer hung up before answering everything: check with what was said.
+            update["status"] = "checking" if any(answer.strip() for answer in state.get("answers", [])) else "no_answer"
+            if update["status"] == "checking":
+                background.add_task(recheck, case["id"])
+        store.update_case(case["id"], {"verification": update})
+        return Response(status_code=204)
+
     @app.post("/api/callback-brief")
     def prepare_callback(body: CallbackIn, request: Request):
-        """A short brief and questions for the analyst's call-back. The agent never calls the customer itself."""
+        """A short brief and questions for the analyst's call-back."""
         if not visitors.allow(visitor_key(request)):
             return JSONResponse({"detail": "Too many requests. Please wait a minute and try again."}, status_code=429)
         use_ai = gemini_client.is_configured() and gemini_budget.allow("gemini")

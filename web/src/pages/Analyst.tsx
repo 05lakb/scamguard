@@ -7,7 +7,7 @@ import type { FinishedCase, Scenario } from "./Console";
 import { EvidenceBars } from "../components/EvidenceBars";
 import { Gauge } from "../components/Gauge";
 import { Icon, type IconName } from "../components/Icon";
-import { findByReference, needsReview, referenceOf, sourceLabel, type CaseItem, type CaseStatus } from "../lib/cases";
+import { findByReference, needsReview, referenceOf, sourceLabel, verificationTrailText, type CaseItem, type CaseStatus } from "../lib/cases";
 import { contributions, type Contribution } from "../lib/contrib";
 import { ACTION_LABEL, SEGMENT_LABEL } from "../lib/labels";
 
@@ -209,6 +209,20 @@ export function Analyst({ cases, decide, scenarios, onTestCase, initialCaseId, f
               {selected.action !== "allow" && <p className="muted small">{selected.savedId
                 ? "Human review is simulated. Your decision is saved with this case, with your name and the time. Only this browser can see the case, it is deleted after 24 hours, and nothing is sent to a bank."
                 : "Human review is simulated in the browser. This case was not saved on the server, so the decision stays on this page and is never sent to a bank."}</p>}
+              {selected.verification && (
+                <div className="call-notes">
+                  <h3 className="mini"><Icon name="mic" size={15} /> Verification with the customer</h3>
+                  <p className="muted small">{verificationTrailText(selected.verification)}</p>
+                  <ol className="call-log">
+                    {selected.verification.questions.map((question, index) => (
+                      <li key={question}>
+                        <span className="muted small">AI analyst: {question}</span>
+                        <span>Customer: {selected.verification?.answers[index] || "(no answer)"}</span>
+                      </li>
+                    ))}
+                  </ol>
+                </div>
+              )}
               {selected.action !== "allow" && <CallbackBrief key={selected.id} item={selected} />}
               {selected.action !== "allow" && addNote && (
                 <CallNotes key={`notes-${selected.id}`} item={selected} onAdd={(kind, text) => addNote(selected.id, kind, text)} />

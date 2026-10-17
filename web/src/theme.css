@@ -2449,3 +2449,26 @@ input, select, textarea {
 .call-log li { display: grid; gap: 2px; padding: 8px 10px; border-radius: 8px; background: var(--surface); border: 1px solid var(--line); }
 .call-log-call { border-color: var(--accent) !important; }
 .call-log-check { background: var(--accent-soft) !important; }
+
+/* Transactions: verifying a held payment with the customer. */
+.verify-panel { margin: 16px 0; padding: 16px 18px; border: 1px solid var(--line); border-radius: 14px; background: var(--surface-2); }
+.verify-head { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
+.verify-head .mini { display: inline-flex; align-items: center; gap: 6px; margin: 0; }
+.agent-steps { list-style: none; margin: 12px 0; padding: 0; display: grid; gap: 8px; }
+.agent-step { display: grid; grid-template-columns: 28px 1fr; gap: 10px; align-items: start; padding: 8px 10px; border-radius: 10px; background: var(--surface); border: 1px solid var(--line); }
+.agent-step strong { display: block; font-size: 0.9rem; }
+.agent-step small { display: block; color: var(--muted); font-size: 0.8rem; line-height: 1.45; }
+.agent-step-icon { display: inline-grid; place-items: center; width: 28px; height: 28px; border-radius: 50%; background: var(--surface-3); color: var(--muted); }
+.agent-step.done .agent-step-icon { background: var(--allow-bg); color: var(--allow); }
+.agent-step.now { border-color: var(--accent); }
+.agent-step.now .agent-step-icon { background: var(--accent-soft); color: var(--accent); }
+.agent-step.failed .agent-step-icon { background: var(--hold-bg); color: var(--hold); }
+.agent-step.todo { opacity: 0.6; }
+.verify-actions { display: grid; gap: 8px; margin-top: 8px; }
+.verify-row { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+.verify-row .f-input { flex: 1; min-width: 170px; }
+.verify-result { margin-top: 12px; padding: 12px 14px; border-radius: 10px; border: 1px solid var(--line); }
+.verify-result.hold { background: var(--hold-bg); }
+.verify-result.warn { background: var(--warn-bg); }
+.verify-result.allow { background: var(--allow-bg); }
+.verify-result ul { margin: 6px 0; padding-left: 18px; }

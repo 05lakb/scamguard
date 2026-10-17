@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
-import { assessPayment, type AssessRequest, type ServerDecision } from "../api";
+import { assessPayment, type AssessRequest, type ServerDecision, type Verification } from "../api";
 import { HoldNotification } from "../components/HoldNotification";
+import { VerificationPanel } from "../components/VerificationPanel";
 import { Icon, type IconName } from "../components/Icon";
 import { AgentEvidence } from "../components/AgentEvidence";
 import { NetworkGraph } from "../components/NetworkGraph";
@@ -23,6 +24,9 @@ interface Props {
   cases: CaseItem[];
   onCase: (finished: FinishedCase, context: CaseContext) => string;
   decide: (id: string, status: CaseStatus) => void;
+  // A verification with the customer finished: update the case with the re-check.
+  onVerified?: (caseId: string, verification: Verification) => void;
+  openCase?: (caseId: string) => void;
 }
 
 type NetworkPattern = "none" | "ring" | "clean";
@@ -173,7 +177,7 @@ interface Remembered {
 }
 let remembered: Remembered | null = null;
 
-export function Analyzer({ scenarios, cases, onCase, decide }: Props) {
+export function Analyzer({ scenarios, cases, onCase, decide, onVerified, openCase }: Props) {
   const [form, setForm] = useState<Form>(remembered?.form ?? BASE);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
@@ -391,6 +395,11 @@ export function Analyzer({ scenarios, cases, onCase, decide }: Props) {
               {result?.notice && <p className="ai-note warn"><Icon name="warn" size={16} /> {result.notice}</p>}
               {result?.customer_warning && <p className="ai-note"><Icon name="shield" size={16} /> {result.customer_warning}</p>}
               {result?.action === "hold" && <HoldNotification amount={Number(used.amount)} currency={used.currency} reference={caseReference(result.execution?.request_id)} />}
+              {result && result.action !== "allow" && result.execution?.saved && caseId && (
+                <VerificationPanel key={result.execution.request_id} caseId={result.execution.request_id} score={result.score}
+                  topReason={result.reasons[0]} onDone={(verification) => onVerified?.(caseId, verification)}
+                  onOpenCase={() => openCase?.(caseId)} />
+              )}
               {!result?.customer_warning && result?.action === "allow" && <p className="ai-note"><Icon name="allow" size={16} /> Last Mile Guard detected a low-risk transaction pattern. No major fraud indicators were identified.</p>}
 
               {asked && (

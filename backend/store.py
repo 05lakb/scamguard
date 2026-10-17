@@ -56,8 +56,8 @@ def _live(record, now):
     return expires is not None and expires > now
 
 
-def case_record(request_id, payment, customer, message, questions, answer, outcome, owner):
-    """Build the stored case from one assessment. Only what the analyst queue needs."""
+def case_record(request_id, payment, customer, message, questions, answer, outcome, owner, network=None):
+    """Build the stored case from one assessment. Only what the analyst queue and a later re-check need."""
     created = utc_now()
     return {
         "id": request_id,
@@ -67,6 +67,7 @@ def case_record(request_id, payment, customer, message, questions, answer, outco
         "expires_at": created + KEEP_FOR,
         "round": outcome.get("round", 1),
         "payment": payment,
+        "network": network,
         "customer": {key: value for key, value in customer.items() if key != "id"},
         "message": message,
         "questions": outcome.get("questions") or questions,
@@ -111,6 +112,12 @@ class NoStore:
 
     def add_note(self, case_id, owner, note):
         return None
+
+    def get_case(self, case_id):
+        return None
+
+    def update_case(self, case_id, fields):
+        return False
 
     def recent_cases(self, owner, limit):
         return []
@@ -159,6 +166,21 @@ class MemoryStore:
                 return None
             notes.append(note)
             return public_case(case)
+
+    def get_case(self, case_id):
+        """The stored live case, owner included, or None. Callers check the owner or a call token."""
+        with self.lock:
+            self._prune(utc_now())
+            case = self.cases.get(case_id)
+            return dict(case) if case else None
+
+    def update_case(self, case_id, fields):
+        with self.lock:
+            case = self.cases.get(case_id)
+            if case is None:
+                return False
+            case.update(fields)
+            return True
 
     def recent_cases(self, owner, limit):
         if not owner:
@@ -244,6 +266,28 @@ class FirestoreStore:
         except Exception as error:
             self._failed("note", error)
             return None
+
+    def get_case(self, case_id):
+        """The stored live case, owner included, or None. Callers check the owner or a call token."""
+        if not self._available():
+            return None
+        try:
+            snapshot = self.client.collection(CASES).document(case_id).get(timeout=WRITE_TIMEOUT_SECONDS)
+            case = snapshot.to_dict() if snapshot.exists else None
+            return case if case and _live(case, utc_now()) else None
+        except Exception as error:
+            self._failed("get", error)
+            return None
+
+    def update_case(self, case_id, fields):
+        if not self._available():
+            return False
+        try:
+            self.client.collection(CASES).document(case_id).update(fields, timeout=WRITE_TIMEOUT_SECONDS)
+            return True
+        except Exception as error:
+            self._failed("update", error)
+            return False
 
     def recent_cases(self, owner, limit):
         """This browser's live cases, newest first. An equality filter only, so no extra index is needed."""

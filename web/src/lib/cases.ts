@@ -1,7 +1,7 @@
 // The shape of a case in the analyst queue, plus the recorded cases it starts with.
 
 import seed from "../data/analyst_seed.json";
-import type { ArenaRecord, CaseNote, SavedCase, ServerDecision } from "../api";
+import type { ArenaRecord, CaseNote, SavedCase, ServerDecision, Verification } from "../api";
 
 export type CaseStatus = "open" | "approved" | "held" | "escalated";
 
@@ -29,6 +29,8 @@ export interface CaseItem {
   savedId?: string;
   // The call log: the customer's call to the fraud team, the analyst's notes and Voice AI checks.
   notes?: CaseNote[];
+  // A verification with the customer after a hold: the questions, their answers and the re-check.
+  verification?: Verification | null;
   // Context captured by the Transaction Analyzer (optional for other sources).
   device?: string;
   location?: string;
@@ -155,6 +157,8 @@ export function caseFromSaved(saved: SavedCase): CaseItem {
     trail.push({ when: timeOf(decision.at), text: `${STATUS_TEXT[decision.status]} (${decision.analyst})` });
   }
   for (const note of saved.notes ?? []) trail.push({ when: timeOf(note.at), text: noteTrailText(note) });
+  const outcome = saved.verification?.outcome;
+  if (outcome) trail.push({ when: timeOf(outcome.decided_at), text: verificationTrailText(saved.verification!) });
   const created = new Date(saved.created_at).getTime();
   return {
     id: `SAVED-${saved.id.slice(0, 6).toUpperCase()}`,
@@ -179,7 +183,17 @@ export function caseFromSaved(saved: SavedCase): CaseItem {
     timestamp: Number.isNaN(created) ? undefined : created,
     savedId: saved.id,
     notes: saved.notes ?? [],
+    verification: saved.verification ?? null,
   };
+}
+
+// How a finished verification reads in the audit trail.
+export function verificationTrailText(verification: Verification): string {
+  const outcome = verification.outcome;
+  const how = verification.mode === "phone" ? `AI analyst called the customer (${verification.phone ?? "their number"})` : "Customer typed the answers";
+  if (!outcome) return `${how}; re-check pending`;
+  const kept = outcome.kept_hold ? ` Held regardless: ${outcome.kept_hold}` : "";
+  return `${how}. Re-check: ${outcome.before_action} → ${outcome.action}, risk ${outcome.before_score} → ${outcome.score}.${kept}`;
 }
 
 // How a call-log entry reads in the audit trail.

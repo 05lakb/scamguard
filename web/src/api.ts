@@ -355,6 +355,7 @@ export interface SavedCase {
   reviewed_at?: string;
   decisions?: { status: AnalystStatus; analyst: string; at: string }[];
   notes?: CaseNote[];
+  verification?: Verification | null;
 }
 
 // The case's call log: the customer's call, the analyst's notes from it, and Voice AI checks of those notes.
@@ -447,4 +448,76 @@ export async function requestCallbackBrief(item: CallbackCase): Promise<Callback
   if (response.status === 429) throw new Error("Too many requests from this device. Please wait a minute and try again.");
   if (!response.ok) throw new Error("The call-back questions could not be prepared. Please try again.");
   return (await response.json()) as CallbackBrief;
+}
+
+// ---------- verification after a hold ----------
+// The customer asks the AI analyst to call their own number (Twilio), or types the answers instead.
+// The payment is then checked again with the answers. Some holds cannot be talked away.
+
+export type VerificationStatus = "awaiting_answers" | "calling" | "ringing" | "in_call" | "checking" | "done" | "no_answer";
+
+export interface VerificationOutcome {
+  action: "allow" | "warn" | "hold";
+  score: number;
+  reasons: string[];
+  before_action: "allow" | "warn" | "hold";
+  before_score: number;
+  kept_hold: string | null;
+  degraded: boolean;
+  reading: {
+    scam_likelihood: number | null;
+    explanation: string;
+    coached: boolean;
+    evasive: boolean;
+    contradicts_first_note: boolean;
+    secrecy: string | null;
+    verified_independently: boolean;
+  } | null;
+  voice?: { risk_level: "low" | "medium" | "high"; scam_likelihood: number; tactics: string[]; source: string };
+  decided_at: string;
+}
+
+export interface Verification {
+  mode: "phone" | "typed";
+  status: VerificationStatus;
+  questions: string[];
+  answers: string[];
+  phone: string | null;
+  call_status: string | null;
+  started_at: string;
+  outcome: VerificationOutcome | null;
+}
+
+export type VerifiedCase = SavedCase & { verification: Verification | null };
+
+async function verificationCall(url: string, init: RequestInit | undefined, failure: string): Promise<VerifiedCase> {
+  const response = await fetch(url, init);
+  if (!response.ok) {
+    let detail = failure;
+    try {
+      const body = (await response.json()) as { detail?: unknown };
+      if (typeof body.detail === "string") detail = body.detail;
+    } catch {
+      /* keep the general message */
+    }
+    throw new Error(detail);
+  }
+  return (await response.json()) as VerifiedCase;
+}
+
+export function startVerification(caseId: string, mode: "phone" | "typed", phone?: string): Promise<VerifiedCase> {
+  return verificationCall(`/api/cases/${encodeURIComponent(caseId)}/verification`, {
+    method: "POST", headers: sessionHeaders(), body: JSON.stringify(mode === "phone" ? { mode, phone } : { mode }),
+  }, "The verification could not start. Please try again.");
+}
+
+export function sendVerificationAnswers(caseId: string, answers: string[]): Promise<VerifiedCase> {
+  return verificationCall(`/api/cases/${encodeURIComponent(caseId)}/verification/answers`, {
+    method: "POST", headers: sessionHeaders(), body: JSON.stringify({ answers: answers.map((answer) => answer.slice(0, 500)) }),
+  }, "The answers could not be checked. Please try again.");
+}
+
+export function fetchCase(caseId: string): Promise<VerifiedCase> {
+  return verificationCall(`/api/cases/${encodeURIComponent(caseId)}`, { headers: sessionHeaders(false) },
+    "The case could not be loaded.");
 }

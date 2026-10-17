@@ -186,3 +186,25 @@ export function mergeSaved(current: CaseItem[], saved: SavedCase[]): CaseItem[] 
   if (!fresh.length) return current;
   return [...current.filter((item) => item.source !== "recorded"), ...fresh, ...current.filter((item) => item.source === "recorded")];
 }
+
+// ---------- case references for call-backs ----------
+// When a payment is held, the customer is told to call the bank and quote this reference.
+// It only finds the case: the analyst still confirms who is calling the bank's usual way.
+
+export function caseReference(requestId: string | null | undefined): string | null {
+  return requestId && /^[0-9a-f]{6,}$/i.test(requestId) ? `LMG-${requestId.slice(0, 6).toUpperCase()}` : null;
+}
+
+export const referenceOf = (item: CaseItem) => caseReference(item.savedId ?? item.execution?.request_id);
+
+// Finds a case by the reference the customer quotes ("LMG-7F3A2C", "lmg 7f3a2c" or "7F3A2C"), or by its queue id.
+export function findByReference(cases: CaseItem[], typed: string): CaseItem | null {
+  const wanted = typed.toUpperCase().replace(/[^A-Z0-9]/g, "");
+  if (wanted.length < 4) return null;
+  const code = wanted.startsWith("LMG") ? wanted.slice(3) : wanted;
+  return (
+    cases.find((item) => referenceOf(item)?.replace("-", "") === `LMG${code}`) ??
+    cases.find((item) => item.id.toUpperCase().replace(/[^A-Z0-9]/g, "") === wanted) ??
+    null
+  );
+}

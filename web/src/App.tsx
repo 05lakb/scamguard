@@ -295,7 +295,7 @@ export function App() {
         {page === "voice" && <VoiceAI onAnalysed={(result) => setVoice((old) => [result, ...old])} />}
         {page === "profile" && <RiskProfile cases={cases} open={openCase} goAnalyze={() => setPage("analyzer")} />}
         {page === "analytics" && <Analytics cases={cases} voice={voice} health={health} refresh={refreshHealth} open={openCase} />}
-        {page === "analyst" && <Analyst initialCaseId={reviewCaseId} focusId={focus} cases={cases} decide={decide} scenarios={scenarios} onTestCase={(finished) => addCase(finished, undefined, "test")} />}
+        {page === "analyst" && <Analyst initialCaseId={reviewCaseId} focusId={focus} cases={cases} decide={decide} scenarios={scenarios} onTestCase={(finished) => addCase(finished, undefined, "test")} logCall={(id, reference) => addTrail(id, `Customer called the fraud team quoting ${reference}`)} />}
         {page === "lab" && (
           <>
             <header className="page-head"><div><p className="kicker live"><span className="dot" /> Red team & scenario library</p><h1>Scenario <span className="grad">Lab</span></h1><p className="page-sub">Replay realistic scam and genuine payments against the live engine, or let the red team attack it.</p></div><div className="page-head-side"><button className="btn small primary" onClick={startStory}><Icon name="play" size={14} /> Guided demo</button></div></header>

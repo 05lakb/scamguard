@@ -2423,3 +2423,21 @@ input, select, textarea {
 .callback-summary { margin: 10px 0 8px; font-weight: 600; }
 .callback-questions { margin: 0 0 8px; padding-left: 20px; }
 .callback-questions li { margin: 4px 0; }
+
+/* The simulated in-app notification shown to the customer when a payment is held. */
+.hold-notification {
+  max-width: 460px;
+  margin: 14px 0;
+  padding: 14px 16px;
+  border: 1px solid var(--line);
+  border-radius: 18px;
+  background: var(--surface);
+  box-shadow: var(--shadow);
+}
+.hold-notification-top { display: flex; align-items: center; justify-content: space-between; color: var(--muted); font-size: 0.8rem; }
+.hold-notification-top span:first-child { display: inline-flex; align-items: center; gap: 6px; }
+.hold-notification-title { margin: 8px 0 4px; font-weight: 700; }
+.hold-notification p { margin-bottom: 8px; }
+.hold-notification-calling { display: flex; gap: 6px; align-items: flex-start; color: var(--allow); font-weight: 600; }
+.reference-search { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; margin: 0 0 12px; }
+.reference-search input { flex: 1; min-width: 160px; }

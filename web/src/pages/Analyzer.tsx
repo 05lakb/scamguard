@@ -1,11 +1,12 @@
 import { useState } from "react";
 import { assessPayment, type AssessRequest, type ServerDecision } from "../api";
+import { HoldNotification } from "../components/HoldNotification";
 import { Icon, type IconName } from "../components/Icon";
 import { AgentEvidence } from "../components/AgentEvidence";
 import { NetworkGraph } from "../components/NetworkGraph";
 import { EmptyState, PageHead, PanelHead, ScoreRing, Toggle, toneForAction } from "../components/ui";
 import type { AccountNetwork, Payment } from "../core/types";
-import type { CaseItem, CaseStatus } from "../lib/cases";
+import { caseReference, type CaseItem, type CaseStatus } from "../lib/cases";
 import { contributions } from "../lib/contrib";
 import { levelOf, money } from "../lib/insights";
 import { ACTION_LABEL, ACTION_NOTE, networkLabel, SEGMENT_LABEL } from "../lib/labels";
@@ -373,6 +374,7 @@ export function Analyzer({ scenarios, cases, onCase, decide }: Props) {
 
               {result?.notice && <p className="ai-note warn"><Icon name="warn" size={16} /> {result.notice}</p>}
               {result?.customer_warning && <p className="ai-note"><Icon name="shield" size={16} /> {result.customer_warning}</p>}
+              {result?.action === "hold" && <HoldNotification amount={Number(used.amount)} currency={used.currency} reference={caseReference(result.execution?.request_id)} />}
               {!result?.customer_warning && result?.action === "allow" && <p className="ai-note"><Icon name="allow" size={16} /> Last Mile Guard detected a low-risk transaction pattern. No major fraud indicators were identified.</p>}
 
               {asked && (

@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, type FormEvent } from "react";
 import { assessPayment, type AssessRequest } from "../api";
 import { AgentEvidence } from "../components/AgentEvidence";
 import { CallbackBrief } from "../components/CallbackBrief";
@@ -6,7 +6,7 @@ import type { FinishedCase, Scenario } from "./Console";
 import { EvidenceBars } from "../components/EvidenceBars";
 import { Gauge } from "../components/Gauge";
 import { Icon, type IconName } from "../components/Icon";
-import { needsReview, sourceLabel, type CaseItem, type CaseStatus } from "../lib/cases";
+import { findByReference, needsReview, referenceOf, sourceLabel, type CaseItem, type CaseStatus } from "../lib/cases";
 import { contributions, type Contribution } from "../lib/contrib";
 import { ACTION_LABEL, SEGMENT_LABEL } from "../lib/labels";
 
@@ -36,7 +36,7 @@ function partsAsBars(item: CaseItem): Contribution[] {
   ].filter((entry) => entry.points !== 0);
 }
 
-export function Analyst({ cases, decide, scenarios, onTestCase, initialCaseId, focusId }: {
+export function Analyst({ cases, decide, scenarios, onTestCase, initialCaseId, focusId, logCall }: {
   initialCaseId?: string | null;
   // Another page asked to open a specific case (changes nonce each time).
   focusId?: { id: string; nonce: number } | null;
@@ -44,6 +44,8 @@ export function Analyst({ cases, decide, scenarios, onTestCase, initialCaseId, f
   decide: (id: string, status: CaseStatus) => void;
   scenarios: Scenario[];
   onTestCase: (item: FinishedCase) => string;
+  // The customer phoned the fraud team and quoted this case's reference.
+  logCall?: (id: string, reference: string) => void;
 }) {
   const [filter, setFilter] = useState<Filter>(initialCaseId || focusId ? "all" : "review");
   const [selectedId, setSelectedId] = useState<string | null>(focusId?.id ?? initialCaseId ?? null);
@@ -57,6 +59,23 @@ export function Analyst({ cases, decide, scenarios, onTestCase, initialCaseId, f
   const [running, setRunning] = useState(false);
   const [testStatus, setTestStatus] = useState("");
   const [testError, setTestError] = useState("");
+  const [reference, setReference] = useState("");
+  const [lookup, setLookup] = useState("");
+
+  function findCall(event: FormEvent) {
+    event.preventDefault();
+    const found = findByReference(cases, reference);
+    if (!found) {
+      setLookup("No case with that reference in this browser's queue. Check the reference with the caller.");
+      return;
+    }
+    const quoted = referenceOf(found) ?? found.id;
+    setFilter("all");
+    setSelectedId(found.id);
+    logCall?.(found.id, quoted);
+    setLookup(`Opened case ${found.id}. The call is noted in its audit trail. Confirm the caller's identity before discussing it.`);
+    setReference("");
+  }
 
   async function runBackendScenario() {
     if (running) return;
@@ -113,6 +132,12 @@ export function Analyst({ cases, decide, scenarios, onTestCase, initialCaseId, f
             <h2 id="queue-title" className="eyebrow">Case queue</h2>
             <span className="muted">Your new cases appear first. Recorded examples are labelled in the list.</span>
           </div>
+          <form className="reference-search" onSubmit={findCall} aria-label="Find a case from a customer's call">
+            <input className="f-input" value={reference} onChange={(event) => setReference(event.target.value)} maxLength={20}
+              placeholder="Caller's reference, e.g. LMG-7F3A2C" aria-label="Reference quoted by the caller" />
+            <button className="ghost" type="submit">Find by reference</button>
+          </form>
+          {lookup && <p className="muted small" role="status">{lookup}</p>}
           <div className="filters" role="group" aria-label="Filter cases">
             {FILTERS.map((entry) => (
               <button key={entry.id} className={`filter ${filter === entry.id ? "on" : ""}`} aria-pressed={filter === entry.id} onClick={() => setFilter(entry.id)}>
@@ -153,7 +178,7 @@ export function Analyst({ cases, decide, scenarios, onTestCase, initialCaseId, f
           ) : (
             <>
               <div className="card-head">
-                <h2 id="case-title" className="eyebrow">Case {selected.id}</h2>
+                <h2 id="case-title" className="eyebrow">Case {selected.id}{referenceOf(selected) ? ` · Ref ${referenceOf(selected)}` : ""}</h2>
                 <span className={`tag ${selected.source}`}>{sourceLabel(selected.source)}</span>
               </div>
               <h3 className="case-title">{selected.title}</h3>

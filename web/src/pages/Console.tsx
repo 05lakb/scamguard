@@ -4,7 +4,9 @@ import { EvidenceBars } from "../components/EvidenceBars";
 import { ExecutionSummary } from "../components/ExecutionSummary";
 import { LiveExecution } from "../components/LiveExecution";
 import { SimpleExecution } from "../components/SimpleExecution";
+import { HoldNotification } from "../components/HoldNotification";
 import { Icon } from "../components/Icon";
+import { caseReference } from "../lib/cases";
 import type { AccountNetwork, Customer, Payment } from "../core/types";
 import { contributions } from "../lib/contrib";
 import { SEGMENT_LABEL } from "../lib/labels";
@@ -264,6 +266,7 @@ export function Console({ scenarios, onCase, autoplay, onFinished, onReview }: P
         {result.notice && <p className="notice">{result.notice}</p>}
         <h3 className="mini">Main reasons</h3><ul className="simple-result-reasons">{result.reasons.slice(0, 3).map(reason => <li key={reason}>{reason}</li>)}</ul>
         {result.reasons.length === 0 && <p className="muted">No elevated risk signals were returned by these checks.</p>}
+        {result.action === "hold" && <HoldNotification amount={p.amount} currency={p.currency} reference={caseReference(result.execution?.request_id)} />}
         <div className="simple-result-next"><p>Next: inspect this case and record a human review.</p><button className="primary" onClick={onReview}>Review this case <Icon name="arrow" size={16} /></button></div>
         <details className="simple-result-details"><summary>Scores, evidence & execution details</summary>
           <p className="muted small">Rule-based risk score: {result.score}/100. This is not a calibrated fraud probability.</p>

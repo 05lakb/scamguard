@@ -233,19 +233,22 @@ Cases belong to the browser that created them (a random session key sent in the 
 
 ## Evaluation
 
-All numbers are on synthetic data and are shown, with the raw files, on the app's **Evidence** page.
+All data is synthetic. Each result below has its raw report on the app's **Evidence** page.
 
-| Test | Scams flagged | Genuine customers stopped |
+**Paired run: the same 50 payments (25 scams, 25 genuine), rules alone and then rules + Gemini.** It stops at the first round: when the guard asks the customer a question, nobody answers in this run.
+
+| First round, before any answer | Payment rules alone | Rules + Gemini |
 | --- | --- | --- |
-| Payment rules alone, 200 cases we built | 70% | 20% |
-| Full system, blind test of 50 cases written by someone else | 84% | 12% |
-| Full system, 4 fresh runs of 40 cases with a Gemini-played customer | 85% to 92% | 0% to 14% |
+| Scams warned or held | 11/25 | 13/25 |
+| Genuine customers asked, warned or held | 1/25 | 16/25 |
+| Stopped at a question, waiting for the customer | 0/50 | 28/50 (12 scams, 16 genuine) |
 
-- Latest blind run: **38 of 40** behaved as expected. Coached victims are the hardest case: 3 of 5 caught.
-- Paired run of 50 cases, rules versus rules + Gemini: median **7.1 s** for a fresh Gemini reading (95th percentile 16.8 s), **0** API errors or fallbacks.
-- Method and reproduction: [docs/PAIRED_EVALUATION.md](docs/PAIRED_EVALUATION.md); recorded results: [docs/EVALUATION_RESULTS.md](docs/EVALUATION_RESULTS.md).
+How to read it: with Gemini, the guard asks instead of guessing. A scam that was asked a question is **not** counted as caught yet, and a genuine customer who was asked counts as interrupted. That is why the friction looks high: 16 of 25 genuine customers were asked or warned, mostly asked. Measuring the outcome after the customer answers is the next test to run.
 
-Small synthetic samples show direction, not a bank-grade rate.
+- Speed: median **7.1 s** for a fresh Gemini reading (95th percentile 16.8 s); **0** API errors or fallbacks.
+- Payment rules alone on our own 200 cases: 70% of scams flagged, 20% of genuine customers interrupted.
+- Earlier development runs, with a simulated customer answering the question, reported higher catch rates. Their run reports were not kept, so the Evidence page lists them as unverified notes, and we do not quote them as results.
+- Method: [docs/PAIRED_EVALUATION.md](docs/PAIRED_EVALUATION.md). Recorded results: [docs/EVALUATION_RESULTS.md](docs/EVALUATION_RESULTS.md).
 
 ## Safety and limits
 

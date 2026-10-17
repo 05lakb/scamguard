@@ -178,12 +178,12 @@ export function Landing({ signedIn, enter, theme, setTheme }: Props) {
         <p className="kicker">Evidence, including the weak results</p>
         <h2>We measured the trade-off <span className="grad">instead of hiding it.</span></h2>
         <StatBand rows={[
-          { value: `${fraction(rules.scams_flagged)} → ${fraction(combined.scams_flagged)}`, text: "scams warned or held: rules alone, then with Gemini" },
-          { value: `${pending.scam + pending.legit} of ${paired.included_cases}`, text: "got a follow-up question instead of a guess" },
-          { value: fraction(combined.genuine_friction), text: "genuine customers asked or held: the friction we are reducing" },
+          { value: `${fraction(rules.scams_flagged)} → ${fraction(combined.scams_flagged)}`, text: "scams warned or held in the first round: rules alone, then with Gemini" },
+          { value: `${pending.scam + pending.legit} of ${paired.included_cases}`, text: "stopped at a question for the customer, so not yet counted as caught or cleared" },
+          { value: fraction(combined.genuine_friction), text: "genuine customers asked, warned or held: mostly a question, the friction we are reducing" },
         ]} />
         <p className="muted small" style={{ margin: "12px 0 0" }}>
-          {paired.included_cases} made-up payments, run {paired.run_id.replace("paired-", "")} with {paired.model}. Small synthetic samples, not real bank data.
+          First round only: {paired.included_cases} made-up payments, before any customer answers. Run {paired.run_id.replace("paired-", "")} with {paired.model}. Small synthetic samples, not real bank data.
         </p>
         <div className="land-cta">
           <div>

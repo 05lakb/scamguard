@@ -226,7 +226,7 @@ input, select, textarea {
 
 .land-hero h1 {
   margin-bottom: 20px;
-  font-size: clamp(2.6rem, 5.4vw, 4.2rem);
+  font-size: clamp(2.2rem, 4vw, 3.3rem);
   line-height: 1.04;
   letter-spacing: -0.04em;
 }
@@ -2392,3 +2392,19 @@ input, select, textarea {
 @media (max-width: 640px) { .engine-grid { grid-template-columns: 1fr; } }
 .risk-scale-marks { position: relative; height: 16px; display: block; }
 .risk-scale-marks span { position: absolute; top: 0; white-space: nowrap; }
+
+/* Landing: research figures (four across) and the five-step flow. */
+.why-grid.four { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+.why-card a { color: inherit; text-decoration: underline; text-underline-offset: 2px; }
+.why-card a:hover { color: var(--accent); }
+.steps-row.five { grid-template-columns: repeat(5, minmax(0, 1fr)); }
+.land-subhead { margin: 36px 0 16px; font-size: 1.15rem; }
+
+@media (max-width: 1080px) {
+  .why-grid.four { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .steps-row.five { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+
+@media (max-width: 560px) {
+  .why-grid.four, .steps-row.five { grid-template-columns: 1fr; }
+}

@@ -253,7 +253,7 @@ export function App() {
   if (!user || !page) {
     return (
       <>
-        <Landing signedIn={Boolean(user)} enter={() => enter("dashboard")} theme={theme} setTheme={setTheme} />
+        <Landing signedIn={Boolean(user)} enter={(target) => enter(target ?? "dashboard")} theme={theme} setTheme={setTheme} />
         {dialog}
       </>
     );

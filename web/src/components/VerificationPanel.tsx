@@ -131,6 +131,7 @@ export function VerificationPanel({ caseId, reference, amount, currency, payee, 
   }
 
   async function finish(final: string[]) {
+    setError(""); // the answers are in: an earlier microphone problem no longer matters
     setPhase("checking");
     void speak("Thank you. We are checking your answers now. An analyst will confirm what happens to your payment.");
     try {

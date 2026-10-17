@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { assessPayment, type AssessRequest } from "../api";
 import { AgentEvidence } from "../components/AgentEvidence";
+import { CallbackBrief } from "../components/CallbackBrief";
 import type { FinishedCase, Scenario } from "./Console";
 import { EvidenceBars } from "../components/EvidenceBars";
 import { Gauge } from "../components/Gauge";
@@ -180,6 +181,7 @@ export function Analyst({ cases, decide, scenarios, onTestCase, initialCaseId, f
               {selected.action !== "allow" && <p className="muted small">{selected.savedId
                 ? "Human review is simulated. Your decision is saved with this case on the server, with your name and the time, but it is never sent to a bank."
                 : "Human review is simulated in the browser. This case was not saved on the server, so the decision stays on this page and is never sent to a bank."}</p>}
+              {selected.action !== "allow" && <CallbackBrief key={selected.id} item={selected} />}
               <details className="simple-result-details"><summary>Detailed findings from each check</summary><AgentEvidence item={selected} /></details>
 
               <h3 className="mini">Why, ranked by weight</h3>

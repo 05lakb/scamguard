@@ -2408,3 +2408,18 @@ input, select, textarea {
 @media (max-width: 560px) {
   .why-grid.four, .steps-row.five { grid-template-columns: 1fr; }
 }
+
+/* Cases: the analyst's call-back brief. */
+.callback-brief {
+  margin: 16px 0;
+  padding: 16px 18px;
+  border: 1px solid var(--line);
+  border-left: 4px solid var(--accent);
+  border-radius: 12px;
+  background: var(--accent-soft);
+}
+.callback-head { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 10px; }
+.callback-head .mini { display: inline-flex; align-items: center; gap: 6px; margin: 0; }
+.callback-summary { margin: 10px 0 8px; font-weight: 600; }
+.callback-questions { margin: 0 0 8px; padding-left: 20px; }
+.callback-questions li { margin: 4px 0; }

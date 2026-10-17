@@ -348,3 +348,48 @@ export async function saveDecision(caseId: string, status: AnalystStatus, analys
     return false;
   }
 }
+
+// ---------- call-back brief ----------
+// Before an analyst phones a customer about a held payment, the server prepares a short summary and
+// questions to ask. The agent itself never calls the customer.
+
+export interface CallbackBrief {
+  summary: string;
+  questions: string[];
+  source: "gemini" | "rules";
+}
+
+export interface CallbackCase {
+  action: "allow" | "warn" | "hold";
+  score: number;
+  amount: number;
+  currency: string;
+  reasons: string[];
+  message: string | null;
+  questions?: string[];
+  answer?: string;
+  typology?: string;
+}
+
+export async function requestCallbackBrief(item: CallbackCase): Promise<CallbackBrief> {
+  if (item.action === "allow") throw new Error("Only warned or held payments need a call-back.");
+  const typology = item.typology && item.typology !== "none" ? item.typology : undefined;
+  const response = await fetch("/api/callback-brief", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      action: item.action,
+      score: Math.round(item.score),
+      amount: item.amount,
+      currency: item.currency,
+      typology: typology?.slice(0, 40),
+      reasons: item.reasons.slice(0, 6).map((reason) => reason.slice(0, 400)),
+      message: item.message?.slice(0, 2000) ?? null,
+      questions: item.questions?.slice(0, 2).map((question) => question.slice(0, 300)),
+      answer: item.answer?.slice(0, 1000),
+    }),
+  });
+  if (response.status === 429) throw new Error("Too many requests from this device. Please wait a minute and try again.");
+  if (!response.ok) throw new Error("The call-back questions could not be prepared. Please try again.");
+  return (await response.json()) as CallbackBrief;
+}

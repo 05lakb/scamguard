@@ -34,6 +34,7 @@ from pydantic import BaseModel, Field
 from backend import arena as arena_module
 from backend import gemini_client
 from backend.risk import clarify, conversation
+from backend.risk.callback import callback_brief
 from backend.risk.decision import decide
 from backend.risk.evidence import load_scam_types, read_message
 from backend.risk.translate import translate_warning
@@ -135,6 +136,20 @@ class DecisionIn(BaseModel):
 CaseId = Annotated[str, Field(pattern=r"^[0-9a-f]{12}$")]
 
 
+class CallbackIn(BaseModel):
+    """A warned or held case, sent so the analyst can get call-back questions before phoning the customer."""
+    action: Literal["warn", "hold"]
+    score: int = Field(ge=0, le=100)
+    amount: float = Field(gt=0, le=10_000_000)
+    currency: str = Field(min_length=3, max_length=3)
+    payee_type: Optional[Literal["individual", "business", "crypto_exchange"]] = None
+    typology: Optional[str] = Field(default=None, max_length=40)
+    reasons: list[Annotated[str, Field(max_length=400)]] = Field(default_factory=list, max_length=6)
+    message: Optional[str] = Field(default=None, max_length=2000)
+    questions: Optional[list[Annotated[str, Field(max_length=300)]]] = Field(default=None, max_length=2)
+    answer: Optional[str] = Field(default=None, max_length=1000)
+
+
 class ConversationIn(BaseModel):
     """A call transcript or chat pasted, uploaded as text, or captured by the browser's speech recogniser."""
     transcript: str = Field(min_length=1, max_length=4000)
@@ -196,7 +211,7 @@ def visitor_key(request: Request):
 
 
 def create_app(reader=read_message, asker=clarify.ask_questions, arena_writer=None, translator=translate_warning,
-               store=None):
+               store=None, callback_writer=None):
     store = store if store is not None else store_from_environment()
     app = FastAPI(title="Last Mile Guard", docs_url=None, redoc_url=None, openapi_url=None)
     visitors = SlidingWindow(PER_VISITOR_PER_MINUTE, PER_VISITOR_PER_HOUR)
@@ -394,6 +409,16 @@ def create_app(reader=read_message, asker=clarify.ask_questions, arena_writer=No
             return JSONResponse({"detail": "The case was not found or could not be updated."}, status_code=404)
         log.info("decision case=%s status=%s", case_id, body.status)  # the analyst's name is not logged
         return saved
+
+    @app.post("/api/callback-brief")
+    def prepare_callback(body: CallbackIn, request: Request):
+        """A short brief and questions for the analyst's call-back. The agent never calls the customer itself."""
+        if not visitors.allow(visitor_key(request)):
+            return JSONResponse({"detail": "Too many requests. Please wait a minute and try again."}, status_code=429)
+        use_ai = gemini_client.is_configured() and gemini_budget.allow("gemini")
+        brief = callback_brief(body.model_dump(), ask=callback_writer, use_ai=use_ai)
+        log.info("callback brief action=%s source=%s", body.action, brief["source"])  # the customer's words are not logged
+        return brief
 
     @app.post("/api/arena")
     def arena_run(body: ArenaIn, request: Request):

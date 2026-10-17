@@ -1,7 +1,7 @@
 // The shape of a case in the analyst queue, plus the recorded cases it starts with.
 
 import seed from "../data/analyst_seed.json";
-import type { ArenaRecord, SavedCase, ServerDecision } from "../api";
+import type { ArenaRecord, CaseNote, SavedCase, ServerDecision } from "../api";
 
 export type CaseStatus = "open" | "approved" | "held" | "escalated";
 
@@ -27,6 +27,8 @@ export interface CaseItem {
   trail: { when: string; text: string }[];
   // The server's id for this case, when it was saved; analyst decisions are saved under it.
   savedId?: string;
+  // The call log: the customer's call to the fraud team, the analyst's notes and Voice AI checks.
+  notes?: CaseNote[];
   // Context captured by the Transaction Analyzer (optional for other sources).
   device?: string;
   location?: string;
@@ -89,7 +91,7 @@ export const KIND_LABEL: Record<string, string> = {
 };
 
 export const sourceLabel = (source: CaseItem["source"]) =>
-  source === "live" ? "Live" : source === "test" ? "Test run" : "Recorded";
+  source === "live" ? "Live" : source === "test" ? "Test run" : "Example";
 
 // Turns one finished red-team scenario into a case for the analyst queue.
 export function caseFromArena(record: ArenaRecord, number: number, now: string): CaseItem | null {
@@ -152,6 +154,7 @@ export function caseFromSaved(saved: SavedCase): CaseItem {
   for (const decision of saved.decisions ?? []) {
     trail.push({ when: timeOf(decision.at), text: `${STATUS_TEXT[decision.status]} (${decision.analyst})` });
   }
+  for (const note of saved.notes ?? []) trail.push({ when: timeOf(note.at), text: noteTrailText(note) });
   const created = new Date(saved.created_at).getTime();
   return {
     id: `SAVED-${saved.id.slice(0, 6).toUpperCase()}`,
@@ -175,7 +178,15 @@ export function caseFromSaved(saved: SavedCase): CaseItem {
     channel: saved.payment.channel,
     timestamp: Number.isNaN(created) ? undefined : created,
     savedId: saved.id,
+    notes: saved.notes ?? [],
   };
+}
+
+// How a call-log entry reads in the audit trail.
+export function noteTrailText(note: CaseNote): string {
+  if (note.kind === "call") return note.text;
+  if (note.kind === "check") return `Voice AI check of the call notes: ${note.text}`;
+  return `Call notes added by ${note.author}`;
 }
 
 // Adds saved cases the page does not already show (matched by the server's id).

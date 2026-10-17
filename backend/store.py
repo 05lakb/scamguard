@@ -32,6 +32,7 @@ WRITE_TIMEOUT_SECONDS = 4
 PAUSE_AFTER_FAILURE_SECONDS = 60
 KEEP_FOR = timedelta(hours=24)
 MAX_CASES_PER_SESSION = 200
+MAX_NOTES_PER_CASE = 40
 SESSION_KEY = re.compile(r"^[A-Za-z0-9_-]{32,64}$")
 
 
@@ -89,7 +90,13 @@ def public_case(record):
             item[key] = _iso(item[key])
     item["decisions"] = [{key: _iso(value) for key, value in decision.items() if key != "expires_at"}
                          for decision in item.get("decisions", [])]
+    item["notes"] = [{**note, "at": _iso(note.get("at"))} for note in item.get("notes", [])]
     return item
+
+
+def note_record(kind, text, author):
+    """One entry in a case's call log: the customer's call, an analyst's notes, or a Voice AI check of them."""
+    return {"kind": kind, "text": text, "author": author, "at": utc_now()}
 
 
 class NoStore:
@@ -100,6 +107,9 @@ class NoStore:
         return False
 
     def record_decision(self, case_id, owner, status, analyst):
+        return None
+
+    def add_note(self, case_id, owner, note):
         return None
 
     def recent_cases(self, owner, limit):
@@ -136,6 +146,18 @@ class MemoryStore:
             case["decisions"].append(decision)
             case["status"] = status
             case["reviewed_at"] = now
+            return public_case(case)
+
+    def add_note(self, case_id, owner, note):
+        with self.lock:
+            self._prune(utc_now())
+            case = self.cases.get(case_id)
+            if case is None or not owner or case["owner"] != owner:
+                return None
+            notes = case.setdefault("notes", [])
+            if len(notes) >= MAX_NOTES_PER_CASE:
+                return None
+            notes.append(note)
             return public_case(case)
 
     def recent_cases(self, owner, limit):
@@ -201,6 +223,26 @@ class FirestoreStore:
             return public_case({**case, "status": status, "reviewed_at": now, "decisions": [decision]})
         except Exception as error:
             self._failed("decision", error)
+            return None
+
+    def add_note(self, case_id, owner, note):
+        """Append a call-log entry to this browser's live case. None if it is not theirs, is full, or storage failed."""
+        if not owner or not self._available():
+            return None
+        try:
+            from google.cloud import firestore
+            case_ref = self.client.collection(CASES).document(case_id)
+            snapshot = case_ref.get(timeout=WRITE_TIMEOUT_SECONDS)
+            if not snapshot.exists:
+                return None
+            case = snapshot.to_dict()
+            notes = case.get("notes", [])
+            if case.get("owner") != owner or not _live(case, utc_now()) or len(notes) >= MAX_NOTES_PER_CASE:
+                return None
+            case_ref.update({"notes": firestore.ArrayUnion([note])}, timeout=WRITE_TIMEOUT_SECONDS)
+            return public_case({**case, "notes": notes + [note]})
+        except Exception as error:
+            self._failed("note", error)
             return None
 
     def recent_cases(self, owner, limit):

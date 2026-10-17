@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { assessPayment, type AssessRequest, type ServerDecision } from "../api";
 import { HoldNotification } from "../components/HoldNotification";
 import { Icon, type IconName } from "../components/Icon";
@@ -161,15 +161,31 @@ function fromScenario(sc: Scenario): Form {
   };
 }
 
+// The last transaction and its result, kept while the visitor looks at other pages,
+// so coming back to Transactions shows it again. Clear, or a new analysis, replaces it.
+interface Remembered {
+  form: Form;
+  asked: ServerDecision | null;
+  answer: string;
+  result: ServerDecision | null;
+  submitted: Form | null;
+  caseId: string | null;
+}
+let remembered: Remembered | null = null;
+
 export function Analyzer({ scenarios, cases, onCase, decide }: Props) {
-  const [form, setForm] = useState<Form>(BASE);
+  const [form, setForm] = useState<Form>(remembered?.form ?? BASE);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
-  const [asked, setAsked] = useState<ServerDecision | null>(null);
-  const [answer, setAnswer] = useState("");
-  const [result, setResult] = useState<ServerDecision | null>(null);
-  const [submitted, setSubmitted] = useState<Form | null>(null);
-  const [caseId, setCaseId] = useState<string | null>(null);
+  const [asked, setAsked] = useState<ServerDecision | null>(remembered?.asked ?? null);
+  const [answer, setAnswer] = useState(remembered?.answer ?? "");
+  const [result, setResult] = useState<ServerDecision | null>(remembered?.result ?? null);
+  const [submitted, setSubmitted] = useState<Form | null>(remembered?.submitted ?? null);
+  const [caseId, setCaseId] = useState<string | null>(remembered?.caseId ?? null);
+
+  useEffect(() => {
+    remembered = { form, asked, answer, result, submitted, caseId };
+  }, [form, asked, answer, result, submitted, caseId]);
 
   const set = <K extends keyof Form>(key: K, value: Form[K]) => setForm((old) => ({ ...old, [key]: value }));
   const amountOk = Number(form.amount) > 0 && Number(form.amount) <= 10_000_000;

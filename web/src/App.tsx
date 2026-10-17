@@ -1,10 +1,11 @@
 import { useEffect, useRef, useState, type FormEvent } from "react";
 import demo from "./data/demo.json";
-import { checkHealth, listSavedCases, saveDecision, type ArenaRecord, type ConversationResult, type Health } from "./api";
+import { addCaseNote, checkHealth, listSavedCases, saveDecision, type ArenaRecord, type CaseNote, type ConversationResult, type Health, type NoteKind } from "./api";
+import { CUSTOMER_CALL_EVENT } from "./components/HoldNotification";
 import { Icon } from "./components/Icon";
 import { Logo } from "./components/Logo";
 import { ThemePicker, isTheme, type Theme } from "./components/ThemePicker";
-import { caseFromArena, mergeSaved, needsReview, recordedCases, type CaseItem, type CaseStatus } from "./lib/cases";
+import { caseFromArena, findByReference, mergeSaved, needsReview, noteTrailText, recordedCases, type CaseItem, type CaseStatus } from "./lib/cases";
 import { NAV, type Page } from "./lib/pages";
 import { STORY, STORY_PAUSE_MS } from "./lib/story";
 import { Analyst } from "./pages/Analyst";
@@ -63,7 +64,7 @@ function pageFromHash(): Page | null {
 }
 
 export function App() {
-  const [theme, setTheme] = useState<Theme>(() => { const saved = load("ps-theme"); return isTheme(saved) ? saved : "indigo"; });
+  const [theme, setTheme] = useState<Theme>(() => { const saved = load("ps-theme"); return isTheme(saved) ? saved : "charcoal"; });
   const [user, setUser] = useState<string | null>(load("ps-user"));
   const [page, setPageState] = useState<Page | null>(() => (load("ps-user") ? pageFromHash() : null));
   const [signIn, setSignIn] = useState<{ then: Page } | null>(null);
@@ -95,6 +96,19 @@ export function App() {
     void refreshHealth();
     // Cases saved on the server (Firestore) join the queue, so it survives a refresh.
     void listSavedCases().then((saved) => setCases((old) => mergeSaved(old, saved)));
+  }, []);
+
+  // The customer pressed "Call fraud team" on a hold notification: log the call on that case.
+  const casesNow = useRef(cases);
+  casesNow.current = cases;
+  useEffect(() => {
+    const onCall = (event: Event) => {
+      const reference = (event as CustomEvent<string>).detail;
+      const found = findByReference(casesNow.current, reference);
+      if (found) addNote(found.id, "call", `Customer called the fraud team quoting ${reference}`, "customer");
+    };
+    window.addEventListener(CUSTOMER_CALL_EVENT, onCall);
+    return () => window.removeEventListener(CUSTOMER_CALL_EVENT, onCall);
   }, []);
 
   useEffect(() => {
@@ -201,6 +215,20 @@ export function App() {
     setCases((old) => old.map((item) => (item.id === id ? { ...item, trail: [...item.trail, { when: clock(), text }] } : item)));
   }
 
+  // Adds to a case's call log, and saves it with the case on the server when the case was saved.
+  function addNote(id: string, kind: NoteKind, text: string, author: string) {
+    const note: CaseNote = { kind, text, author, at: new Date().toISOString() };
+    setCases((old) => old.map((item) => (item.id === id
+      ? { ...item, notes: [...(item.notes ?? []), note], trail: [...item.trail, { when: clock(), text: noteTrailText(note) }] }
+      : item)));
+    const savedId = casesNow.current.find((item) => item.id === id)?.savedId;
+    if (savedId) {
+      void addCaseNote(savedId, kind, text, author).then((ok) => {
+        if (!ok) addTrail(id, "That call-log entry could not be saved on the server; it is kept on this page only");
+      });
+    }
+  }
+
   function decide(id: string, status: CaseStatus) {
     setCases((old) =>
       old.map((item) => (item.id === id ? { ...item, status, trail: [...item.trail, { when: clock(), text: STATUS_TRAIL[status] }] } : item)),
@@ -295,7 +323,7 @@ export function App() {
         {page === "voice" && <VoiceAI onAnalysed={(result) => setVoice((old) => [result, ...old])} />}
         {page === "profile" && <RiskProfile cases={cases} open={openCase} goAnalyze={() => setPage("analyzer")} />}
         {page === "analytics" && <Analytics cases={cases} voice={voice} health={health} refresh={refreshHealth} open={openCase} />}
-        {page === "analyst" && <Analyst initialCaseId={reviewCaseId} focusId={focus} cases={cases} decide={decide} scenarios={scenarios} onTestCase={(finished) => addCase(finished, undefined, "test")} logCall={(id, reference) => addTrail(id, `Customer called the fraud team quoting ${reference}`)} />}
+        {page === "analyst" && <Analyst initialCaseId={reviewCaseId} focusId={focus} cases={cases} decide={decide} scenarios={scenarios} onTestCase={(finished) => addCase(finished, undefined, "test")} logCall={(id, reference) => addTrail(id, `Analyst opened the case from the caller's reference ${reference}`)} addNote={(id, kind, text) => addNote(id, kind, text, user ?? "analyst")} />}
         {page === "lab" && (
           <>
             <header className="page-head"><div><p className="kicker live"><span className="dot" /> Red team & scenario library</p><h1>Scenario <span className="grad">Lab</span></h1><p className="page-sub">Replay realistic scam and genuine payments against the live engine, or let the red team attack it.</p></div><div className="page-head-side"><button className="btn small primary" onClick={startStory}><Icon name="play" size={14} /> Guided demo</button></div></header>

@@ -1,7 +1,8 @@
 import { useEffect, useState, type FormEvent } from "react";
-import { assessPayment, type AssessRequest } from "../api";
+import { assessPayment, type AssessRequest, type NoteKind } from "../api";
 import { AgentEvidence } from "../components/AgentEvidence";
 import { CallbackBrief } from "../components/CallbackBrief";
+import { CallNotes } from "../components/CallNotes";
 import type { FinishedCase, Scenario } from "./Console";
 import { EvidenceBars } from "../components/EvidenceBars";
 import { Gauge } from "../components/Gauge";
@@ -36,7 +37,7 @@ function partsAsBars(item: CaseItem): Contribution[] {
   ].filter((entry) => entry.points !== 0);
 }
 
-export function Analyst({ cases, decide, scenarios, onTestCase, initialCaseId, focusId, logCall }: {
+export function Analyst({ cases, decide, scenarios, onTestCase, initialCaseId, focusId, logCall, addNote }: {
   initialCaseId?: string | null;
   // Another page asked to open a specific case (changes nonce each time).
   focusId?: { id: string; nonce: number } | null;
@@ -46,6 +47,8 @@ export function Analyst({ cases, decide, scenarios, onTestCase, initialCaseId, f
   onTestCase: (item: FinishedCase) => string;
   // The customer phoned the fraud team and quoted this case's reference.
   logCall?: (id: string, reference: string) => void;
+  // Adds to the case's call log: notes from the call, or a Voice AI check of them.
+  addNote?: (id: string, kind: NoteKind, text: string) => void;
 }) {
   const [filter, setFilter] = useState<Filter>(initialCaseId || focusId ? "all" : "review");
   const [selectedId, setSelectedId] = useState<string | null>(focusId?.id ?? initialCaseId ?? null);
@@ -130,7 +133,7 @@ export function Analyst({ cases, decide, scenarios, onTestCase, initialCaseId, f
         <section className="card queue" aria-labelledby="queue-title">
           <div className="card-head">
             <h2 id="queue-title" className="eyebrow">Case queue</h2>
-            <span className="muted">Your new cases appear first. Recorded examples are labelled in the list.</span>
+            <span className="muted">Your payments appear first. The built-in example cases are marked "example".</span>
           </div>
           <form className="reference-search" onSubmit={findCall} aria-label="Find a case from a customer's call">
             <input className="f-input" value={reference} onChange={(event) => setReference(event.target.value)} maxLength={20}
@@ -207,6 +210,9 @@ export function Analyst({ cases, decide, scenarios, onTestCase, initialCaseId, f
                 ? "Human review is simulated. Your decision is saved with this case, with your name and the time. Only this browser can see the case, it is deleted after 24 hours, and nothing is sent to a bank."
                 : "Human review is simulated in the browser. This case was not saved on the server, so the decision stays on this page and is never sent to a bank."}</p>}
               {selected.action !== "allow" && <CallbackBrief key={selected.id} item={selected} />}
+              {selected.action !== "allow" && addNote && (
+                <CallNotes key={`notes-${selected.id}`} item={selected} onAdd={(kind, text) => addNote(selected.id, kind, text)} />
+              )}
               <details className="simple-result-details"><summary>Detailed findings from each check</summary><AgentEvidence item={selected} /></details>
 
               <h3 className="mini">Why, ranked by weight</h3>

@@ -1,13 +1,12 @@
 import { useEffect, useRef, useState } from "react";
 import { Icon } from "./Icon";
 
-export type Theme = "indigo" | "emerald" | "purple" | "charcoal";
+export type Theme = "charcoal" | "violet" | "mono";
 
 export const THEMES: { id: Theme; name: string; note: string; swatch: [string, string, string] }[] = [
-  { id: "indigo", name: "Clean White + Indigo", note: "Bright and professional", swatch: ["#f8fafc", "#4f46e5", "#7c3aed"] },
-  { id: "emerald", name: "Emerald Light", note: "Fresh, safe-money feel", swatch: ["#f6fbf9", "#059669", "#0d9488"] },
-  { id: "purple", name: "Royal Purple Light", note: "Modern and eye-catching", swatch: ["#faf7ff", "#7c3aed", "#db2777"] },
   { id: "charcoal", name: "Charcoal + Amber", note: "Neutral dark, warm accents", swatch: ["#121212", "#f59e0b", "#f97316"] },
+  { id: "violet", name: "Midnight Violet", note: "Dark banking dashboard", swatch: ["#17171a", "#7c4dff", "#a78bfa"] },
+  { id: "mono", name: "Monochrome Editorial", note: "Light, black and white, serif headlines", swatch: ["#e9e9e7", "#111111", "#4b4b4b"] },
 ];
 
 export const isTheme = (value: string | null): value is Theme => THEMES.some((theme) => theme.id === value);

@@ -2441,3 +2441,11 @@ input, select, textarea {
 .hold-notification-calling { display: flex; gap: 6px; align-items: flex-start; color: var(--allow); font-weight: 600; }
 .reference-search { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; margin: 0 0 12px; }
 .reference-search input { flex: 1; min-width: 160px; }
+
+/* Cases: the call log with the customer. */
+.call-notes { margin: 16px 0; padding: 16px 18px; border: 1px solid var(--line); border-radius: 12px; background: var(--surface-2); }
+.call-notes .mini { display: inline-flex; align-items: center; gap: 6px; margin: 0 0 4px; }
+.call-log { list-style: none; margin: 10px 0; padding: 0; display: grid; gap: 8px; }
+.call-log li { display: grid; gap: 2px; padding: 8px 10px; border-radius: 8px; background: var(--surface); border: 1px solid var(--line); }
+.call-log-call { border-color: var(--accent) !important; }
+.call-log-check { background: var(--accent-soft) !important; }

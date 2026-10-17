@@ -1,6 +1,8 @@
 import { useState } from "react";
 import { Icon } from "./Icon";
 
+export const CUSTOMER_CALL_EVENT = "lmg-customer-call";
+
 // What the customer sees in the bank's app when a payment is held: a notification asking them to
 // call the bank, never a call from the bank. Simulated: no message is sent and no call is placed.
 export function HoldNotification({ amount, currency, reference }: { amount: number; currency: string; reference: string | null }) {
@@ -19,10 +21,14 @@ export function HoldNotification({ amount, currency, reference }: { amount: numb
       <p className="muted small">We will never call or message you asking you to move money. Do not use a number someone gave you.</p>
       {calling ? (
         <p className="hold-notification-calling" aria-live="polite">
-          <Icon name="user" size={15} /> Simulated call: you are through to the fraud team.{reference ? ` Quote ${reference}.` : ""} The analyst finds your case with it on the Cases page.
+          <Icon name="user" size={15} /> Simulated call: you are through to the fraud team.{reference ? ` Quote ${reference}.` : ""} The call is now on your case, and the analyst sees it on the Cases page.
         </p>
       ) : (
-        <button className="btn small primary" onClick={() => setCalling(true)}><Icon name="user" size={14} /> Call fraud team</button>
+        <button className="btn small primary" onClick={() => {
+          setCalling(true);
+          // The app logs the call on the case, so the analyst sees it straight away.
+          if (reference) window.dispatchEvent(new CustomEvent(CUSTOMER_CALL_EVENT, { detail: reference }));
+        }}><Icon name="user" size={14} /> Call fraud team</button>
       )}
     </div>
   );

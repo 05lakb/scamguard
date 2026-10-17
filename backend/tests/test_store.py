@@ -54,7 +54,12 @@ class FakeDocument:
         return FakeSnapshot(self.db.docs.get(self.path))
 
     def update(self, fields, timeout=None):
-        self.db.docs[self.path].update(fields)
+        doc = self.db.docs[self.path]
+        for key, value in fields.items():
+            if type(value).__name__ == "ArrayUnion":  # firestore.ArrayUnion appends to a list field
+                doc[key] = doc.get(key, []) + list(value.values)
+            else:
+                doc[key] = value
 
     def collection(self, name):
         return FakeCollection(self.db, f"{self.path}/{name}")
@@ -272,6 +277,51 @@ def test_firestore_store_keeps_each_browser_to_its_own_cases():
     assert fake.added == [(f"cases/{first}/decisions", {"status": "escalated", "analyst": "Lalit",
                                                           "at": case["reviewed_at"], "expires_at": case["expires_at"]})]
     assert client.post("/api/cases/abcdef123456/decision", json={"status": "held"}).status_code == 404
+
+
+def test_call_log_is_kept_with_the_case_and_private():
+    store = MemoryStore()
+    client = client_with(store)
+    case_id = client.post("/api/assess", json=LONG_NOTE).json()["execution"]["request_id"]
+    call = client.post(f"/api/cases/{case_id}/notes",
+                       json={"kind": "call", "text": "Customer called the fraud team quoting LMG-ABC123", "author": "customer"})
+    assert call.status_code == 200
+    notes = client.post(f"/api/cases/{case_id}/notes",
+                        json={"kind": "note", "text": "Says the bank told them to move money\nand stay on the line.", "author": " Priya "})
+    assert notes.status_code == 200
+    saved = client.get("/api/cases").json()["cases"][0]["notes"]
+    assert [note["kind"] for note in saved] == ["call", "note"]
+    assert saved[1]["author"] == "Priya" and isinstance(saved[1]["at"], str)
+
+    assert client.post(f"/api/cases/{case_id}/notes", json={"kind": "note", "text": "x"},
+                       headers=as_browser(client, BROWSER_B)).status_code == 404
+    assert client.post(f"/api/cases/{case_id}/notes", json={"kind": "note", "text": "x"},
+                       headers={"X-LMG-Session": ""}).status_code == 401
+    assert client.post(f"/api/cases/{case_id}/notes", json={"kind": "decision", "text": "x"}).status_code == 422
+    assert client.post(f"/api/cases/{case_id}/notes", json={"kind": "note", "text": ""}).status_code == 422
+    assert client.post(f"/api/cases/{case_id}/notes", json={"kind": "note", "text": "x" * 2001}).status_code == 422
+
+
+def test_call_log_has_a_limit_and_needs_storage():
+    store = MemoryStore()
+    client = client_with(store)
+    case_id = client.post("/api/assess", json=LONG_NOTE).json()["execution"]["request_id"]
+    owner = owner_of(BROWSER_A)
+    for _ in range(store_module.MAX_NOTES_PER_CASE):  # straight to the store: the API's rate limit would stop a loop
+        assert store.add_note(case_id, owner, store_module.note_record("note", "ok", "analyst")) is not None
+    assert client.post(f"/api/cases/{case_id}/notes", json={"kind": "note", "text": "one too many"}).status_code == 404
+    assert client_with(NoStore()).post(f"/api/cases/{case_id}/notes", json={"kind": "note", "text": "x"}).status_code == 503
+
+
+def test_firestore_store_appends_to_the_call_log():
+    fake = FakeFirestore()
+    client = client_with(FirestoreStore(client=fake))
+    case_id = client.post("/api/assess", json=LONG_NOTE).json()["execution"]["request_id"]
+    assert client.post(f"/api/cases/{case_id}/notes", json={"kind": "call", "text": "Customer called"}).status_code == 200
+    assert client.post(f"/api/cases/{case_id}/notes", json={"kind": "check", "text": "high risk (90/100)."}).status_code == 200
+    assert [note["kind"] for note in fake.docs[f"cases/{case_id}"]["notes"]] == ["call", "check"]
+    assert client.post(f"/api/cases/{case_id}/notes", json={"kind": "note", "text": "x"},
+                       headers=as_browser(client, BROWSER_B)).status_code == 404
 
 
 def test_firestore_store_hides_expired_cases():

@@ -40,7 +40,7 @@ from backend.risk.decision import decide
 from backend.risk.evidence import load_scam_types, read_message
 from backend.risk.translate import translate_warning
 from backend.service import assess_steps
-from backend.store import case_record, owner_of, store_from_environment
+from backend.store import case_record, note_record, owner_of, store_from_environment
 
 log = logging.getLogger("lmg")
 logging.basicConfig(level=logging.INFO, format="%(message)s")
@@ -136,6 +136,13 @@ class DecisionIn(BaseModel):
 
 
 CaseId = Annotated[str, Field(pattern=r"^[0-9a-f]{12}$")]
+
+
+class NoteIn(BaseModel):
+    """One call-log entry: the customer's call, the analyst's notes from it, or a Voice AI check of those notes."""
+    kind: Literal["call", "note", "check"]
+    text: str = Field(min_length=1, max_length=2000)
+    author: str = Field(default="analyst", min_length=1, max_length=40)
 
 
 class CallbackIn(BaseModel):
@@ -416,6 +423,24 @@ def create_app(reader=read_message, asker=clarify.ask_questions, arena_writer=No
         if saved is None:
             return JSONResponse({"detail": "The case was not found or could not be updated."}, status_code=404)
         log.info("decision case=%s status=%s", case_id, body.status)  # the analyst's name is not logged
+        return saved
+
+    @app.post("/api/cases/{case_id}/notes")
+    def add_note(case_id: CaseId, body: NoteIn, request: Request):
+        """Add to a saved case's call log. Only the browser that owns the case can write to it."""
+        if not visitors.allow(visitor_key(request)):
+            return JSONResponse({"detail": "Too many requests. Please wait a minute and try again."}, status_code=429)
+        if store.kind == "off":
+            return JSONResponse({"detail": "Case storage is switched off on this server."}, status_code=503)
+        owner = owner_of(request.headers.get(SESSION_HEADER))
+        if owner is None:
+            return JSONResponse({"detail": "A session key is required to add to a case."}, status_code=401)
+        text = re.sub(r"[\x00-\x08\x0b-\x1f]", " ", body.text).strip()
+        author = " ".join(body.author.split())[:40] or "analyst"
+        saved = store.add_note(case_id, owner, note_record(body.kind, text, author))
+        if saved is None:
+            return JSONResponse({"detail": "The case was not found, is full, or could not be updated."}, status_code=404)
+        log.info("note case=%s kind=%s", case_id, body.kind)  # the note itself is never logged
         return saved
 
     @app.post("/api/callback-brief")

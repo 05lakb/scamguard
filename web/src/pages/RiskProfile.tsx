@@ -31,7 +31,7 @@ export function RiskProfile({ cases, open, goAnalyze }: Props) {
 
   return (
     <div>
-      <PageHead kicker="User risk intelligence" title="User Risk" accent="Profile" text="One view of the customer: their payments, devices, beneficiaries, locations and fraud alerts, and why their risk is where it is.">
+      <PageHead kicker="User risk intelligence" title="User Risk" accent="Profile" text="One view of the customer: their payments, devices, beneficiaries, locations and fraud alerts. In this demo, every payment you run in this browser belongs to one customer, and the built-in example cases are not included.">
         <span className={`act ${level === "high" ? "hold" : level === "medium" ? "warn" : "allow"}`}>{level} profile</span>
       </PageHead>
 
@@ -56,12 +56,12 @@ export function RiskProfile({ cases, open, goAnalyze }: Props) {
 
       <section className="stats-grid four" aria-label="Profile metrics">
         <StatCard icon="activity" tone="teal" label="Transactions" value={stats.total} />
-        <StatCard icon="bell" tone="red" label="Fraud alerts" value={alerts.length} />
+        <StatCard icon="bell" tone="red" label="Alerts raised (warn or hold)" value={alerts.length} />
         <StatCard icon="ban" tone="violet" label="Held" value={stats.hold} />
         <StatCard icon="trend" tone="blue" label="Average risk" value={`${stats.averageScore.toFixed(0)}/100`} />
         <StatCard icon="warn" tone="red" label="High risk" value={stats.levels.high} />
         <StatCard icon="allow" tone="green" label="Allowed" value={stats.allow} />
-        <StatCard icon="eye" tone="amber" label="Needs review" value={stats.needsReview} />
+        <StatCard icon="eye" tone="amber" label="Awaiting analyst review" value={stats.needsReview} />
         <StatCard icon="shield" tone="teal" label="Current score" value={latest ? `${latest.score}/100` : "—"} />
       </section>
 

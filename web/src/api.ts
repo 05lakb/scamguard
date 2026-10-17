@@ -354,6 +354,30 @@ export interface SavedCase {
   status: "open" | AnalystStatus;
   reviewed_at?: string;
   decisions?: { status: AnalystStatus; analyst: string; at: string }[];
+  notes?: CaseNote[];
+}
+
+// The case's call log: the customer's call, the analyst's notes from it, and Voice AI checks of those notes.
+export type NoteKind = "call" | "note" | "check";
+
+export interface CaseNote {
+  kind: NoteKind;
+  text: string;
+  author: string;
+  at: string;
+}
+
+export async function addCaseNote(caseId: string, kind: NoteKind, text: string, author: string): Promise<boolean> {
+  try {
+    const response = await fetch(`/api/cases/${encodeURIComponent(caseId)}/notes`, {
+      method: "POST",
+      headers: sessionHeaders(),
+      body: JSON.stringify({ kind, text: text.slice(0, 2000), author: author.slice(0, 40) || "analyst" }),
+    });
+    return response.ok;
+  } catch {
+    return false;
+  }
 }
 
 export async function listSavedCases(): Promise<SavedCase[]> {

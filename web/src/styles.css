@@ -1,107 +1,85 @@
-/* Last Mile Guard themes. Clean White + Indigo is the default; the theme picker switches data-theme on <html>. */
+/* Last Mile Guard themes. Charcoal + Amber is the default; the theme picker switches data-theme on <html>. */
+:root[data-theme="mono"] {
+  color-scheme: light;
+  --bg: #e9e9e7;
+  --surface: #f6f6f4;
+  --surface-2: #efefed;
+  --surface-3: #dcdcda;
+  --ink: #111111;
+  --muted: #555555;
+  --line: #d4d4d2;
+  --line-strong: #b8b8b6;
+  --accent: #111111;
+  --accent-2: #4b4b4b;
+  --accent-hover: #333333;
+  --accent-ink: #ffffff;
+  --accent-soft: rgba(17, 17, 17, 0.07);
+  --grad: linear-gradient(90deg, #111111, #4b4b4b);
+  --glow-1: rgba(17, 17, 17, 0.03);
+  --glow-2: rgba(17, 17, 17, 0.02);
+  --focus: #111111;
+  --violet: #4b4b4b;
+  --allow: #166534;
+  --allow-bg: #e3efe6;
+  --warn: #92400e;
+  --warn-bg: #f6ead9;
+  --hold: #b91c1c;
+  --hold-bg: #f5e1e1;
+  --ask: #1e3a8a;
+  --ask-bg: #e3e8f4;
+  --shadow: 0 1px 2px rgba(0, 0, 0, 0.04), 0 8px 24px rgba(0, 0, 0, 0.05);
+  --shadow-lg: 0 24px 60px rgba(0, 0, 0, 0.1);
+  --font: "Inter", "Segoe UI", system-ui, -apple-system, Arial, sans-serif;
+  --mono: ui-monospace, "Cascadia Mono", "SF Mono", Consolas, "Liberation Mono", monospace;
+}
+
+/* Editorial headings for the monochrome theme: a serif, with the highlighted words in italics. */
+:root[data-theme="mono"] h1,
+:root[data-theme="mono"] h2 {
+  font-family: "Didot", "Bodoni MT", Georgia, "Times New Roman", serif;
+  font-weight: 500;
+  letter-spacing: -0.02em;
+}
+:root[data-theme="mono"] h1 .grad,
+:root[data-theme="mono"] h2 .grad {
+  font-style: italic;
+}
+
+:root[data-theme="violet"] {
+  color-scheme: dark;
+  --bg: #17171a;
+  --surface: #222226;
+  --surface-2: #2a2a2f;
+  --surface-3: #34343a;
+  --ink: #f4f4f6;
+  --muted: #a4a4ae;
+  --line: #303036;
+  --line-strong: #44444c;
+  --accent: #7c4dff;
+  --accent-2: #a78bfa;
+  --accent-hover: #9470ff;
+  --accent-ink: #ffffff;
+  --accent-soft: rgba(124, 77, 255, 0.16);
+  --grad: linear-gradient(90deg, #6d3fe6, #a78bfa);
+  --glow-1: rgba(124, 77, 255, 0.08);
+  --glow-2: rgba(167, 139, 250, 0.06);
+  --focus: #a78bfa;
+  --violet: #c4b5fd;
+  --allow: #4ade80;
+  --allow-bg: rgba(74, 222, 128, 0.12);
+  --warn: #facc15;
+  --warn-bg: rgba(250, 204, 21, 0.12);
+  --hold: #f87171;
+  --hold-bg: rgba(248, 113, 113, 0.13);
+  --ask: #93c5fd;
+  --ask-bg: rgba(147, 197, 253, 0.12);
+  --shadow: 0 1px 0 rgba(255, 255, 255, 0.03) inset, 0 12px 32px rgba(0, 0, 0, 0.32);
+  --shadow-lg: 0 30px 80px rgba(0, 0, 0, 0.45);
+  --font: "Inter", "Segoe UI", system-ui, -apple-system, Arial, sans-serif;
+  --mono: ui-monospace, "Cascadia Mono", "SF Mono", Consolas, "Liberation Mono", monospace;
+}
+
 :root,
-:root[data-theme="indigo"] {
-  color-scheme: light;
-  --bg: #f8fafc;
-  --surface: #ffffff;
-  --surface-2: #f1f5f9;
-  --surface-3: #e2e8f0;
-  --ink: #0f172a;
-  --muted: #5b6577;
-  --line: #e2e8f0;
-  --line-strong: #cbd5e1;
-  --accent: #4f46e5;
-  --accent-2: #7c3aed;
-  --accent-hover: #4338ca;
-  --accent-ink: #ffffff;
-  --accent-soft: rgba(79, 70, 229, 0.09);
-  --grad: linear-gradient(90deg, #4f46e5, #7c3aed);
-  --glow-1: rgba(79, 70, 229, 0.07);
-  --glow-2: rgba(124, 58, 237, 0.06);
-  --focus: #4338ca;
-  --violet: #7c3aed;
-  --allow: #047857;
-  --allow-bg: #e6f6ef;
-  --warn: #b45309;
-  --warn-bg: #fef3e2;
-  --hold: #c81e1e;
-  --hold-bg: #fdecec;
-  --ask: #1d4ed8;
-  --ask-bg: #e8efff;
-  --shadow: 0 1px 2px rgba(15, 23, 42, 0.05), 0 8px 24px rgba(15, 23, 42, 0.06);
-  --shadow-lg: 0 24px 60px rgba(15, 23, 42, 0.12);
-  --font: "Inter", "Segoe UI", system-ui, -apple-system, Arial, sans-serif;
-  --mono: ui-monospace, "Cascadia Mono", "SF Mono", Consolas, "Liberation Mono", monospace;
-}
-
-:root[data-theme="emerald"] {
-  color-scheme: light;
-  --bg: #f6fbf9;
-  --surface: #ffffff;
-  --surface-2: #eef7f3;
-  --surface-3: #dcefe6;
-  --ink: #0b1f17;
-  --muted: #52665d;
-  --line: #dcebe4;
-  --line-strong: #c2d9ce;
-  --accent: #059669;
-  --accent-2: #0d9488;
-  --accent-hover: #047857;
-  --accent-ink: #ffffff;
-  --accent-soft: rgba(5, 150, 105, 0.09);
-  --grad: linear-gradient(90deg, #059669, #0d9488);
-  --glow-1: rgba(5, 150, 105, 0.07);
-  --glow-2: rgba(13, 148, 136, 0.05);
-  --focus: #047857;
-  --violet: #6d28d9;
-  --allow: #047857;
-  --allow-bg: #e6f6ef;
-  --warn: #b45309;
-  --warn-bg: #fef3e2;
-  --hold: #c81e1e;
-  --hold-bg: #fdecec;
-  --ask: #1d4ed8;
-  --ask-bg: #e8efff;
-  --shadow: 0 1px 2px rgba(15, 23, 42, 0.05), 0 8px 24px rgba(15, 23, 42, 0.06);
-  --shadow-lg: 0 24px 60px rgba(15, 23, 42, 0.12);
-  --font: "Inter", "Segoe UI", system-ui, -apple-system, Arial, sans-serif;
-  --mono: ui-monospace, "Cascadia Mono", "SF Mono", Consolas, "Liberation Mono", monospace;
-}
-
-:root[data-theme="purple"] {
-  color-scheme: light;
-  --bg: #faf7ff;
-  --surface: #ffffff;
-  --surface-2: #f4effc;
-  --surface-3: #e9e0f7;
-  --ink: #1e1033;
-  --muted: #655a78;
-  --line: #ebe3f5;
-  --line-strong: #d6c8ea;
-  --accent: #7c3aed;
-  --accent-2: #db2777;
-  --accent-hover: #6d28d9;
-  --accent-ink: #ffffff;
-  --accent-soft: rgba(124, 58, 237, 0.09);
-  --grad: linear-gradient(90deg, #7c3aed, #db2777);
-  --glow-1: rgba(124, 58, 237, 0.08);
-  --glow-2: rgba(219, 39, 119, 0.06);
-  --focus: #6d28d9;
-  --violet: #7c3aed;
-  --allow: #047857;
-  --allow-bg: #e6f6ef;
-  --warn: #b45309;
-  --warn-bg: #fef3e2;
-  --hold: #c81e1e;
-  --hold-bg: #fdecec;
-  --ask: #1d4ed8;
-  --ask-bg: #e8efff;
-  --shadow: 0 1px 2px rgba(15, 23, 42, 0.05), 0 8px 24px rgba(15, 23, 42, 0.06);
-  --shadow-lg: 0 24px 60px rgba(15, 23, 42, 0.12);
-  --font: "Inter", "Segoe UI", system-ui, -apple-system, Arial, sans-serif;
-  --mono: ui-monospace, "Cascadia Mono", "SF Mono", Consolas, "Liberation Mono", monospace;
-}
-
 :root[data-theme="charcoal"] {
   color-scheme: dark;
   --bg: #121212;

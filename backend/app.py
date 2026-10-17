@@ -153,8 +153,8 @@ class NoteIn(BaseModel):
 
 
 class VerificationIn(BaseModel):
-    """Start a verification after a hold: an AI call to the customer's own number, or typed answers."""
-    mode: Literal["phone", "typed"]
+    """Start a verification after a hold: a voice call in the app, an AI call to the customer's own number, or typed answers."""
+    mode: Literal["voice", "phone", "typed"]
     phone: Optional[str] = Field(default=None, max_length=16)
 
 
@@ -518,9 +518,10 @@ def create_app(reader=read_message, asker=clarify.ask_questions, arena_writer=No
             except Exception as error:
                 log.warning("verification voice check failed: %s", type(error).__name__)
         state.update(status="done", outcome=summary)
-        store.update_case(case_id, {"verification": state, "action": summary["action"], "score": summary["score"],
-                                    "reasons": summary["reasons"]})
-        log.info("verification done case=%s action=%s kept=%s", case_id, summary["action"], bool(summary["kept_hold"]))
+        # The re-check is a recommendation for the analyst. The case keeps its decision until a person
+        # approves, keeps on hold or escalates it, so it stays in the review queue.
+        store.update_case(case_id, {"verification": state})
+        log.info("verification done case=%s recommends=%s kept=%s", case_id, summary["action"], bool(summary["kept_hold"]))
         return state
 
     @app.post("/api/cases/{case_id}/verification")
@@ -579,7 +580,8 @@ def create_app(reader=read_message, asker=clarify.ask_questions, arena_writer=No
         if not state or state.get("status") in ("done", "checking"):
             return JSONResponse({"detail": "Start a verification first."}, status_code=409)
         clean = [re.sub(r"[\x00-\x08\x0b-\x1f]", " ", answer).strip() for answer in body.answers]
-        state = {**state, "mode": "typed", "answers": clean, "status": "checking"}
+        mode = state.get("mode") if state.get("mode") in ("voice", "typed") else "typed"  # a missed phone call becomes typed
+        state = {**state, "mode": mode, "answers": clean, "status": "checking"}
         store.update_case(case_id, {"verification": state})
         recheck(case_id)
         return verified_case(store.get_case(case_id) or case)

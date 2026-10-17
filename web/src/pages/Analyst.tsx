@@ -211,16 +211,25 @@ export function Analyst({ cases, decide, scenarios, onTestCase, initialCaseId, f
                 : "Human review is simulated in the browser. This case was not saved on the server, so the decision stays on this page and is never sent to a bank."}</p>}
               {selected.verification && (
                 <div className="call-notes">
-                  <h3 className="mini"><Icon name="mic" size={15} /> Verification with the customer</h3>
+                  <h3 className="mini"><Icon name="mic" size={15} /> Customer's call with the AI agent</h3>
                   <p className="muted small">{verificationTrailText(selected.verification)}</p>
                   <ol className="call-log">
                     {selected.verification.questions.map((question, index) => (
                       <li key={question}>
-                        <span className="muted small">AI analyst: {question}</span>
+                        <span className="muted small">AI agent: {question}</span>
                         <span>Customer: {selected.verification?.answers[index] || "(no answer)"}</span>
                       </li>
                     ))}
                   </ol>
+                  {selected.verification.outcome && (
+                    <p className="small">
+                      {selected.verification.outcome.reading
+                        ? <>Gemini: scam likelihood {selected.verification.outcome.reading.scam_likelihood ?? "?"}/100{selected.verification.outcome.reading.coached ? ", sounds coached" : ""}{selected.verification.outcome.reading.secrecy === "concealment" ? ", told to keep it secret" : ""}. </>
+                        : <>Gemini could not read the answers. </>}
+                      {selected.verification.outcome.voice && <>Voice AI: {selected.verification.outcome.voice.risk_level} risk{selected.verification.outcome.voice.tactics.length && selected.verification.outcome.voice.tactics[0] !== "none" ? ` (${selected.verification.outcome.voice.tactics.join(", ")})` : ""}. </>}
+                      <strong>Your decision: approve, keep on hold or escalate.</strong>
+                    </p>
+                  )}
                 </div>
               )}
               {selected.action !== "allow" && <CallbackBrief key={selected.id} item={selected} />}

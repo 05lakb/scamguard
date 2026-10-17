@@ -190,10 +190,13 @@ export function caseFromSaved(saved: SavedCase): CaseItem {
 // How a finished verification reads in the audit trail.
 export function verificationTrailText(verification: Verification): string {
   const outcome = verification.outcome;
-  const how = verification.mode === "phone" ? `AI analyst called the customer (${verification.phone ?? "their number"})` : "Customer typed the answers";
+  const how = verification.mode === "voice" ? "Customer called the fraud desk in the app and spoke to the AI agent"
+    : verification.mode === "phone" ? `AI agent called the customer (${verification.phone ?? "their number"})`
+    : "Customer typed the answers";
   if (!outcome) return `${how}; re-check pending`;
   const kept = outcome.kept_hold ? ` Held regardless: ${outcome.kept_hold}` : "";
-  return `${how}. Re-check: ${outcome.before_action} → ${outcome.action}, risk ${outcome.before_score} → ${outcome.score}.${kept}`;
+  const recommends = { allow: "release", warn: "release with a warning", hold: "keep on hold" }[outcome.action];
+  return `${how}. Agent recommends: ${recommends} (risk ${outcome.before_score} → ${outcome.score}).${kept} Analyst to decide.`;
 }
 
 // How a call-log entry reads in the audit trail.

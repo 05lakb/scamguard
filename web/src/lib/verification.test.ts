@@ -53,9 +53,12 @@ describe("verification transport", () => {
 describe("verification in the audit trail", () => {
   it("says who was called, the re-check and why a hold was kept", () => {
     const text = verificationTrailText(done);
-    expect(text).toContain("AI analyst called the customer (•••• 5678)");
-    expect(text).toContain("hold → hold, risk 95 → 100");
+    expect(text).toContain("AI agent called the customer (•••• 5678)");
+    expect(text).toContain("Agent recommends: keep on hold (risk 95 → 100)");
     expect(text).toContain("Held regardless: A remote-control app");
+    expect(text).toContain("Analyst to decide.");
     expect(verificationTrailText({ ...done, mode: "typed", outcome: null })).toBe("Customer typed the answers; re-check pending");
+    expect(verificationTrailText({ ...done, mode: "voice", outcome: { ...done.outcome!, action: "allow", kept_hold: null } }))
+      .toBe("Customer called the fraud desk in the app and spoke to the AI agent. Agent recommends: release (risk 95 → 100). Analyst to decide.");
   });
 });

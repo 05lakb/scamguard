@@ -186,6 +186,7 @@ export function Analyzer({ scenarios, cases, onCase, decide, onVerified, openCas
   const [result, setResult] = useState<ServerDecision | null>(remembered?.result ?? null);
   const [submitted, setSubmitted] = useState<Form | null>(remembered?.submitted ?? null);
   const [caseId, setCaseId] = useState<string | null>(remembered?.caseId ?? null);
+  const [callSignal, setCallSignal] = useState(0); // the customer pressed "Call fraud team" on the notification
 
   useEffect(() => {
     remembered = { form, asked, answer, result, submitted, caseId };
@@ -394,11 +395,15 @@ export function Analyzer({ scenarios, cases, onCase, decide, onVerified, openCas
 
               {result?.notice && <p className="ai-note warn"><Icon name="warn" size={16} /> {result.notice}</p>}
               {result?.customer_warning && <p className="ai-note"><Icon name="shield" size={16} /> {result.customer_warning}</p>}
-              {result?.action === "hold" && <HoldNotification amount={Number(used.amount)} currency={used.currency} reference={caseReference(result.execution?.request_id)} />}
+              {result?.action === "hold" && (
+                <HoldNotification amount={Number(used.amount)} currency={used.currency} reference={caseReference(result.execution?.request_id)}
+                  onCall={result.execution?.saved ? () => setCallSignal((n) => n + 1) : undefined} />
+              )}
               {result && result.action !== "allow" && result.execution?.saved && caseId && (
-                <VerificationPanel key={result.execution.request_id} caseId={result.execution.request_id} score={result.score}
-                  topReason={result.reasons[0]} onDone={(verification) => onVerified?.(caseId, verification)}
-                  onOpenCase={() => openCase?.(caseId)} />
+                <VerificationPanel key={result.execution.request_id} caseId={result.execution.request_id}
+                  reference={caseReference(result.execution.request_id)} amount={Number(used.amount)} currency={used.currency}
+                  payee={used.payee || "the payee"} score={result.score} topReason={result.reasons[0]} startSignal={callSignal}
+                  onDone={(verification) => onVerified?.(caseId, verification)} onOpenCase={() => openCase?.(caseId)} />
               )}
               {!result?.customer_warning && result?.action === "allow" && <p className="ai-note"><Icon name="allow" size={16} /> Last Mile Guard detected a low-risk transaction pattern. No major fraud indicators were identified.</p>}
 

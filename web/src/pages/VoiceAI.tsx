@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from "react";
 import { analyseConversation, type ConversationResult } from "../api";
 import { Icon } from "../components/Icon";
 import { EmptyState, PageHead, PanelHead, ScoreRing, toneForLevel } from "../components/ui";
+import { makeRecogniser, type Recogniser } from "../lib/speech";
 
 interface Props {
   onAnalysed: (result: ConversationResult) => void;
@@ -16,23 +17,6 @@ const SAMPLES = [
 
 const MAX = 4000;
 
-// The browser's speech recogniser (Chrome and Edge). Not available in every browser.
-interface Recogniser {
-  continuous: boolean;
-  interimResults: boolean;
-  lang: string;
-  start: () => void;
-  stop: () => void;
-  onresult: ((event: { resultIndex: number; results: ArrayLike<{ isFinal: boolean; 0: { transcript: string } }> }) => void) | null;
-  onerror: ((event: { error: string }) => void) | null;
-  onend: (() => void) | null;
-}
-
-function makeRecogniser(): Recogniser | null {
-  const w = window as unknown as { SpeechRecognition?: new () => Recogniser; webkitSpeechRecognition?: new () => Recogniser };
-  const Ctor = w.SpeechRecognition ?? w.webkitSpeechRecognition;
-  return Ctor ? new Ctor() : null;
-}
 
 export function VoiceAI({ onAnalysed }: Props) {
   const [text, setText] = useState("");

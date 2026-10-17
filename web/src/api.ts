@@ -478,7 +478,7 @@ export interface VerificationOutcome {
 }
 
 export interface Verification {
-  mode: "phone" | "typed";
+  mode: "voice" | "phone" | "typed";
   status: VerificationStatus;
   questions: string[];
   answers: string[];
@@ -505,7 +505,7 @@ async function verificationCall(url: string, init: RequestInit | undefined, fail
   return (await response.json()) as VerifiedCase;
 }
 
-export function startVerification(caseId: string, mode: "phone" | "typed", phone?: string): Promise<VerifiedCase> {
+export function startVerification(caseId: string, mode: "voice" | "phone" | "typed", phone?: string): Promise<VerifiedCase> {
   return verificationCall(`/api/cases/${encodeURIComponent(caseId)}/verification`, {
     method: "POST", headers: sessionHeaders(), body: JSON.stringify(mode === "phone" ? { mode, phone } : { mode }),
   }, "The verification could not start. Please try again.");

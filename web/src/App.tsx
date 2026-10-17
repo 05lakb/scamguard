@@ -229,13 +229,12 @@ export function App() {
     }
   }
 
-  // The customer was verified after a hold: the case takes the re-check's decision, reasons and transcript.
+  // The customer spoke to the AI agent after a hold: the case keeps its decision, gains the call and the
+  // agent's recommendation, and stays in the review queue until the analyst decides.
   function verified(id: string, verification: Verification) {
-    const outcome = verification.outcome;
-    if (!outcome) return;
+    if (!verification.outcome) return;
     setCases((old) => old.map((item) => (item.id === id
-      ? { ...item, action: outcome.action, score: outcome.score, reasons: outcome.reasons, verification,
-          trail: [...item.trail, { when: clock(), text: verificationTrailText(verification) }] }
+      ? { ...item, verification, trail: [...item.trail, { when: clock(), text: verificationTrailText(verification) }] }
       : item)));
   }
 

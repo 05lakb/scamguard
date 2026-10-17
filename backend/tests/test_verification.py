@@ -103,7 +103,20 @@ def test_typed_answers_can_clear_a_hold_with_the_reasons_shown(monkeypatch):
     assert outcome["score"] < outcome["before_score"] and outcome["kept_hold"] is None
     assert outcome["reading"]["scam_likelihood"] == 5
     assert outcome["voice"]["risk_level"] in ("low", "medium", "high")
-    assert done["action"] == "allow" and store.cases[case_id]["action"] == "allow"
+    # A recommendation only: the case stays held, in the review queue, until the analyst decides.
+    assert done["action"] == "hold" and store.cases[case_id]["action"] == "hold"
+    assert client.get("/api/cases").json()["cases"][0]["status"] == "open"
+
+
+def test_an_in_app_voice_call_keeps_its_mode(monkeypatch):
+    client, _ = make(ai=True, monkeypatch=monkeypatch)
+    case_id = held_case(client)
+    started = client.post(f"/api/cases/{case_id}/verification", json={"mode": "voice"}).json()["verification"]
+    assert started["mode"] == "voice" and started["status"] == "awaiting_answers"
+    done = client.post(f"/api/cases/{case_id}/verification/answers",
+                       json={"answers": ["My brother Rahul, I met him last week.", "No one is with me."]}).json()
+    assert done["verification"]["mode"] == "voice" and done["verification"]["outcome"]["action"] == "allow"
+    assert client.post(f"/api/cases/{case_id}/verification", json={"mode": "video"}).status_code == 422
 
 
 def test_some_holds_cannot_be_talked_away(monkeypatch):

@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Makes the narration audio, records the live site, renders the video, and saves everything to the results repo.
+# Makes the narration audio, records the live site, renders the video, and saves the video to the results repo.
 # Run it in Google Cloud Shell, from anywhere:   bash video/build.sh
 # To render only some parts:                      SCENES="Scene1 Scene2" bash video/build.sh   (default: the whole video, "Full")
 # To skip recording and reuse the last footage:   SKIP_RECORD=1 bash video/build.sh
@@ -13,8 +13,8 @@ gcloud services enable texttospeech.googleapis.com
 python3 tts.py
 
 if [ -z "${SKIP_RECORD:-}" ]; then
-  echo "2/6 Recording the live site and taking screenshots (about 5 minutes)..."
-  bash record/run.sh
+  echo "2/6 Recording the live site (about 2 minutes). Screenshots are taken separately: ONLY=shots bash video/record/run.sh"
+  ONLY=video bash record/run.sh
 else
   echo "2/6 Skipping the recording: using the footage already here."
 fi
@@ -36,5 +36,4 @@ echo "6/6 Saving to the results repo..."
 cd ..
 files=()
 for id in ${SCENES}; do files+=("video/out/$id.mp4"); done
-[ -d video/out/shots ] && for shot in video/out/shots/*.png; do files+=("$shot"); done
 RESULTS_MAX_BYTES=$((40 * 1024 * 1024)) bash infra/save_results.sh video-final "${files[@]}" video/public/audio/durations.json video/public/footage/marks.json

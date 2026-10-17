@@ -3,12 +3,12 @@
     {
       "id": "scene1",
       "kind": "animated",
-      "text": "Many of today's biggest scams don't hack anyone. A fake bank officer, or a fake police call, talks the customer into sending the money themselves. Every security check passes, because the customer approved it. In India, citizens lost over twenty-two thousand crore rupees to cyber crime in 2024."
+      "text": "Many of today's biggest scams don't hack anyone. A fake bank officer, or a fake police call, talks the customer into sending the money themselves, so every check passes. In India, citizens lost over twenty-two thousand crore rupees to cyber crime in 2024."
     },
     {
       "id": "scene2",
       "kind": "animated",
-      "text": "Last Mile Guard is a second look in the seconds before the money leaves. It checks the payment, reads the customer's own words with Gemini, and looks at the receiving account. Plain rules decide. A person confirms every hold. Everything you will see uses made-up data, and no money moves."
+      "text": "Last Mile Guard is a second look before the money leaves. It checks the payment, reads the customer's own words with Gemini, and looks at the receiving account. Plain rules decide, and a person confirms every hold. The data is made up, and no money moves."
     },
     {
       "id": "scene3",
@@ -18,22 +18,22 @@
     {
       "id": "scene4",
       "kind": "screen",
-      "text": "The customer sees a hold notice with a reference, and taps Call fraud team inside the app, so it cannot be a scammer's call. An AI agent asks two questions about this payment. Here the answers are typed. Gemini and Voice AI read them for coaching, secrecy and someone on the line, and recommend keeping the payment on hold. The case moves to the analyst, with the reasons, the call and the AI view in one place. The analyst keeps it on hold. Only a person can release a held payment."
+      "text": "The customer sees a hold notice with a reference, and taps Call fraud team inside the app, so it cannot be a scammer's call. An AI agent asks two questions about this payment. Here the answers are typed. Gemini and Voice AI read them for coaching, secrecy and someone on the line, and recommend keeping the payment on hold. The case moves to the analyst, who keeps it on hold. Only a person can release a held payment."
     },
     {
       "id": "scene4v",
       "kind": "screen",
-      "text": "The same engine reads a pasted call. This digital-arrest script, a fake police officer demanding money, is flagged high risk, with every tactic listed."
+      "text": "The same engine reads a pasted call. This digital-arrest script, a fake police officer demanding money, is flagged high risk. It lists every tactic it found, and the points each one adds."
     },
     {
       "id": "scene4r",
       "kind": "screen",
-      "text": "To test it, Gemini plays both the scammer and the customer, with new cases it invents. Four run live, and the answer key is revealed only after the guard decides. Misses are shown, not hidden."
+      "text": "To test it, Gemini plays both the scammer and the customer, with new cases it invents. Four run live, and the answer key is revealed only after the guard decides. A summary counts what was caught, what was missed, and any false alarm. Misses are shown, not hidden."
     },
     {
       "id": "scene5",
       "kind": "animated",
-      "text": "We measured it, including the bad news. On a blind test of fifty cases written by someone else, the full system flagged eighty-four percent of scams, and stopped twelve percent of genuine customers. In the latest fresh run, thirty-eight of forty cases behaved as expected. The hardest case is the coached victim: we caught three of five. These are small, synthetic samples, so they show direction, not a bank-grade rate."
+      "text": "We measured it, including the bad news. On a blind test of fifty cases written by someone else, the full system flagged eighty-four percent of scams, and stopped twelve percent of genuine customers. In the latest fresh run, thirty-eight of forty cases behaved as expected. The hardest case is the coached victim: we caught three of five. Samples are small and synthetic."
     },
     {
       "id": "scene6",

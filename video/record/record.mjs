@@ -15,6 +15,8 @@ import { chromium } from "playwright";
 import fs from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
+import os from "node:os";
+import { spawnSync } from "node:child_process";
 
 const HERE = path.dirname(fileURLToPath(import.meta.url));
 const SITE = (process.env.SITE || "https://lastmileguard.web.app").replace(/\/$/, "");
@@ -186,6 +188,37 @@ async function scrollBy(page, pixels) {
   for (let i = 0; i < 6; i += 1) { await page.mouse.wheel(0, pixels / 6); await sleep(90); }
 }
 
+// ---------- measuring how far the video runs behind the clock ----------
+
+// A screen recording made this way can run a little behind the clock. The recorder flashes the whole screen magenta
+// at a known moment, then looks for that flash in the finished video. The gap is the lag, and the video uses it.
+function findFfmpeg() {
+  const candidates = [];
+  const playwrightRoot = path.join(os.homedir(), ".cache", "ms-playwright");
+  try {
+    for (const dir of fs.readdirSync(playwrightRoot)) if (dir.startsWith("ffmpeg-")) candidates.push(path.join(playwrightRoot, dir, "ffmpeg-linux"));
+  } catch { /* the folder may not exist */ }
+  return candidates.find((file) => fs.existsSync(file)) ?? null;
+}
+
+function findFlash(file) {
+  const ffmpeg = findFfmpeg();
+  if (!ffmpeg) { log("no ffmpeg found to measure the lag"); return null; }
+  const rate = 20;
+  const run = spawnSync(ffmpeg, ["-v", "error", "-i", file, "-t", "20", "-vf", "fps=" + rate + ",scale=16:9", "-f", "rawvideo", "-pix_fmt", "rgb24", "pipe:1"], { maxBuffer: 128 * 1024 * 1024 });
+  if (run.status !== 0 || !run.stdout || run.stdout.length === 0) { log("could not read the video to measure the lag:", String(run.stderr || "").split("\n")[0]); return null; }
+  const size = 16 * 9 * 3;
+  const frames = Math.floor(run.stdout.length / size);
+  for (let i = 0; i < frames; i += 1) {
+    let r = 0, g = 0, b = 0;
+    for (let p = 0; p < size; p += 3) { r += run.stdout[i * size + p]; g += run.stdout[i * size + p + 1]; b += run.stdout[i * size + p + 2]; }
+    const n = size / 3;
+    if (r / n > 170 && b / n > 170 && g / n < 100) return i / rate;
+  }
+  log("the magenta flash was not found in the first 20 s of the video");
+  return null;
+}
+
 // ---------- the video ----------
 
 async function recordVideo(browser) {
@@ -197,11 +230,21 @@ async function recordVideo(browser) {
   const time = clock();
   const L3 = lengthOf("scene3");
   const L4 = lengthOf("scene4");
-  const marks = { fps: FPS, scene3: { start: 0, end: 0 }, scene4: { start: 0, end: 0 }, scene4v: { start: 0, end: 0 }, scene4r: { start: 0, end: 0 } };
+  const marks = { fps: FPS, lag: 0, scene3: { start: 0, end: 0 }, scene4: { start: 0, end: 0 }, scene4v: { start: 0, end: 0 }, scene4r: { start: 0, end: 0 } };
 
   // A short lead-in so the landing page is already on screen when the first scene starts.
   await page.goto(SITE + "/", { waitUntil: "networkidle" }).catch(() => {});
-  await time.until(2.2);
+  const flashAt = time.now() + 0.4;
+  await time.until(flashAt);
+  await page.evaluate(() => {
+    const cue = document.createElement("div");
+    cue.id = "sync-cue";
+    cue.style.cssText = "position:fixed;inset:0;background:#ff00ff;z-index:2147483647";
+    document.body.appendChild(cue);
+  });
+  await sleep(900);
+  await page.evaluate(() => document.getElementById("sync-cue")?.remove());
+  await time.until(time.now() + 1.0);
 
   // Scene 3: the live site, sign in, choose the case, analyse, and read the result.
   const s3 = time.now();
@@ -255,9 +298,9 @@ async function recordVideo(browser) {
   await time.until(sv + 0.30 * LV);
   await click(page, page.getByRole("button", { name: /Analyse for phishing/ }));
   await page.getByText(/risk level/i).first().waitFor({ timeout: 45000 });
-  await time.until(sv + 0.62 * LV);
+  await time.until(sv + 0.55 * LV);
   await scrollBy(page, 360);
-  await sleep(1200);
+  await sleep(3500); // keep the result on screen
   await time.until(sv + LV);
   marks.scene4v.end = time.now();
   log("scene4v ended at", marks.scene4v.end.toFixed(2), "s");
@@ -277,16 +320,19 @@ async function recordVideo(browser) {
   await page.getByText(/Live feed/i).first().scrollIntoViewIfNeeded();
   await sleep(2200);
   await page.getByText(/This run in summary/).scrollIntoViewIfNeeded();
-  await sleep(2500);
+  await sleep(5000); // keep the summary on screen
   await time.until(sr + LR);
   marks.scene4r.end = time.now();
   log("scene4r ended at", marks.scene4r.end.toFixed(2), "s; real run took", (marks.scene4r.end - sr).toFixed(1), "s");
-  await sleep(800);
+  await sleep(7000);
 
   const video = page.video();
   await context.close(); // the file is only finished once the page is closed
   const source = await video.path();
   fs.copyFileSync(source, path.join(FOOTAGE, "demo.webm"));
+  const seen = findFlash(path.join(FOOTAGE, "demo.webm"));
+  marks.lag = seen === null ? 0 : Math.min(8, Math.max(-1, seen - flashAt));
+  log(seen === null ? "lag not measured, using 0" : "the video runs " + marks.lag.toFixed(2) + " s behind the clock (flash planned at " + flashAt.toFixed(2) + " s, seen at " + seen.toFixed(2) + " s)");
   fs.writeFileSync(path.join(FOOTAGE, "marks.json"), JSON.stringify(marks, null, 2) + "\n");
   log("saved footage/demo.webm", Math.round(fs.statSync(path.join(FOOTAGE, "demo.webm")).size / 1024), "KB and marks.json", JSON.stringify(marks));
 }

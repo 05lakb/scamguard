@@ -1,18 +1,17 @@
-import { useEffect, useState } from "react";
-import { assessPayment, type AssessRequest, type ServerDecision } from "../api";
+import { useEffect, useRef, useState, type ReactNode } from "react";
+import { streamAssessment, type AssessmentEvent, type AssessmentStage, type AssessRequest, type ServerDecision } from "../api";
 import { CallResult } from "../components/CallResult";
 import { HoldNotification } from "../components/HoldNotification";
 import { JourneySteps } from "../components/JourneySteps";
 import type { ActiveCall } from "../components/VerificationPanel";
 import { Icon, type IconName } from "../components/Icon";
-import { AgentEvidence } from "../components/AgentEvidence";
 import { NetworkGraph } from "../components/NetworkGraph";
-import { EmptyState, PageHead, PanelHead, ScoreRing, Toggle, toneForAction } from "../components/ui";
+import { PageHead, ScoreRing, Toggle, toneForAction } from "../components/ui";
 import type { AccountNetwork, Payment } from "../core/types";
 import { caseReference, type CaseItem, type CaseStatus } from "../lib/cases";
 import { contributions } from "../lib/contrib";
-import { levelOf, money } from "../lib/insights";
-import { ACTION_LABEL, ACTION_NOTE, networkLabel, SEGMENT_LABEL } from "../lib/labels";
+import { money } from "../lib/insights";
+import { ACTION_LABEL, ACTION_NOTE } from "../lib/labels";
 import type { FinishedCase, Scenario } from "./Console";
 
 export interface CaseContext {
@@ -176,7 +175,9 @@ interface Remembered {
   result: ServerDecision | null;
   submitted: Form | null;
   caseId: string | null;
+  stages: Stages;
 }
+type Stages = Partial<Record<AssessmentStage, AssessmentEvent>>;
 let remembered: Remembered | null = null;
 
 export function Analyzer({ scenarios, cases, onCase, openCase, onStartCall }: Props) {
@@ -188,10 +189,37 @@ export function Analyzer({ scenarios, cases, onCase, openCase, onStartCall }: Pr
   const [result, setResult] = useState<ServerDecision | null>(remembered?.result ?? null);
   const [submitted, setSubmitted] = useState<Form | null>(remembered?.submitted ?? null);
   const [caseId, setCaseId] = useState<string | null>(remembered?.caseId ?? null);
+  // Stage events from the server, shown one by one as the checks run.
+  const [stages, setStages] = useState<Stages>(remembered?.stages ?? {});
+  const queue = useRef<AssessmentEvent[]>([]);
+  const draining = useRef<number | null>(null);
 
   useEffect(() => {
-    remembered = { form, asked, answer, result, submitted, caseId };
-  }, [form, asked, answer, result, submitted, caseId]);
+    remembered = { form, asked, answer, result, submitted, caseId, stages };
+  }, [form, asked, answer, result, submitted, caseId, stages]);
+  useEffect(() => () => { if (draining.current !== null) window.clearTimeout(draining.current); }, []);
+
+  // A proxy can deliver the stage events in one burst; showing them a beat apart keeps the order readable.
+  // The times shown are the server's own.
+  function drain() {
+    const next = queue.current.shift();
+    if (!next) { draining.current = null; return; }
+    setStages((old) => ({ ...old, [next.stage]: next }));
+    draining.current = window.setTimeout(drain, 280);
+  }
+  function onStage(event: AssessmentEvent) {
+    queue.current.push(event);
+    if (draining.current === null) drain();
+  }
+  const settled = () => new Promise<void>((resolve) => {
+    const check = () => (queue.current.length || draining.current !== null ? window.setTimeout(check, 80) : resolve());
+    check();
+  });
+  async function run(request: AssessRequest) {
+    const decision = await streamAssessment(request, onStage);
+    await settled();
+    return decision;
+  }
 
   const set = <K extends keyof Form>(key: K, value: Form[K]) => setForm((old) => ({ ...old, [key]: value }));
   const amountOk = Number(form.amount) > 0 && Number(form.amount) <= 10_000_000;
@@ -203,6 +231,7 @@ export function Analyzer({ scenarios, cases, onCase, openCase, onStartCall }: Pr
     setAnswer("");
     setError("");
     setCaseId(null);
+    setStages({});
   }
 
   function finish(decision: ServerDecision, used: Form, questions?: string[], reply?: string) {
@@ -224,9 +253,11 @@ export function Analyzer({ scenarios, cases, onCase, openCase, onStartCall }: Pr
     setResult(null);
     setAsked(null);
     setCaseId(null);
+    setStages({});
     setSubmitted(used);
+    window.setTimeout(() => document.getElementById("flow-2")?.scrollIntoView({ behavior: "smooth", block: "start" }), 60);
     try {
-      const decision = await assessPayment(toRequest(used));
+      const decision = await run(toRequest(used));
       if (decision.action === "ask") {
         setAsked(decision);
         setAnswer("");
@@ -245,8 +276,9 @@ export function Analyzer({ scenarios, cases, onCase, openCase, onStartCall }: Pr
     setBusy(true);
     setError("");
     try {
-      const decision = await assessPayment(toRequest(submitted, asked.questions, text));
+      const decision = await run(toRequest(submitted, asked.questions, text));
       finish(decision, submitted, asked.questions, text);
+      window.setTimeout(() => document.getElementById("flow-3")?.scrollIntoView({ behavior: "smooth", block: "start" }), 60);
     } catch (problem) {
       setError(problem instanceof Error ? problem.message : "Something went wrong.");
     } finally {
@@ -273,221 +305,383 @@ export function Analyzer({ scenarios, cases, onCase, openCase, onStartCall }: Pr
   const stage = callDone ? 3 : canCall ? 2 : 1;
   // Coming back from the call: show its result straight away.
   useEffect(() => {
-    if (callDone) window.setTimeout(() => document.querySelector(".call-result")?.scrollIntoView({ block: "center" }), 150);
+    if (callDone) window.setTimeout(() => document.getElementById("flow-4")?.scrollIntoView({ block: "start" }), 150);
   }, []);
+
+  const started = busy || Boolean(shown) || Object.keys(stages).length > 0;
+  const network = submitted ? networkFor(submitted.network, submitted.payee.trim() || "Unnamed beneficiary") : undefined;
+  const amount = Number(used.amount);
+  const usual = Math.max(1, Number(used.typical) || 1);
+  const step = (n: number): FlowState => {
+    if (n === 1) return started ? "done" : "active";
+    if (n === 2) return shown ? "done" : started ? "active" : "waiting";
+    if (n === 3) return result ? "done" : asked ? "active" : "waiting";
+    if (n === 4) return !result ? "waiting" : result.action === "allow" ? "skipped" : callDone ? "done" : "active";
+    return !result ? "waiting" : result.action === "allow" ? "skipped" : currentCase && currentCase.status !== "open" ? "done" : callDone ? "active" : "waiting";
+  };
 
   return (
     <div>
       <JourneySteps current={stage} />
-      <PageHead kicker="Real-time fraud engine" title="Transaction Risk" accent="Analyzer" text="Enter the transaction context. Last Mile Guard evaluates behaviour, device, beneficiary, location, timing and the customer's own words before the payment completes.">
+      <PageHead kicker="Real-time fraud engine" title="Transaction Risk" accent="Analyzer" text="Follow one payment from top to bottom: the details, how each check reads it, the decision, the customer's call and the analyst.">
         <span className="status-pill"><span className="dot" /> Engine online</span>
       </PageHead>
 
-      <div className="preset-row" aria-label="Quick examples">
-        {PRESETS.map((preset) => (
-          <button key={preset.label} className="chip-btn" onClick={() => { setForm({ ...BASE, time: preset.form.time ?? now(), ...preset.form }); setResult(null); setAsked(null); }}>
-            <Icon name={preset.icon} size={14} /> {preset.label}
-          </button>
-        ))}
-        <select className="f-select" style={{ width: "auto", minHeight: 36 }} aria-label="Load a scenario from the library" value="" onChange={(event) => { const sc = scenarios.find((s) => s.id === event.target.value); if (sc) { setForm(fromScenario(sc)); setResult(null); setAsked(null); } }}>
-          <option value="">Load from scenario library…</option>
-          {scenarios.map((sc) => <option key={sc.id} value={sc.id}>{sc.title}</option>)}
-        </select>
-      </div>
-
-      <div className="analyzer">
-        <section className="panel">
-          <PanelHead kicker="Step 01" title="Transaction context" icon="pulse" />
-
-          <label className="f-label" htmlFor="amount">Transaction amount</label>
-          <div className="money-input">
-            <select aria-label="Currency" className="f-select" style={{ width: 86, border: 0, background: "none" }} value={form.currency} onChange={(e) => set("currency", e.target.value)}>
-              <option value="INR">₹ INR</option><option value="USD">$ USD</option><option value="GBP">£ GBP</option><option value="EUR">€ EUR</option>
-            </select>
-            <input id="amount" inputMode="decimal" value={form.amount} onChange={(e) => set("amount", e.target.value.replace(/[^\d.]/g, ""))} aria-invalid={!amountOk} />
-          </div>
-          {!amountOk && <span className="f-help" style={{ color: "var(--hold)" }}>Enter an amount between 1 and 1,00,00,000.</span>}
-
-          <div className="form-grid" style={{ marginTop: 14 }}>
-            <div>
-              <label className="f-label" htmlFor="payee"><Icon name="user" size={13} /> Beneficiary</label>
-              <input id="payee" className="f-input" maxLength={80} value={form.payee} onChange={(e) => set("payee", e.target.value)} />
-            </div>
-            <div>
-              <label className="f-label" htmlFor="ptype">Beneficiary type</label>
-              <select id="ptype" className="f-select" value={form.payeeType} onChange={(e) => set("payeeType", e.target.value as Form["payeeType"])}>
-                <option value="individual">Individual</option><option value="business">Business / merchant</option><option value="crypto_exchange">Crypto exchange</option>
+      <ol className="flow" aria-label="The steps for one payment">
+        {/* ---------- 1. the payment ---------- */}
+        <FlowStep n={1} state={step(1)} title="Payment details" sub="The transfer the customer is about to make, and what they wrote about it.">
+          <section className="panel">
+            <div className="preset-row" aria-label="Quick examples">
+              {PRESETS.map((preset) => (
+                <button key={preset.label} className="chip-btn" onClick={() => { setForm({ ...BASE, time: preset.form.time ?? now(), ...preset.form }); setResult(null); setAsked(null); setStages({}); }}>
+                  <Icon name={preset.icon} size={14} /> {preset.label}
+                </button>
+              ))}
+              <select className="f-select" style={{ width: "auto", minHeight: 36 }} aria-label="Load a scenario from the library" value="" onChange={(event) => { const sc = scenarios.find((s) => s.id === event.target.value); if (sc) { setForm(fromScenario(sc)); setResult(null); setAsked(null); setStages({}); } }}>
+                <option value="">Load from scenario library…</option>
+                {scenarios.map((sc) => <option key={sc.id} value={sc.id}>{sc.title}</option>)}
               </select>
             </div>
-            <div>
-              <label className="f-label" htmlFor="device"><Icon name="device" size={13} /> Device ID</label>
-              <input id="device" className="f-input" maxLength={60} value={form.device} onChange={(e) => set("device", e.target.value)} />
-            </div>
-            <div>
-              <label className="f-label" htmlFor="loc"><Icon name="map" size={13} /> Transaction location</label>
-              <input id="loc" className="f-input" maxLength={60} value={form.location} onChange={(e) => set("location", e.target.value)} />
-            </div>
-            <div>
-              <label className="f-label" htmlFor="age">Beneficiary account age (days)</label>
-              <input id="age" className="f-input" inputMode="numeric" value={form.accountAge} onChange={(e) => set("accountAge", e.target.value.replace(/\D/g, ""))} />
-            </div>
-            <div>
-              <label className="f-label" htmlFor="time" title="01:00–05:59 counts as a night payment"><Icon name="moon" size={13} /> Payment time</label>
-              <input id="time" type="time" className="f-input" value={form.time} onChange={(e) => set("time", e.target.value)} />
-            </div>
-          </div>
 
-          <p className="sub-kicker">Behavioural security signals</p>
-          <div className="toggle-grid">
-            <Toggle id="t-payee" label="New beneficiary" hint="First payment to this payee" checked={form.newPayee} onChange={(v) => set("newPayee", v)} />
-            <Toggle id="t-device" label="New device" hint="Device not seen before" checked={form.newDevice} onChange={(v) => set("newDevice", v)} />
-            <Toggle id="t-loc" label="Location changed" hint="Unusual place for this user" checked={form.locationChanged} onChange={(v) => set("locationChanged", v)} />
-            <Toggle id="t-call" label="On a live call" hint="Customer is on a phone call" checked={form.onCall} onChange={(v) => set("onCall", v)} />
-            <Toggle id="t-remote" label="Remote-access app" hint="AnyDesk, TeamViewer and similar" checked={form.remote} onChange={(v) => set("remote", v)} />
-            <div>
-              <label className="f-label" htmlFor="recent">Payments in last 24 hours</label>
-              <input id="recent" className="f-input" inputMode="numeric" value={form.recent} onChange={(e) => set("recent", e.target.value.replace(/\D/g, "").slice(0, 2))} />
+            <div className="fields-4">
+              <div>
+                <label className="f-label" htmlFor="amount">Transaction amount</label>
+                <div className="money-input">
+                  <select aria-label="Currency" className="f-select" style={{ width: 86, border: 0, background: "none" }} value={form.currency} onChange={(e) => set("currency", e.target.value)}>
+                    <option value="INR">₹ INR</option><option value="USD">$ USD</option><option value="GBP">£ GBP</option><option value="EUR">€ EUR</option>
+                  </select>
+                  <input id="amount" inputMode="decimal" value={form.amount} onChange={(e) => set("amount", e.target.value.replace(/[^\d.]/g, ""))} aria-invalid={!amountOk} />
+                </div>
+                {!amountOk && <span className="f-help" style={{ color: "var(--hold)" }}>Enter an amount between 1 and 1,00,00,000.</span>}
+              </div>
+              <div>
+                <label className="f-label" htmlFor="payee"><Icon name="user" size={13} /> Beneficiary</label>
+                <input id="payee" className="f-input" maxLength={80} value={form.payee} onChange={(e) => set("payee", e.target.value)} />
+              </div>
+              <div>
+                <label className="f-label" htmlFor="ptype">Beneficiary type</label>
+                <select id="ptype" className="f-select" value={form.payeeType} onChange={(e) => set("payeeType", e.target.value as Form["payeeType"])}>
+                  <option value="individual">Individual</option><option value="business">Business / merchant</option><option value="crypto_exchange">Crypto exchange</option>
+                </select>
+              </div>
+              <div>
+                <label className="f-label" htmlFor="age">Beneficiary account age (days)</label>
+                <input id="age" className="f-input" inputMode="numeric" value={form.accountAge} onChange={(e) => set("accountAge", e.target.value.replace(/\D/g, ""))} />
+              </div>
+              <div>
+                <label className="f-label" htmlFor="device"><Icon name="device" size={13} /> Device ID</label>
+                <input id="device" className="f-input" maxLength={60} value={form.device} onChange={(e) => set("device", e.target.value)} />
+              </div>
+              <div>
+                <label className="f-label" htmlFor="loc"><Icon name="map" size={13} /> Transaction location</label>
+                <input id="loc" className="f-input" maxLength={60} value={form.location} onChange={(e) => set("location", e.target.value)} />
+              </div>
+              <div>
+                <label className="f-label" htmlFor="time" title="01:00–05:59 counts as a night payment"><Icon name="moon" size={13} /> Payment time</label>
+                <input id="time" type="time" className="f-input" value={form.time} onChange={(e) => set("time", e.target.value)} />
+              </div>
+              <div>
+                <label className="f-label" htmlFor="recent">Payments in last 24 hours</label>
+                <input id="recent" className="f-input" inputMode="numeric" value={form.recent} onChange={(e) => set("recent", e.target.value.replace(/\D/g, "").slice(0, 2))} />
+              </div>
             </div>
-          </div>
 
-          <p className="sub-kicker">Receiving account (MuleNet)</p>
-          <label className="f-label" htmlFor="network">Who this beneficiary has been sending to and receiving from</label>
-          <select id="network" className="f-select" value={form.network} onChange={(e) => set("network", e.target.value as NetworkPattern)}>
-            <option value="none">{NETWORK_LABEL.none}</option>
-            <option value="ring">{NETWORK_LABEL.ring}</option>
-            <option value="clean">{NETWORK_LABEL.clean}</option>
-          </select>
-
-          <p className="sub-kicker">Customer profile</p>
-          <div className="form-grid">
-            <div>
-              <label className="f-label" htmlFor="segment">Segment</label>
-              <select id="segment" className="f-select" value={form.segment} onChange={(e) => set("segment", e.target.value as Segment)}>
-                <option value="young_professional">Young professional</option><option value="retiree">Retiree</option><option value="family">Family</option>
-                <option value="student">Student</option><option value="small_business_owner">Small business owner</option>
-              </select>
+            <p className="sub-kicker">Behavioural security signals</p>
+            <div className="toggle-row">
+              <Toggle id="t-payee" label="New beneficiary" hint="First payment to this payee" checked={form.newPayee} onChange={(v) => set("newPayee", v)} />
+              <Toggle id="t-device" label="New device" hint="Device not seen before" checked={form.newDevice} onChange={(v) => set("newDevice", v)} />
+              <Toggle id="t-loc" label="Location changed" hint="Unusual place for this user" checked={form.locationChanged} onChange={(v) => set("locationChanged", v)} />
+              <Toggle id="t-call" label="On a live call" hint="Customer is on a phone call" checked={form.onCall} onChange={(v) => set("onCall", v)} />
+              <Toggle id="t-remote" label="Remote-access app" hint="AnyDesk, TeamViewer and similar" checked={form.remote} onChange={(v) => set("remote", v)} />
             </div>
-            <div>
-              <label className="f-label" htmlFor="typical">Usual payment amount</label>
-              <input id="typical" className="f-input" inputMode="numeric" value={form.typical} onChange={(e) => set("typical", e.target.value.replace(/\D/g, ""))} />
-            </div>
-            <div className="span-2">
-              <label className="f-label" htmlFor="note"><Icon name="brain" size={13} /> What the customer says this payment is for</label>
-              <textarea id="note" className="f-area" style={{ minHeight: 90, fontFamily: "var(--font)" }} maxLength={2000} value={form.note} onChange={(e) => set("note", e.target.value)} placeholder="e.g. Paying my landlord the first month's rent. I met him and signed the agreement." />
-            </div>
-          </div>
 
-          <div className="form-actions">
-            <button className="btn primary" disabled={busy || !amountOk} onClick={analyse}>{busy ? <span className="spin" /> : <Icon name="pulse" size={16} />} {busy ? "Analysing" : "Analyse transaction"}</button>
-            <button className="btn" onClick={clear}>Clear</button>
-          </div>
-        </section>
+            <div className="fields-4" style={{ marginTop: 14 }}>
+              <div>
+                <label className="f-label" htmlFor="segment">Customer segment</label>
+                <select id="segment" className="f-select" value={form.segment} onChange={(e) => set("segment", e.target.value as Segment)}>
+                  <option value="young_professional">Young professional</option><option value="retiree">Retiree</option><option value="family">Family</option>
+                  <option value="student">Student</option><option value="small_business_owner">Small business owner</option>
+                </select>
+              </div>
+              <div>
+                <label className="f-label" htmlFor="typical">Usual payment amount</label>
+                <input id="typical" className="f-input" inputMode="numeric" value={form.typical} onChange={(e) => set("typical", e.target.value.replace(/\D/g, ""))} />
+              </div>
+              <div className="span-2">
+                <label className="f-label" htmlFor="network"><Icon name="network" size={13} /> Receiving account (MuleNet): who it sends to and receives from</label>
+                <select id="network" className="f-select" value={form.network} onChange={(e) => set("network", e.target.value as NetworkPattern)}>
+                  <option value="none">{NETWORK_LABEL.none}</option>
+                  <option value="ring">{NETWORK_LABEL.ring}</option>
+                  <option value="clean">{NETWORK_LABEL.clean}</option>
+                </select>
+              </div>
+            </div>
 
-        <section className="panel result-panel" aria-live="polite">
-          {!shown && !busy && !error && (
-            <EmptyState icon="shield" title="Awaiting risk assessment" text="Complete the transaction context and run the engine. The explainable result will appear here."
-              action={<ul className="checklist"><li><Icon name="check" size={14} /> Multi-signal scoring</li><li><Icon name="check" size={14} /> Rule-based evaluation</li><li><Icon name="check" size={14} /> Explainable decision</li></ul>} />
-          )}
-          {busy && !shown && <EmptyState icon="pulse" title="Analysing" text="Scoring behaviour signals and reading the customer's note." />}
+            <div className="note-row">
+              <div>
+                <label className="f-label" htmlFor="note"><Icon name="brain" size={13} /> What the customer says this payment is for</label>
+                <textarea id="note" className="f-area" style={{ minHeight: 76, fontFamily: "var(--font)" }} maxLength={2000} value={form.note} onChange={(e) => set("note", e.target.value)} placeholder="e.g. Paying my landlord the first month's rent. I met him and signed the agreement." />
+              </div>
+              <div className="note-actions">
+                <button className="btn primary" disabled={busy || !amountOk} onClick={analyse}>{busy ? <span className="spin" /> : <Icon name="pulse" size={16} />} {busy ? "Analysing" : "Analyse transaction"}</button>
+                <button className="btn" onClick={clear}>Clear</button>
+              </div>
+            </div>
+          </section>
+        </FlowStep>
+
+        {/* ---------- 2. the checks, as the server runs them ---------- */}
+        <FlowStep n={2} state={step(2)} title="How Last Mile Guard checks it" sub="Three checks run on the server, in this order. Each one adds points with a written reason." id="flow-2"
+          waiting="Runs when you press Analyse transaction.">
           {error && <p className="problem-box" role="alert">{error}</p>}
+          <div className="engine-cards">
+            <EngineCard name="FraudShield" what="Payment behaviour" icon="activity" event={stages.behaviour}
+              score={shown ? shown.audit.behaviour_score : null}
+              lines={items.filter((item) => item.kind === "payment" && item.points > 0)}
+              extra={shown ? `${money(amount, used.currency)} now · usually about ${money(usual, used.currency)} (${amount / usual >= 10 ? Math.round(amount / usual) : (amount / usual).toFixed(1)}×)` : null} />
+            <EngineCard name="MuleNet" what="Receiving account" icon="network" event={stages.network}
+              score={shown && shown.audit.network_available ? shown.audit.network_score ?? 0 : null}
+              lines={items.filter((item) => item.kind === "network" && item.points > 0)}
+              empty={shown && !shown.audit.network_available ? "No account-network data was supplied for this payment." : null} />
+            <EngineCard name="ScamStop · Gemini" what="The customer's words" icon="brain" event={stages.message}
+              score={shown?.audit.message_reading ? shown.audit.message_reading.scam_likelihood : null}
+              lines={items.filter((item) => item.kind === "message")}
+              extra={shown?.audit.message_reading?.explanation ?? null}
+              tags={(shown?.audit.message_reading?.tactics ?? []).filter((t) => t !== "none").map((t) => t.replaceAll("_", " "))}
+              empty={shown && !shown.audit.message_reading ? (used.note.trim() ? "The reader was unavailable, so the payment checks decided." : "No note was written, so there was nothing to read.") : null} />
+          </div>
 
-          {shown && status && (
-            <>
-              <PanelHead kicker="Step 02 · explainable AI" title="Risk assessment">
-                <span className={`act ${status}`}>{status === "hold" ? "High risk" : status === "warn" ? "Medium risk" : status === "ask" ? "Needs info" : "Low risk"}</span>
-              </PanelHead>
-              <div className="verdict-box">
-                <ScoreRing score={shown.score} tone={toneForAction(status)} label="RISK" />
-                <div className="verdict-card">
-                  <span className="kicker" style={{ color: "var(--muted)" }}>Decision</span>
-                  <div className={`big ${status}`}><Icon name={status as IconName} size={22} /> {ACTION_LABEL[status].toUpperCase()}</div>
-                  <span className="muted small">{ACTION_NOTE[status]}</span>
+          {network && shown && (
+            <section className="panel net-panel">
+              <div className="net-panel-head">
+                <div>
+                  <span className="kicker">Receiving account · MuleNet</span>
+                  <h3>Where the money would go</h3>
+                </div>
+                <span className={`act ${(shown.audit.network_score ?? 0) >= 70 ? "hold" : (shown.audit.network_score ?? 0) >= 40 ? "warn" : "allow"}`}>Network score {shown.audit.network_score ?? 0}/100</span>
+              </div>
+              <div className="net-split">
+                <div><NetworkGraph graph={network} markerId="txn-net-arrow" payment={{ label: `This payment · ${money(amount, used.currency)}` }} /></div>
+                <div>
+                  <p className="sub-kicker" style={{ marginTop: 0 }}>How to read it</p>
+                  <ul className="read-guide">
+                    <li><span className="node-key you">You</span> The customer making this payment.</li>
+                    <li><span className="node-key payee">P</span> The beneficiary being paid.</li>
+                    <li><span className="node-key">A</span> Left: who else paid it in the last 24 h. Right: where it sent money on.</li>
+                    <li><span className="node-key flagged">!</span> An account already flagged as a mule.</li>
+                  </ul>
+                  <p className="muted small" style={{ margin: 0 }}>{NETWORK_LABEL[submitted!.network]}. Synthetic test data, not real bank records.</p>
                 </div>
               </div>
+            </section>
+          )}
+        </FlowStep>
 
-              <div className="engine-bars" aria-label="Score from each engine">
-                <EngineBar name="FraudShield" what="Payment behaviour" value={shown.audit.behaviour_score} />
-                <EngineBar name="ScamStop" what="Customer's words" value={shown.audit.message_reading ? shown.audit.message_reading.scam_likelihood : null} empty="No note" />
-                <EngineBar name="MuleNet" what="Receiving account" value={shown.audit.network_available ? shown.audit.network_score ?? 0 : null} empty="No data" />
-                <p className="muted small">Warn from {shown.audit.thresholds.warn} · hold from {shown.audit.thresholds.hold}</p>
-              </div>
-
-              {result?.notice && <p className="ai-note warn"><Icon name="warn" size={16} /> {result.notice}</p>}
-              {result?.customer_warning && <p className="ai-note"><Icon name="shield" size={16} /> {result.customer_warning}</p>}
-              {result?.action === "hold" && !callDone && (
-                <HoldNotification amount={Number(used.amount)} currency={used.currency} reference={caseReference(result.execution?.request_id)}
-                  onCall={canCall ? startCall : undefined} />
-              )}
-              {/* A held payment already offers the call on the customer's notification; the box below is for the result,
-                  or for a warned payment, which has no notification. */}
-              {canCall && (callDone || result?.action !== "hold") && (
-                <CallResult verification={currentCase?.verification} onCall={startCall} onOpenCase={() => openCase?.(caseId!)} />
-              )}
-              {!result?.customer_warning && result?.action === "allow" && <p className="ai-note"><Icon name="allow" size={16} /> Last Mile Guard detected a low-risk transaction pattern. No major fraud indicators were identified.</p>}
-
-              {asked && (
-                <div className="ask-box">
-                  <p><strong>Before deciding, the engine asks the customer:</strong></p>
-                  <p>{asked.questions?.join(" ")}</p>
-                  <label className="f-label" htmlFor="reply">Customer's answer</label>
-                  <textarea id="reply" className="f-area" style={{ minHeight: 70, fontFamily: "var(--font)" }} maxLength={1000} value={answer} onChange={(e) => setAnswer(e.target.value)} />
-                  <div className="form-actions" style={{ marginTop: 10 }}>
-                    <button className="btn primary small" disabled={busy} onClick={() => sendAnswer(answer)}>Send answer</button>
-                    <button className="btn small" disabled={busy} onClick={() => sendAnswer("")}>Customer declines</button>
+        {/* ---------- 3. the decision, and what the customer is told ---------- */}
+        <FlowStep n={3} state={step(3)} title="Decision" sub="The rules add the points up: warn from 40, hold from 70. Gemini explains; it never decides." id="flow-3"
+          waiting="Appears once the three checks finish.">
+          {shown && status && (
+            <div className="decision-split">
+              <section className="panel">
+                <div className="verdict-box">
+                  <ScoreRing score={shown.score} tone={toneForAction(status)} label="RISK" />
+                  <div className="verdict-card">
+                    <span className="kicker" style={{ color: "var(--muted)" }}>Recommendation</span>
+                    <div className={`big ${status}`}><Icon name={status as IconName} size={22} /> {ACTION_LABEL[status].toUpperCase()}</div>
+                    <span className="muted small">{ACTION_NOTE[status]}</span>
                   </div>
                 </div>
-              )}
+                {shown.audit.message_reading && (
+                  <p className="ai-note" style={{ marginTop: 14 }}><Icon name="brain" size={16} /> <span><strong>AI explanation:</strong> {shown.audit.message_reading.explanation}</span></p>
+                )}
+                {result?.notice && <p className="ai-note warn"><Icon name="warn" size={16} /> {result.notice}</p>}
+                <p className="sub-kicker">How the score adds up</p>
+                <ScoreSum items={items} score={shown.score} warn={shown.audit.thresholds.warn} hold={shown.audit.thresholds.hold} />
+              </section>
 
-              <PanelHead kicker="Why this decision?" title="Explainable risk signals" icon="eye" />
-              <ul className="reason-list">
-                {items.length === 0 && <li className="calm"><Icon name="allow" size={16} /> No suspicious transaction signals detected.</li>}
+              <section className="panel side-panel">
+                <span className="kicker">{asked ? "Asked before deciding" : "Sent to the customer"}</span>
+                {asked && (
+                  <div className="ask-box">
+                    <p><strong>Before deciding, the engine asks the customer:</strong></p>
+                    <p>{asked.questions?.join(" ")}</p>
+                    <label className="f-label" htmlFor="reply">Customer's answer</label>
+                    <textarea id="reply" className="f-area" style={{ minHeight: 70, fontFamily: "var(--font)" }} maxLength={1000} value={answer} onChange={(e) => setAnswer(e.target.value)} />
+                    <div className="form-actions" style={{ marginTop: 10 }}>
+                      <button className="btn primary small" disabled={busy} onClick={() => sendAnswer(answer)}>Send answer</button>
+                      <button className="btn small" disabled={busy} onClick={() => sendAnswer("")}>Customer declines</button>
+                    </div>
+                  </div>
+                )}
+                {result?.action === "hold" && (
+                  <>
+                    <HoldNotification amount={amount} currency={used.currency} reference={caseReference(result.execution?.request_id)}
+                      onCall={canCall && !callDone ? startCall : undefined} />
+                    {result.customer_warning && <p className="ai-note"><Icon name="shield" size={16} /> {result.customer_warning}</p>}
+                  </>
+                )}
+                {result?.action === "warn" && (
+                  <p className="ai-note warn"><Icon name="shield" size={16} /> <span><strong>Warning shown before sending:</strong> {result.customer_warning ?? "Please check this payment before you send it."}</span></p>
+                )}
+                {result?.action === "allow" && (
+                  <p className="ai-note"><Icon name="allow" size={16} /> Payment sent. Nothing for the customer to do, and no review needed.</p>
+                )}
+              </section>
+            </div>
+          )}
+        </FlowStep>
+
+        {/* ---------- 4. the customer's call ---------- */}
+        <FlowStep n={4} state={step(4)} title="The customer's call with the AI agent" id="flow-4"
+          sub="The customer taps Call fraud team. The AI agent asks two questions; Gemini and Voice AI read the answers and recommend."
+          waiting={result?.action === "allow" ? "Not needed: the payment was allowed." : "Starts when the customer taps Call fraud team."}>
+          {result && result.action !== "allow" && (
+            callDone || result.action === "warn" ? (
+              <CallResult verification={currentCase?.verification} onCall={startCall} onOpenCase={() => openCase?.(caseId!)} />
+            ) : (
+              <div className="flow-wait live"><span className="spin" /> Waiting for the customer to call. They use the Call fraud team button on the notice above.</div>
+            )
+          )}
+        </FlowStep>
+
+        {/* ---------- 5. the analyst ---------- */}
+        <FlowStep n={5} state={step(5)} title="Analyst decides" sub="Only a person can release a held payment. The decision is made on the Cases page."
+          waiting={result?.action === "allow" ? "Not needed: the payment was allowed." : "After the call, the case goes to the analyst."}>
+          {result && result.action !== "allow" && caseId && (
+            <section className="panel analyst-panel">
+              <div className="analyst-head">
+                <div>
+                  <span className={`act ${currentCase?.status === "approved" ? "allow" : currentCase && currentCase.status !== "open" ? "hold" : "warn"}`}>
+                    {currentCase?.status && currentCase.status !== "open" ? STATUS_TEXT[currentCase.status] : "Awaiting analyst decision"}
+                  </span>
+                  <p className="muted small" style={{ margin: "8px 0 0" }}>Case {caseId}{serverId ? ` · reference ${caseReference(serverId)}` : ""}</p>
+                </div>
+                {openCase && <button className="btn primary small" onClick={() => openCase(caseId)}><Icon name="flag" size={14} /> Open the case (analyst)</button>}
+              </div>
+              <p className="sub-kicker">Audit trail</p>
+              <ol className="stream-log">
+                {(currentCase?.trail ?? []).map((entry, index) => <li key={`${entry.when}-${index}`}><span className="mono">{entry.when}</span> {entry.text}</li>)}
+              </ol>
+            </section>
+          )}
+        </FlowStep>
+      </ol>
+
+      {shown && (
+        <details className="tech-details">
+          <summary>Technical details: every signal, the transaction context and the full audit record</summary>
+          <div className="tech-grid">
+            <div>
+              <p className="sub-kicker" style={{ marginTop: 0 }}>Every signal</p>
+              <ul className="reason-list compact">
                 {items.map((item) => (
-                  <li key={item.label} className={item.points < 0 ? "calm" : ""} title={item.why}>
+                  <li key={item.label} className={item.points < 0 ? "calm" : ""}>
                     <Icon name={item.points < 0 ? "allow" : "warn"} size={16} />
                     <span>{item.label}<br /><small className="muted">{item.why}</small></span>
                     <span className="pts">{item.points > 0 ? `+${item.points}` : item.points}</span>
                   </li>
                 ))}
               </ul>
-
-              <PanelHead kicker="Transaction context" title="Signals used by the engine" />
-              <div className="context-grid">
-                <div><small>Amount</small><strong>{money(Number(used.amount), used.currency)}</strong></div>
-                <div><small>Beneficiary</small><strong>{used.payee}</strong></div>
-                <div><small>Device</small><strong>{used.device || "Not supplied"}</strong></div>
-                <div><small>Location</small><strong>{used.location || "Not supplied"}</strong></div>
-              </div>
-
-              {result && (
-                <div className="form-actions">
-                  <details style={{ flex: 1 }}><summary className="muted small" style={{ cursor: "pointer", paddingTop: 10 }}>Full audit record</summary><pre style={{ maxHeight: 260, overflow: "auto", fontSize: "0.72rem" }}>{JSON.stringify(result.audit, null, 2)}</pre></details>
-                </div>
-              )}
-            </>
-          )}
-        </section>
-      </div>
-
-      {result && submitted && caseId && (
-        <Investigation result={result} used={submitted} caseId={caseId} cases={cases} openCase={openCase} />
+            </div>
+            <div>
+              <p className="sub-kicker" style={{ marginTop: 0 }}>Full audit record</p>
+              <pre className="audit-json">{JSON.stringify(shown.audit, null, 2)}</pre>
+            </div>
+          </div>
+        </details>
       )}
     </div>
   );
 }
 
+type FlowState = "waiting" | "active" | "done" | "skipped";
 
-function EngineBar({ name, what, value, empty }: { name: string; what: string; value: number | null; empty?: string }) {
-  const tone = value === null ? "" : value >= 70 ? "red" : value >= 40 ? "amber" : "green";
+function FlowStep({ n, state, title, sub, id, waiting, children }: {
+  n: number; state: FlowState; title: string; sub: string; id?: string; waiting?: string; children?: ReactNode;
+}) {
   return (
-    <div className="engine-bar">
-      <span><strong>{name}</strong> <span className="muted">{what}</span></span>
-      <strong className="mono">{value === null ? empty : `${value}/100`}</strong>
-      <div className="dist-track"><div className={`dist-fill tone-${tone || "green"}`} style={{ width: `${value ?? 0}%` }} /></div>
+    <li className={`flow-step ${state}`} id={id} aria-current={state === "active" ? "step" : undefined}>
+      <div className="flow-rail" aria-hidden="true">
+        <span className="flow-no">{state === "done" ? <Icon name="check" size={16} /> : n}</span>
+        <span className="flow-line" />
+      </div>
+      <div className="flow-body">
+        <div className="flow-head">
+          <div>
+            <span className="kicker">Step {String(n).padStart(2, "0")}</span>
+            <h2>{title}</h2>
+            <p className="muted small">{sub}</p>
+          </div>
+          <span className={`flow-state ${state}`}>{state === "done" ? "Done" : state === "active" ? "In progress" : state === "skipped" ? "Not needed" : "Waiting"}</span>
+        </div>
+        {state === "waiting" || state === "skipped" ? <div className="flow-wait">{waiting}</div> : children}
+      </div>
+    </li>
+  );
+}
+
+// The decision in one line: each check's points, the total, and the threshold it crossed.
+function ScoreSum({ items, score, warn, hold }: { items: { kind: string; points: number }[]; score: number; warn: number; hold: number }) {
+  const parts = [
+    { name: "FraudShield", kind: "payment" }, { name: "MuleNet", kind: "network" }, { name: "ScamStop", kind: "message" }, { name: "Checked by the customer", kind: "credit" },
+  ].map((part) => ({ ...part, points: items.filter((item) => item.kind === part.kind).reduce((sum, item) => sum + item.points, 0) }))
+    .filter((part) => part.points !== 0);
+  const total = parts.reduce((sum, part) => sum + part.points, 0);
+  const band = score >= hold ? `at or above ${hold}: hold` : score >= warn ? `${warn} to ${hold - 1}: warn` : `below ${warn}: allow`;
+  return (
+    <div className="score-sum">
+      {parts.length === 0 && <span className="score-part">No risk points</span>}
+      {parts.map((part, index) => (
+        <span key={part.kind} className="score-part">
+          {index > 0 && <em>{part.points < 0 ? "−" : "+"}</em>}
+          <strong className="mono">{Math.abs(part.points)}</strong> {part.name}
+        </span>
+      ))}
+      <span className="score-part total">= <strong className="mono">{total}</strong>{total > 100 ? ", capped at 100" : ""}</span>
+      <span className={`score-band ${score >= hold ? "hold" : score >= warn ? "warn" : "allow"}`}>Risk {score}, {band}</span>
     </div>
   );
 }
 
-// ---------- everything about this one transaction, on the same page ----------
+const STAGE_TEXT: Record<AssessmentEvent["status"], string> = { running: "Checking", complete: "Done", skipped: "Skipped", failed: "Unavailable" };
+
+function EngineCard({ name, what, icon, event, score, lines, extra, tags, empty }: {
+  name: string; what: string; icon: IconName; event?: AssessmentEvent; score: number | null;
+  lines: { label: string; points: number; why: string }[]; extra?: string | null; tags?: string[]; empty?: string | null;
+}) {
+  const tone = score === null ? "" : score >= 70 ? "red" : score >= 40 ? "amber" : "green";
+  const state = event?.status ?? "waiting";
+  const mode = event?.mode === "live" ? "Gemini, live" : event?.mode === "cached" ? "Gemini, saved reading" : null;
+  return (
+    <article className={`engine-card ${state}`}>
+      <header>
+        <span className="engine-card-icon"><Icon name={icon} size={18} /></span>
+        <span className="engine-card-name"><strong>{name}</strong><small>{what}</small></span>
+        <span className={`engine-card-state ${state}`}>
+          {state === "running" && <span className="spin" />}
+          {state === "waiting" ? "Waiting" : STAGE_TEXT[state as AssessmentEvent["status"]]}
+          {event && event.status !== "running" ? ` · ${(event.elapsed_ms / 1000).toFixed(1)} s` : ""}
+        </span>
+      </header>
+      {score !== null ? (
+        <div className="engine-card-score">
+          <strong className="mono">{score}<small>/100</small></strong>
+          <div className="dist-track"><div className={`dist-fill tone-${tone}`} style={{ width: `${score}%` }} /></div>
+        </div>
+      ) : (
+        <p className="muted small engine-card-detail">{empty ?? event?.detail ?? "Waiting for the previous check."}</p>
+      )}
+      {mode && <span className="tag">{mode}</span>}
+      {lines.length > 0 && (
+        <ul className="engine-card-lines">
+          {lines.slice(0, 4).map((line) => <li key={line.label} title={line.why}><span>{line.label.replace(/^MuleNet: /, "")}</span><em>{line.points > 0 ? `+${line.points}` : line.points}</em></li>)}
+        </ul>
+      )}
+      {tags && tags.length > 0 && <div className="tag-row">{tags.map((t) => <span key={t} className="act warn">{t}</span>)}</div>}
+      {extra && <p className="muted small engine-card-extra">{extra}</p>}
+    </article>
+  );
+}
 
 const STATUS_TEXT: Record<CaseStatus, string> = {
   open: "Awaiting analyst decision",
@@ -495,154 +689,3 @@ const STATUS_TEXT: Record<CaseStatus, string> = {
   held: "Kept on hold by analyst",
   escalated: "Escalated for investigation",
 };
-
-function Investigation({ result, used, caseId, cases, openCase }: {
-  result: ServerDecision;
-  used: Form;
-  caseId: string;
-  cases: CaseItem[];
-  openCase?: (caseId: string) => void;
-}) {
-  const item = cases.find((c) => c.id === caseId);
-  const earlier = cases.filter((c) => c.id !== caseId && c.source !== "recorded");
-  const sameLocation = used.location.trim() ? earlier.filter((c) => c.location === used.location.trim()) : [];
-  const sameDevice = used.device.trim() ? earlier.filter((c) => c.device === used.device.trim()) : [];
-  const samePayee = earlier.filter((c) => c.payee === (used.payee.trim() || "Unnamed beneficiary"));
-  const worst = (list: CaseItem[]) => list.reduce((max, c) => Math.max(max, c.score), 0);
-  const amount = Number(used.amount);
-  const usual = Math.max(1, Number(used.typical) || 1);
-  const ratio = amount / usual;
-  const network = networkFor(used.network, used.payee.trim() || "Unnamed beneficiary");
-  const netSignals = result.audit.network_signals ?? [];
-  const netScore = result.audit.network_score ?? 0;
-  const status = item?.status ?? "open";
-  const statusText = status === "open" ? (result.action === "allow" ? "No review needed" : "Awaiting analyst decision") : STATUS_TEXT[status];
-  const statusTone = status === "approved" || (status === "open" && result.action === "allow") ? "allow" : status === "open" ? "warn" : "hold";
-
-  const seen = (label: string, list: CaseItem[], value: string) => (
-    <div className="ctx-row">
-      <span className="muted">{label}</span>
-      <strong>{value || "Not supplied"}</strong>
-      <span className={`lvl ${list.length ? levelOf(worst(list)) : "low"}`}>
-        {list.length ? `Seen ${list.length}× before · worst ${worst(list)}` : value ? "First time in this session" : "—"}
-      </span>
-    </div>
-  );
-
-  return (
-    // Folded by default: the page leads with the result and the call; the detail is one click away.
-    <details className="investigation investigation-fold">
-      <summary className="section-title">
-        <span>
-          <span className="kicker">Full investigation</span>
-          <span className="fold-title">Everything about this transaction</span>
-          <span className="muted small">Case file and audit trail, the customer's context, and where the money would go (MuleNet).</span>
-        </span>
-        <Icon name="arrow" size={16} />
-      </summary>
-
-      <section className="panel case-file">
-        <PanelHead kicker={`Case ${caseId}`} title="Case file" icon="flag">
-          <span className={`act ${statusTone}`}>{statusText}</span>
-        </PanelHead>
-        <div className="case-file-grid">
-          <div>
-            <div className="case-facts">
-              <div><small>Decision</small><strong className={`lvl ${levelOf(result.score)}`}>{ACTION_LABEL[result.action]} · {result.score}/100</strong></div>
-              <div><small>Amount</small><strong>{money(amount, used.currency)}</strong></div>
-              <div><small>Beneficiary</small><strong>{used.payee.trim() || "Unnamed beneficiary"}</strong></div>
-              <div><small>Beneficiary type</small><strong>{used.payeeType === "crypto_exchange" ? "Crypto exchange" : used.payeeType === "business" ? "Business / merchant" : "Individual"} · account {used.accountAge || 0} days old</strong></div>
-              <div><small>Payment time</small><strong>{used.time || "—"} · {used.channel === "web" ? "Web banking" : "Mobile app"}</strong></div>
-              <div><small>Customer</small><strong>{SEGMENT_LABEL(used.segment)} · {Number(used.recent) || 0} payment{Number(used.recent) === 1 ? "" : "s"} in 24 h</strong></div>
-              <div><small>Device</small><strong>{used.device.trim() || "Not supplied"}</strong></div>
-              <div><small>Location</small><strong>{used.location.trim() || "Not supplied"}</strong></div>
-            </div>
-
-            <p className="sub-kicker">Analyst decision</p>
-            <p className="muted small" style={{ marginTop: -4 }}>
-              {status !== "open" ? `${STATUS_TEXT[status]}, on the Cases page.`
-                : result.action === "allow" ? "The engine allowed this payment; no review is needed."
-                : "The analyst decides on the Cases page, after the customer's call."}
-            </p>
-            {result.action !== "allow" && openCase && (
-              <div className="chip-row" style={{ marginBottom: 6 }}>
-                <button className="btn small" onClick={() => openCase(caseId)}><Icon name="flag" size={14} /> Open the case (analyst)</button>
-              </div>
-            )}
-
-            <p className="sub-kicker">Audit trail</p>
-            <ol className="audit-trail">
-              {(item?.trail ?? []).map((entry, index) => <li key={`${entry.when}-${index}`}><span className="mono muted">{entry.when}</span> {entry.text}</li>)}
-            </ol>
-          </div>
-          <div>{item && <AgentEvidence item={item} />}</div>
-        </div>
-      </section>
-
-      <div className="grid-2" style={{ marginTop: 16 }}>
-        <section className="panel">
-          <PanelHead kicker="ScamStop · customer's own words" title="Customer conversation" icon="brain" />
-          <div className="thread">
-            <div className="bubble customer"><span className="who">Customer note</span>{used.note.trim() || <em className="muted">No note written</em>}</div>
-            {item?.questions && <div className="bubble guard"><span className="who">Engine asked</span>{item.questions.join(" ")}</div>}
-            {item?.answer !== undefined && <div className="bubble customer"><span className="who">Customer answered</span>{item.answer || <em className="muted">Declined to answer</em>}</div>}
-          </div>
-          {result.audit.message_reading ? (
-            <p className="ai-note" style={{ marginTop: 14 }}><Icon name="brain" size={16} /> <span><strong>Reading:</strong> {result.audit.message_reading.explanation} {result.audit.message_reading.tactics.filter((t) => t !== "none").length > 0 && <>Tactics: {result.audit.message_reading.tactics.filter((t) => t !== "none").map((t) => t.replaceAll("_", " ")).join(", ")}.</>}</span></p>
-          ) : <p className="muted small" style={{ marginTop: 14 }}>No message reading for this payment{used.note.trim() ? " (the reader was unavailable, so payment checks decided)" : ""}.</p>}
-          {result.customer_warning && <p className="ai-note warn"><Icon name="shield" size={16} /> <span><strong>Warning shown to the customer:</strong> {result.customer_warning}</span></p>}
-        </section>
-
-        <section className="panel">
-          <PanelHead kicker="Behaviour, device and geography" title="Context for this customer" icon="user" />
-          <div className="ctx-amount">
-            <div className="dist-head"><span>This payment vs usual amount</span><strong className="mono">{ratio >= 10 ? Math.round(ratio) : ratio.toFixed(1)}×</strong></div>
-            <div className="dist-track"><div className={`dist-fill tone-${ratio >= 5 ? "red" : ratio >= 3 ? "amber" : "green"}`} style={{ width: `${Math.min(100, (ratio / 10) * 100)}%` }} /></div>
-            <small className="muted">{money(amount, used.currency)} now · usually about {money(usual, used.currency)}</small>
-          </div>
-          {seen("Location", sameLocation, used.location.trim())}
-          {seen("Device", sameDevice, used.device.trim())}
-          {seen("Beneficiary", samePayee, used.payee.trim())}
-          <div className="tag-row" style={{ marginTop: 12 }}>
-            {used.locationChanged && <span className="act hold">Unusual location</span>}
-            {used.newDevice && <span className="act hold">New device</span>}
-            {used.newPayee && <span className="act warn">New beneficiary</span>}
-            {used.onCall && <span className="act hold">On a live call</span>}
-            {used.remote && <span className="act hold">Remote-access app</span>}
-            {!used.locationChanged && !used.newDevice && !used.newPayee && !used.onCall && !used.remote && <span className="act allow">No behavioural flags</span>}
-          </div>
-        </section>
-      </div>
-
-      <section className="panel" style={{ marginTop: 16 }}>
-        <PanelHead kicker="Receiving account · MuleNet" title="Where the money would go" icon="network">
-          {network && <span className={`act ${netScore >= 70 ? "hold" : netScore >= 40 ? "warn" : "allow"}`}>Network score {netScore}/100</span>}
-        </PanelHead>
-        {network ? (
-          <div className="net-split">
-            <div><NetworkGraph graph={network} markerId="txn-net-arrow" payment={{ label: `This payment · ${money(amount, used.currency)}` }} /></div>
-            <div>
-              <p className="sub-kicker" style={{ marginTop: 0 }}>How to read it</p>
-              <ul className="read-guide">
-                <li><span className="node-key you">You</span> The customer making this payment.</li>
-                <li><span className="node-key payee">P</span> The beneficiary being paid.</li>
-                <li><span className="node-key">A</span> Left: who else paid it in the last 24 h. Right: where it sent money on.</li>
-                <li><span className="node-key flagged">!</span> An account already flagged as a mule.</li>
-              </ul>
-              <p className="sub-kicker">What MuleNet found</p>
-              <ul className="reason-list">
-                {netSignals.length === 0 && <li className="calm"><Icon name="allow" size={16} /> No mule-network pattern around this beneficiary.</li>}
-                {netSignals.map((signal) => (
-                  <li key={signal.name}><Icon name="warn" size={16} /><span>{networkLabel(signal.name)}<br /><small className="muted">{signal.reason}</small></span><span className="pts">+{signal.points}</span></li>
-                ))}
-              </ul>
-              <p className="muted small" style={{ margin: 0 }}>{NETWORK_LABEL[used.network]}. Synthetic test data, not real bank records.</p>
-            </div>
-          </div>
-        ) : (
-          <EmptyState icon="network" title="No account-network data for this run" text="Choose a pattern under “Receiving account (MuleNet)” in the form and analyse again to check where the money would go next." />
-        )}
-      </section>
-    </details>
-  );
-}

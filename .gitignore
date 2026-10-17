@@ -52,3 +52,4 @@ video/out/
 # Firebase CLI cache
 .firebase/
 firebase-debug.log
+preview-shots/

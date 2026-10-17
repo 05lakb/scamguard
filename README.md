@@ -63,7 +63,98 @@ Also worth a look: **Voice AI** (score a call transcript), **Red Team** (Gemini 
 
 ## Architecture and Google Cloud
 
-Diagrams: [architecture](docs/architecture/architecture.png) · [process flow](docs/architecture/process-flow.png) · [use cases](docs/architecture/use-case.png)
+### System architecture
+
+```mermaid
+flowchart LR
+  subgraph USERS["Browser: customer, fraud analyst, judge"]
+    UI["React + TypeScript web app"]
+    SPEECH["Web Speech API<br/>speaks the questions, hears the answers"]
+  end
+
+  subgraph GCP["Google Cloud · project last-mile-guard-510814 · us-central1"]
+    HOST["Firebase Hosting<br/>lastmileguard.web.app"]
+
+    subgraph RUN["Cloud Run service last-mile-guard · one container, 1–2 instances"]
+      API["FastAPI + Pydantic<br/>input checks · rate limits · Gemini cost cap"]
+      FS["FraudShield<br/>payment behaviour rules"]
+      MN["MuleNet<br/>receiving-account rules"]
+      SS["ScamStop<br/>reads the customer's note"]
+      DEC["Decision rules<br/>allow · warn from 40 · hold from 70"]
+      VER["Verification agent<br/>in-app call and re-check"]
+      VAI["Voice Phishing AI<br/>scores a call transcript"]
+      CASES["Cases API<br/>private to each browser"]
+    end
+
+    GEM["Vertex AI<br/>Gemini 3.5 Flash-Lite"]
+    DB[("Firestore<br/>cases · decisions · calls · notes<br/>deleted after 24 h")]
+    SA["Service account lmg-runtime<br/>Vertex AI User · Datastore User · no keys"]
+    LOG["Cloud Logging<br/>request logs, no customer text"]
+    CB["Cloud Build → Artifact Registry"]
+  end
+
+  UI -- HTTPS --> HOST -- rewrite --> API
+  SPEECH --- UI
+  API --> FS & MN & SS
+  FS & MN & SS --> DEC
+  DEC --> CASES
+  API --> VER & VAI
+  SS -- "note in, fixed JSON out" --> GEM
+  VER -- "writes a question, reads the answers" --> GEM
+  VAI -- "reads the transcript" --> GEM
+  CASES --> DB
+  VER --> DB
+  SA -. "runs as" .-> RUN
+  API -.-> LOG
+  CB -. "deploys" .-> RUN
+```
+
+### End-to-end flow: one held payment
+
+```mermaid
+sequenceDiagram
+  autonumber
+  actor C as Customer
+  participant W as Web app (browser)
+  participant A as FastAPI on Cloud Run
+  participant G as Gemini on Vertex AI
+  participant F as Firestore
+  actor N as Fraud analyst
+
+  C->>W: Enters the transfer and its note, presses Analyse
+  W->>A: POST /api/assess/stream
+  A->>A: FraudShield scores the payment behaviour
+  A->>A: MuleNet scores the receiving account
+  A->>G: ScamStop sends the note
+  G-->>A: Scam type, pressure, coaching (fixed JSON)
+  A->>A: Rules add the points: hold from 70
+  A->>F: Save the case (this browser only, 24 h)
+  A-->>W: Each stage as it finishes, then the decision and reasons
+  W-->>C: "We've paused your payment" with Call fraud team
+
+  C->>W: Taps Call fraud team
+  W->>A: POST /api/cases/{id}/verification
+  A->>G: Write a question about this payment
+  A-->>W: Two questions: Gemini's and a fixed safety question
+  W-->>C: The AI agent speaks the questions
+  C->>W: Answers by voice or typing
+  W->>A: POST /api/cases/{id}/verification/answers
+  A->>G: Read the answers
+  A->>A: Re-check with the answers (hard holds cannot be talked away)
+  A->>F: Save the call and the agent's recommendation
+  A-->>W: Recommendation: keep on hold or release
+  W->>A: POST /api/conversation (Voice AI scores the call)
+  A->>G: Read the call transcript
+
+  N->>A: GET /api/cases (Cases page)
+  A-->>N: Reasons, the call and the AI's recommendation
+  N->>A: POST /api/cases/{id}/decision: approve, keep on hold or escalate
+  A->>F: Save the decision with the analyst's name and time
+```
+
+Only the rules choose allow, warn or hold, and only the analyst can release a held payment. Gemini reads and writes text; it never makes the decision. No real money moves.
+
+### How each Google Cloud service is used
 
 | Google Cloud service | How Last Mile Guard uses it |
 | --- | --- |
@@ -270,5 +361,5 @@ How to read it: with Gemini, the guard asks instead of guessing. A scam that was
 | `redteam/` | Red-team generator, simulated customer and public-advice pattern tools |
 | `infra/` | Cloud Run deploy script and helper scripts |
 | `hosting/` | Firebase Hosting public folder (empty; Hosting forwards to Cloud Run) |
-| `docs/` | Architecture diagrams, evaluation notes, branding, demo video |
+| `docs/` | Evaluation notes, branding, demo video |
 | `video/` | Source of the explainer video (Remotion scenes, narration script) |

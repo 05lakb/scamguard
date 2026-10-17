@@ -2779,3 +2779,26 @@ input, select, textarea {
 .mini-notice { display: grid; gap: 6px; padding: 10px 12px; border: 1px solid var(--line); border-radius: 10px; background: var(--surface-2); }
 .mini-notice > span:first-child { display: inline-flex; align-items: center; gap: 6px; }
 .btn.tiny { justify-self: start; padding: 4px 10px; min-height: 0; font-size: 0.74rem; pointer-events: none; }
+
+/* The scenario picker sits in the row of example chips, so it looks like one of them. */
+.preset-row .preset-select {
+  width: auto; min-height: 0; height: auto; padding: 8px 34px 8px 12px; border: 1px solid var(--line); border-radius: 9px;
+  background-color: var(--surface-2); color: var(--ink); font-size: 0.82rem; line-height: 1.2; cursor: pointer;
+}
+.preset-row .preset-select:hover, .preset-row .preset-select:focus-visible { border-color: var(--accent); }
+
+/* Ready-made scenarios: a separate strip above the payment form, not part of it. */
+.scenario-bar {
+  display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 14px 24px;
+  margin-bottom: 14px; padding: 14px 18px; border: 1px dashed var(--accent); border-radius: 14px; background: var(--accent-soft);
+}
+.scenario-bar-head { display: flex; align-items: center; gap: 12px; min-width: 0; }
+.scenario-bar-head > div { display: grid; gap: 2px; }
+.scenario-bar-head strong { font-size: 0.98rem; }
+.scenario-bar-icon { display: grid; place-items: center; width: 36px; height: 36px; flex: none; border-radius: 10px; background: var(--accent); color: var(--accent-ink); }
+.scenario-bar-options { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
+.scenario-bar .preset-select {
+  width: auto; min-height: 0; height: auto; padding: 8px 34px 8px 12px; border: 1px solid var(--line); border-radius: 9px;
+  background-color: var(--surface-2); color: var(--ink); font-size: 0.82rem; line-height: 1.2; cursor: pointer;
+}
+.scenario-bar .preset-select:hover, .scenario-bar .preset-select:focus-visible { border-color: var(--accent); }

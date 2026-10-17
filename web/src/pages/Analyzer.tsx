@@ -191,6 +191,8 @@ export function Analyzer({ scenarios, cases, onCase, openCase, onStartCall }: Pr
   const [caseId, setCaseId] = useState<string | null>(remembered?.caseId ?? null);
   // Stage events from the server, shown one by one as the checks run.
   const [stages, setStages] = useState<Stages>(remembered?.stages ?? {});
+  // Which ready-made scenario filled the form, if any.
+  const [picked, setPicked] = useState("");
   const queue = useRef<AssessmentEvent[]>([]);
   const draining = useRef<number | null>(null);
 
@@ -232,6 +234,7 @@ export function Analyzer({ scenarios, cases, onCase, openCase, onStartCall }: Pr
     setError("");
     setCaseId(null);
     setStages({});
+    setPicked("");
   }
 
   function finish(decision: ServerDecision, used: Form, questions?: string[], reply?: string) {
@@ -330,20 +333,30 @@ export function Analyzer({ scenarios, cases, onCase, openCase, onStartCall }: Pr
       <ol className="flow" aria-label="The steps for one payment">
         {/* ---------- 1. the payment ---------- */}
         <FlowStep n={1} state={step(1)} title="Payment details" sub="The transfer the customer is about to make, and what they wrote about it.">
-          <section className="panel">
-            <div className="preset-row" aria-label="Quick examples">
+          <div className="scenario-bar" role="group" aria-label="Ready-made scenarios">
+            <div className="scenario-bar-head">
+              <span className="scenario-bar-icon"><Icon name="flask" size={18} /></span>
+              <div>
+                <strong>Try a ready-made scenario</strong>
+                <span className="muted small">Pick one to fill in the payment below, then press Analyse transaction. Or type your own.</span>
+              </div>
+            </div>
+            <div className="scenario-bar-options">
               {PRESETS.map((preset) => (
-                <button key={preset.label} className="chip-btn" onClick={() => { setForm({ ...BASE, time: preset.form.time ?? now(), ...preset.form }); setResult(null); setAsked(null); setStages({}); }}>
+                <button key={preset.label} className={`chip-btn ${picked === preset.label ? "on" : ""}`} aria-pressed={picked === preset.label}
+                  onClick={() => { setForm({ ...BASE, time: preset.form.time ?? now(), ...preset.form }); setPicked(preset.label); setResult(null); setAsked(null); setStages({}); }}>
                   <Icon name={preset.icon} size={14} /> {preset.label}
                 </button>
               ))}
-              <select className="f-select" style={{ width: "auto", minHeight: 36 }} aria-label="Load a scenario from the library" value="" onChange={(event) => { const sc = scenarios.find((s) => s.id === event.target.value); if (sc) { setForm(fromScenario(sc)); setResult(null); setAsked(null); setStages({}); } }}>
-                <option value="">Load from scenario library…</option>
+              <select className="f-select preset-select" aria-label="More scenarios from the library" value="" onChange={(event) => { const sc = scenarios.find((s) => s.id === event.target.value); if (sc) { setForm(fromScenario(sc)); setPicked(sc.title); setResult(null); setAsked(null); setStages({}); } }}>
+                <option value="">More scenarios…</option>
                 {scenarios.map((sc) => <option key={sc.id} value={sc.id}>{sc.title}</option>)}
               </select>
             </div>
+          </div>
 
-            <div className="fields-4">
+          <section className="panel">
+            <div className="fields-4" style={{ marginTop: 0 }}>
               <div>
                 <label className="f-label" htmlFor="amount">Transaction amount</label>
                 <div className="money-input">

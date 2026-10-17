@@ -22,7 +22,11 @@ elif [ "${code}" -ne 0 ]; then
   exit "${code}"
 fi
 
-if [ "${ONLY:-all}" = "shots" ]; then
+if [ "${ONLY:-all}" = "dashboard" ]; then
+  echo "Saving the dashboard screenshot to the results repo..."
+  cd ../..
+  RESULTS_MAX_BYTES=$((30 * 1024 * 1024)) bash infra/save_results.sh dashboard video/out/shots/dashboard.png
+elif [ "${ONLY:-all}" = "shots" ]; then
   echo "Saving the screenshots to the results repo..."
   cd ../..
   files=(video/out/shots/*.png)

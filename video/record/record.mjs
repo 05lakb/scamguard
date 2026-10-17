@@ -4,6 +4,7 @@
 //   node record.mjs                 video and screenshots
 //   ONLY=shots node record.mjs      screenshots only (a quick check, about 3 minutes)
 //   ONLY=video node record.mjs      video only
+//   ONLY=dashboard node record.mjs  just the command-centre screenshot, with the recorded examples switched on
 //   SITE=https://example.web.app    record a different copy of the site
 //
 // The video is paced by the narration: it reads how long each spoken scene is (public/audio/durations.json) and
@@ -307,13 +308,34 @@ async function takeScreenshots(browser) {
   await context.close();
 }
 
+// ---------- the command-centre screenshot with real numbers ----------
+
+async function dashboardShot(browser) {
+  fs.mkdirSync(SHOTS, { recursive: true });
+  const context = await browser.newContext({ viewport: SHOT_SIZE, deviceScaleFactor: 1.5, bypassCSP: true });
+  const page = await context.newPage();
+  await page.goto(SITE + "/", { waitUntil: "networkidle" }).catch(() => {});
+  await signIn(page);
+  await goTo(page, "#/dashboard");
+  // A fresh session has no checked payments yet, so show the recorded examples to fill in the numbers.
+  await click(page, page.getByRole("button", { name: /Include recorded examples/ })).catch((error) => log("recorded examples switch skipped:", error.message.split("\n")[0]));
+  await sleep(2500);
+  await page.screenshot({ path: path.join(SHOTS, "dashboard.png") });
+  log("screenshot dashboard (with recorded examples)");
+  await context.close();
+}
+
 // ---------- go ----------
 
 fs.mkdirSync(OUT, { recursive: true });
 const browser = await launch();
 try {
-  if (ONLY !== "shots") await recordVideo(browser);
-  if (ONLY !== "video") await takeScreenshots(browser);
+  if (ONLY === "dashboard") {
+    await dashboardShot(browser);
+  } else {
+    if (ONLY !== "shots") await recordVideo(browser);
+    if (ONLY !== "video") await takeScreenshots(browser);
+  }
 } finally {
   await browser.close();
 }

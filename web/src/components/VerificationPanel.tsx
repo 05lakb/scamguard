@@ -12,7 +12,31 @@ type StepState = "done" | "now" | "todo" | "failed";
 // (one written by Gemini from this case, one coaching check) and listens to the answers; the answers are
 // read by Gemini and Voice AI and the payment is re-scored. The result is a recommendation: the case
 // stays in Cases until the analyst approves it or keeps it on hold.
-export function VerificationPanel({ caseId, reference, amount, currency, payee, score, topReason, startSignal, onDone, onOpenCase }: {
+// What the Transactions page hands to the Voice AI page when the customer presses "Call fraud team".
+export interface ActiveCall {
+  caseId: string; // the case's id on this page
+  serverId: string; // the server's case id
+  reference: string | null;
+  amount: number;
+  currency: string;
+  payee: string;
+  score: number;
+  topReason?: string;
+}
+
+// The conversation so far, as one transcript: what the agent asked and what the customer said.
+export function callTranscript(questions: string[], answers: string[], hearing = ""): string {
+  const lines: string[] = [];
+  questions.forEach((question, index) => {
+    if (index > answers.length) return;
+    lines.push(`AI agent: ${question}`);
+    const answer = index < answers.length ? answers[index] : hearing;
+    if (answer) lines.push(`Customer: ${answer}`);
+  });
+  return lines.join("\n");
+}
+
+export function VerificationPanel({ caseId, reference, amount, currency, payee, score, topReason, startSignal, onDone, onOpenCase, openLabel, onTranscript }: {
   caseId: string; // the server's case id
   reference: string | null;
   amount: number;
@@ -23,6 +47,8 @@ export function VerificationPanel({ caseId, reference, amount, currency, payee, 
   startSignal: number; // changes when the customer presses "Call fraud team" on the notification
   onDone: (verification: Verification) => void;
   onOpenCase: () => void;
+  openLabel?: string;
+  onTranscript?: (text: string) => void; // the conversation as it happens, for the Voice AI transcript
 }) {
   const [verification, setVerification] = useState<Verification | null>(null);
   const [phase, setPhase] = useState<Phase>("idle");
@@ -37,6 +63,9 @@ export function VerificationPanel({ caseId, reference, amount, currency, payee, 
 
   useEffect(() => () => { cancelled.current = true; recogniser.current?.stop(); stopSpeaking(); }, []);
   useEffect(() => { if (startSignal > 0 && phase === "idle" && !verification) void startCall(); }, [startSignal]);
+  useEffect(() => {
+    if (verification) onTranscript?.(callTranscript(verification.questions, answers, phase === "listening" ? hearing : ""));
+  }, [verification, answers, hearing, phase]);
 
   // Listens until the customer pauses, and returns what was heard.
   function listenOnce(): Promise<string> {
@@ -236,7 +265,7 @@ export function VerificationPanel({ caseId, reference, amount, currency, payee, 
         <div className={`verify-result ${outcome.action}`}>
           <p><strong>The agent recommends: {ACTION_WORD[outcome.action]}.</strong> Sent to Cases with the call and the analysis. The analyst approves or keeps it on hold.</p>
           <ul className="small">{outcome.reasons.slice(0, 3).map((reason) => <li key={reason}>{reason}</li>)}</ul>
-          <button className="btn small" onClick={onOpenCase}>Open the case for the analyst <Icon name="arrow" size={14} /></button>
+          <button className="btn small" onClick={onOpenCase}>{openLabel ?? "Open the case for the analyst"} <Icon name="arrow" size={14} /></button>
         </div>
       )}
     </section>

@@ -1,5 +1,6 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { fetchCase, sendVerificationAnswers, sessionKey, startVerification, type Verification } from "../api";
+import { callTranscript } from "../components/VerificationPanel";
 import { verificationTrailText } from "./cases";
 
 const done: Verification = {
@@ -47,6 +48,15 @@ describe("verification transport", () => {
     await expect(startVerification("abcdef123456", "phone", "+91")).rejects.toThrow("Phone calls are not set up");
     vi.stubGlobal("fetch", vi.fn().mockResolvedValue(new Response("oops", { status: 500 })));
     await expect(sendVerificationAnswers("abcdef123456", ["a"])).rejects.toThrow("could not be checked");
+  });
+});
+
+describe("call transcript for the Voice AI page", () => {
+  it("shows each question with its answer, and the answer being heard now", () => {
+    expect(callTranscript(["Q1?", "Q2?"], [])).toBe("AI agent: Q1?");
+    expect(callTranscript(["Q1?", "Q2?"], [], "my bro")).toBe("AI agent: Q1?\nCustomer: my bro");
+    expect(callTranscript(["Q1?", "Q2?"], ["My brother."])).toBe("AI agent: Q1?\nCustomer: My brother.\nAI agent: Q2?");
+    expect(callTranscript(["Q1?", "Q2?"], ["My brother.", "No."])).toBe("AI agent: Q1?\nCustomer: My brother.\nAI agent: Q2?\nCustomer: No.");
   });
 });
 

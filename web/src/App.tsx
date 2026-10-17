@@ -19,6 +19,7 @@ import { Evidence } from "./pages/Evidence";
 import { Landing } from "./pages/Landing";
 import { RiskProfile } from "./pages/RiskProfile";
 import { VoiceAI } from "./pages/VoiceAI";
+import type { ActiveCall } from "./components/VerificationPanel";
 
 
 interface StoryState {
@@ -76,6 +77,9 @@ export function App() {
   const [story, setStory] = useState<StoryState | null>(null);
   const counter = useRef(0);
   const [reviewCaseId, setReviewCaseId] = useState<string | null>(null);
+  // A customer's call to the fraud desk, started on Transactions and taking place on the Voice AI page.
+  const [activeCall, setActiveCall] = useState<ActiveCall | null>(null);
+  useEffect(() => { if (page !== "voice") setActiveCall(null); }, [page]);
 
   useEffect(() => {
     window.scrollTo(0, 0);
@@ -328,8 +332,11 @@ export function App() {
       <main className="app-main">
         {page !== "dashboard" && <button className="back-link" onClick={() => setPage("dashboard")}><Icon name="back" size={12} /> Dashboard</button>}
         {page === "dashboard" && <Dashboard user={user} cases={cases} health={health} refresh={refreshHealth} goTo={(p) => setPage(p)} />}
-        {page === "analyzer" && <Analyzer scenarios={scenarios} cases={cases} onCase={addCase} decide={decide} onVerified={verified} openCase={openCase} />}
-        {page === "voice" && <VoiceAI onAnalysed={(result) => setVoice((old) => [result, ...old])} />}
+        {page === "analyzer" && <Analyzer scenarios={scenarios} cases={cases} onCase={addCase} decide={decide} openCase={openCase}
+          onStartCall={(call) => { setActiveCall(call); setPage("voice"); }} />}
+        {page === "voice" && <VoiceAI onAnalysed={(result) => setVoice((old) => [result, ...old])} call={activeCall}
+          onCallDone={(verification) => { if (activeCall) verified(activeCall.caseId, verification); }}
+          onBackToPayment={() => { setActiveCall(null); setPage("analyzer"); }} />}
         {page === "profile" && <RiskProfile cases={cases} open={openCase} goAnalyze={() => setPage("analyzer")} />}
         {page === "analytics" && <Analytics cases={cases} voice={voice} health={health} refresh={refreshHealth} open={openCase} />}
         {page === "analyst" && <Analyst initialCaseId={reviewCaseId} focusId={focus} cases={cases} decide={decide} scenarios={scenarios} onTestCase={(finished) => addCase(finished, undefined, "test")} logCall={(id, reference) => addTrail(id, `Analyst opened the case from the caller's reference ${reference}`)} addNote={(id, kind, text) => addNote(id, kind, text, user ?? "analyst")} />}

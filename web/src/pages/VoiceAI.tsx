@@ -1,12 +1,20 @@
 import { useEffect, useRef, useState } from "react";
-import { analyseConversation, type ConversationResult } from "../api";
+import { analyseConversation, type ConversationResult, type Verification } from "../api";
 import { Icon } from "../components/Icon";
+import { JourneySteps } from "../components/JourneySteps";
 import { EmptyState, PageHead, PanelHead, ScoreRing, toneForLevel } from "../components/ui";
+import { VerificationPanel, callTranscript, type ActiveCall } from "../components/VerificationPanel";
 import { makeRecogniser, type Recogniser } from "../lib/speech";
 
 interface Props {
   onAnalysed: (result: ConversationResult) => void;
+  // A customer's call to the fraud desk, started from a held payment on Transactions.
+  call?: ActiveCall | null;
+  onCallDone?: (verification: Verification) => void;
+  onBackToPayment?: () => void;
 }
+
+const BACK_AFTER_SECONDS = 8;
 
 const SAMPLES = [
   { label: "Bank OTP call", text: "Hello, I am calling from your bank's security department. Your account will be blocked today unless you verify your identity. Give me the OTP sent to your phone immediately." },
@@ -18,8 +26,27 @@ const SAMPLES = [
 const MAX = 4000;
 
 
-export function VoiceAI({ onAnalysed }: Props) {
+export function VoiceAI({ onAnalysed, call, onCallDone, onBackToPayment }: Props) {
   const [text, setText] = useState("");
+  const [callFinished, setCallFinished] = useState(false);
+  const [backIn, setBackIn] = useState<number | null>(null);
+
+  // After the call: Voice AI analyses the conversation here, then the page returns to the payment.
+  async function finishCall(verification: Verification) {
+    setCallFinished(true);
+    onCallDone?.(verification);
+    const transcript = callTranscript(verification.questions, verification.answers);
+    setText(transcript);
+    await analyse(transcript);
+    setBackIn(BACK_AFTER_SECONDS);
+  }
+
+  useEffect(() => {
+    if (backIn === null) return;
+    if (backIn <= 0) { onBackToPayment?.(); return; }
+    const timer = window.setTimeout(() => setBackIn((value) => (value === null ? null : value - 1)), 1000);
+    return () => window.clearTimeout(timer);
+  }, [backIn]);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
   const [result, setResult] = useState<ConversationResult | null>(null);
@@ -112,11 +139,31 @@ export function VoiceAI({ onAnalysed }: Props) {
 
   return (
     <div>
-      <PageHead kicker="Social-engineering detection" title="Voice Phishing" accent="AI" text="Detect impersonation, urgency, threats and OTP requests in a phone call, live from the microphone or from a transcript.">
-        <span className="status-pill"><span className="dot" /> Ready</span>
+      {call && <JourneySteps current={callFinished && result ? 3 : 2} />}
+      <PageHead kicker="Social-engineering detection" title="Voice Phishing" accent="AI" text={call
+        ? `The customer is calling the fraud desk about the held ${call.amount.toLocaleString()} ${call.currency} payment to ${call.payee}. The AI agent asks the questions; Voice AI analyses the conversation below.`
+        : "Detect impersonation, urgency, threats and OTP requests in a phone call, live from the microphone or from a transcript."}>
+        <span className="status-pill"><span className="dot" /> {call ? (callFinished ? "Call finished" : "Customer on the call") : "Ready"}</span>
       </PageHead>
 
-      <section className="panel live-panel">
+      {call && (
+        <section className="panel live-panel" aria-label="Customer's call with the fraud desk">
+          <VerificationPanel key={call.serverId} caseId={call.serverId} reference={call.reference} amount={call.amount} currency={call.currency}
+            payee={call.payee} score={call.score} topReason={call.topReason} startSignal={1}
+            onTranscript={(conversation) => { if (!callFinished) setText(conversation); }}
+            onDone={(verification) => void finishCall(verification)}
+            onOpenCase={() => onBackToPayment?.()} openLabel="Back to the payment" />
+          {callFinished && (
+            <div className="call-done" role="status">
+              <strong>{busy ? "Voice AI is analysing the conversation…" : "The agent's work is done. The call and its analysis are on the payment and sent to the analyst."}</strong>
+              {backIn !== null && <span className="muted small">Going back to the payment in {backIn} s.</span>}
+              <button className="btn small primary" onClick={() => onBackToPayment?.()}>Back to the payment <Icon name="arrow" size={14} /></button>
+            </div>
+          )}
+        </section>
+      )}
+
+      {!call && <section className="panel live-panel">
         <PanelHead kicker="Microphone speech → Last Mile Guard analysis" title="Live call detection" icon="mic">
           <span className={`act ${listening ? "hold" : "allow"}`}>{listening ? "Listening" : "Ready"}</span>
         </PanelHead>
@@ -140,7 +187,7 @@ export function VoiceAI({ onAnalysed }: Props) {
         ) : (
           <p className="muted" style={{ margin: 0 }}>Live speech recognition is not available in this browser. Use Chrome or Edge, or paste a transcript below.</p>
         )}
-      </section>
+      </section>}
 
       <div className="grid-2">
         <section className="panel">

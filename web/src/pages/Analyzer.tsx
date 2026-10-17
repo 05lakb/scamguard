@@ -1,7 +1,9 @@
 import { useEffect, useState } from "react";
-import { assessPayment, type AssessRequest, type ServerDecision, type Verification } from "../api";
+import { assessPayment, type AssessRequest, type ServerDecision } from "../api";
+import { CallResult } from "../components/CallResult";
 import { HoldNotification } from "../components/HoldNotification";
-import { VerificationPanel } from "../components/VerificationPanel";
+import { JourneySteps } from "../components/JourneySteps";
+import type { ActiveCall } from "../components/VerificationPanel";
 import { Icon, type IconName } from "../components/Icon";
 import { AgentEvidence } from "../components/AgentEvidence";
 import { NetworkGraph } from "../components/NetworkGraph";
@@ -25,8 +27,9 @@ interface Props {
   onCase: (finished: FinishedCase, context: CaseContext) => string;
   decide: (id: string, status: CaseStatus) => void;
   // A verification with the customer finished: update the case with the re-check.
-  onVerified?: (caseId: string, verification: Verification) => void;
   openCase?: (caseId: string) => void;
+  // The customer pressed "Call fraud team": the call continues on the Voice AI page.
+  onStartCall?: (call: ActiveCall) => void;
 }
 
 type NetworkPattern = "none" | "ring" | "clean";
@@ -177,7 +180,7 @@ interface Remembered {
 }
 let remembered: Remembered | null = null;
 
-export function Analyzer({ scenarios, cases, onCase, decide, onVerified, openCase }: Props) {
+export function Analyzer({ scenarios, cases, onCase, decide, openCase, onStartCall }: Props) {
   const [form, setForm] = useState<Form>(remembered?.form ?? BASE);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
@@ -186,7 +189,6 @@ export function Analyzer({ scenarios, cases, onCase, decide, onVerified, openCas
   const [result, setResult] = useState<ServerDecision | null>(remembered?.result ?? null);
   const [submitted, setSubmitted] = useState<Form | null>(remembered?.submitted ?? null);
   const [caseId, setCaseId] = useState<string | null>(remembered?.caseId ?? null);
-  const [callSignal, setCallSignal] = useState(0); // the customer pressed "Call fraud team" on the notification
 
   useEffect(() => {
     remembered = { form, asked, answer, result, submitted, caseId };
@@ -257,9 +259,27 @@ export function Analyzer({ scenarios, cases, onCase, decide, onVerified, openCas
   const items = shown ? contributions(shown) : [];
   const status = result ? result.action : asked ? "ask" : null;
   const used = submitted ?? form;
+  // The customer's call: possible once a warned or held payment was saved; its result comes back on the case.
+  const currentCase = caseId ? cases.find((item) => item.id === caseId) : undefined;
+  const serverId = result?.execution?.saved ? result.execution.request_id : null;
+  const canCall = Boolean(result && result.action !== "allow" && serverId && caseId);
+  const callDone = Boolean(currentCase?.verification?.outcome);
+  function startCall() {
+    if (!result || !serverId || !caseId) return;
+    onStartCall?.({
+      caseId, serverId, reference: caseReference(serverId), amount: Number(used.amount), currency: used.currency,
+      payee: used.payee || "the payee", score: result.score, topReason: result.reasons[0],
+    });
+  }
+  const stage = callDone ? 3 : canCall ? 2 : 1;
+  // Coming back from the call: show its result straight away.
+  useEffect(() => {
+    if (callDone) window.setTimeout(() => document.querySelector(".call-result")?.scrollIntoView({ block: "center" }), 150);
+  }, []);
 
   return (
     <div>
+      <JourneySteps current={stage} />
       <PageHead kicker="Real-time fraud engine" title="Transaction Risk" accent="Analyzer" text="Enter the transaction context. Last Mile Guard evaluates behaviour, device, beneficiary, location, timing and the customer's own words before the payment completes.">
         <span className="status-pill"><span className="dot" /> Engine online</span>
       </PageHead>
@@ -395,16 +415,11 @@ export function Analyzer({ scenarios, cases, onCase, decide, onVerified, openCas
 
               {result?.notice && <p className="ai-note warn"><Icon name="warn" size={16} /> {result.notice}</p>}
               {result?.customer_warning && <p className="ai-note"><Icon name="shield" size={16} /> {result.customer_warning}</p>}
-              {result?.action === "hold" && (
+              {result?.action === "hold" && !callDone && (
                 <HoldNotification amount={Number(used.amount)} currency={used.currency} reference={caseReference(result.execution?.request_id)}
-                  onCall={result.execution?.saved ? () => setCallSignal((n) => n + 1) : undefined} />
+                  onCall={canCall ? startCall : undefined} />
               )}
-              {result && result.action !== "allow" && result.execution?.saved && caseId && (
-                <VerificationPanel key={result.execution.request_id} caseId={result.execution.request_id}
-                  reference={caseReference(result.execution.request_id)} amount={Number(used.amount)} currency={used.currency}
-                  payee={used.payee || "the payee"} score={result.score} topReason={result.reasons[0]} startSignal={callSignal}
-                  onDone={(verification) => onVerified?.(caseId, verification)} onOpenCase={() => openCase?.(caseId)} />
-              )}
+              {canCall && <CallResult verification={currentCase?.verification} onCall={startCall} onOpenCase={() => openCase?.(caseId!)} />}
               {!result?.customer_warning && result?.action === "allow" && <p className="ai-note"><Icon name="allow" size={16} /> Last Mile Guard detected a low-risk transaction pattern. No major fraud indicators were identified.</p>}
 
               {asked && (

@@ -624,7 +624,7 @@ input, select, textarea {
 }
 
 .app-main {
-  max-width: 1360px;
+  max-width: 1480px;
   margin: 0 auto;
   padding: 26px 24px 64px;
 }
@@ -2481,3 +2481,63 @@ input, select, textarea {
 .call-pulse { width: 14px; height: 14px; border-radius: 50%; background: var(--accent); box-shadow: 0 0 0 0 var(--accent-soft); animation: call-pulse 1.4s infinite; }
 @keyframes call-pulse { 0% { box-shadow: 0 0 0 0 var(--accent-soft); } 70% { box-shadow: 0 0 0 12px rgba(0, 0, 0, 0); } 100% { box-shadow: 0 0 0 0 rgba(0, 0, 0, 0); } }
 @media (prefers-reduced-motion: reduce) { .call-pulse { animation: none; } }
+
+/* The four stages of a held payment. */
+.journey { list-style: none; display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 8px; margin: 0 0 18px; padding: 0; }
+.journey-step { display: flex; align-items: center; gap: 10px; padding: 10px 12px; border-radius: 12px; border: 1px solid var(--line); background: var(--surface); }
+.journey-step strong { display: block; font-size: 0.86rem; }
+.journey-step small { display: block; color: var(--muted); font-size: 0.75rem; }
+.journey-no { flex: none; display: inline-grid; place-items: center; width: 26px; height: 26px; border-radius: 50%; background: var(--surface-3); color: var(--muted); font-weight: 700; font-size: 0.8rem; }
+.journey-step.now { border-color: var(--accent); background: var(--accent-soft); }
+.journey-step.now .journey-no { background: var(--accent); color: var(--accent-ink); }
+.journey-step.done .journey-no { background: var(--allow-bg); color: var(--allow); }
+@media (max-width: 720px) { .journey { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+
+/* Cases: a full-width queue, then a narrow queue beside a full review. */
+.queue-full { padding: 18px 20px; }
+.queue-toolbar { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 10px; }
+.queue-toolbar .reference-search { margin: 0; flex: 0 1 420px; }
+.filter-count { margin-left: 4px; opacity: 0.7; font-size: 0.8em; }
+.case-table-wrap { overflow-x: auto; margin-top: 10px; }
+.case-table { width: 100%; border-collapse: collapse; font-size: 0.88rem; }
+.case-table th { text-align: left; padding: 8px 10px; color: var(--muted); font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.04em; border-bottom: 1px solid var(--line); }
+.case-table td { padding: 10px; border-bottom: 1px solid var(--line); vertical-align: middle; }
+.case-table td strong { display: block; }
+.case-table td .small { display: block; }
+.case-table .num { text-align: right; white-space: nowrap; }
+.case-table tbody tr { cursor: pointer; }
+.case-table tbody tr:hover, .case-table tbody tr:focus-visible { background: var(--accent-soft); outline: none; }
+.review-layout { display: grid; grid-template-columns: 300px minmax(0, 1fr); gap: 16px; align-items: start; }
+.queue-side { position: sticky; top: 84px; max-height: calc(100vh - 100px); overflow-y: auto; padding: 14px; display: grid; gap: 10px; }
+.queue-side .filters { flex-wrap: wrap; }
+.case-review { padding: 20px 24px; }
+.review-summary { display: flex; align-items: center; gap: 18px; margin: 8px 0 14px; }
+.review-summary .case-title { margin: 0 0 6px; }
+.decision-bar { position: sticky; top: 74px; z-index: 5; display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 12px; margin: 0 0 18px; padding: 14px 16px; border-radius: 12px; border: 1px solid var(--accent); background: var(--surface); box-shadow: var(--shadow); }
+.decision-bar > div:first-child { display: grid; gap: 2px; max-width: 560px; }
+.decision-bar .kicker { margin: 0; }
+.review-section { padding: 16px 0; border-top: 1px solid var(--line); }
+.review-heading { display: flex; align-items: center; gap: 10px; margin: 0 0 12px; font-size: 1.02rem; }
+.review-no { display: inline-grid; place-items: center; width: 26px; height: 26px; border-radius: 50%; background: var(--accent); color: var(--accent-ink); font-size: 0.8rem; font-weight: 700; }
+@media (max-width: 980px) {
+  .review-layout { grid-template-columns: 1fr; }
+  .queue-side { position: static; max-height: 280px; }
+  .decision-bar { position: static; }
+}
+
+/* Voice AI during a customer's call: the agent's work is done. */
+.call-done { display: flex; flex-wrap: wrap; align-items: center; gap: 12px; margin-top: 12px; padding: 12px 14px; border-radius: 12px; border: 1px solid var(--allow); background: var(--allow-bg); }
+.call-done strong { flex: 1 1 320px; }
+
+/* Transactions: the customer's call and the agent's recommendation. */
+.call-result { margin: 16px 0; padding: 16px 18px; border-radius: 14px; border: 1px solid var(--line); background: var(--surface-2); }
+.call-result.waiting { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 12px; border-color: var(--accent); }
+.call-result.waiting p { margin: 4px 0 0; }
+.call-result .mini { display: inline-flex; align-items: center; gap: 6px; margin: 0 0 8px; }
+.call-result.hold { border-color: var(--hold); }
+.call-result.allow { border-color: var(--allow); }
+.call-result.warn { border-color: var(--warn); }
+.call-findings { margin: 8px 0; padding-left: 18px; font-size: 0.9rem; }
+.call-findings li { margin: 3px 0; }
+.call-result-foot { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 12px; margin-top: 10px; padding-top: 10px; border-top: 1px solid var(--line); }
+.call-result-foot p { margin: 0; flex: 1 1 340px; }

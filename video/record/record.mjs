@@ -121,7 +121,8 @@ async function analyse(page) {
 
 async function callFraudTeam(page) {
   await click(page, page.getByRole("button", { name: /Call fraud team/ }).first());
-  const boxes = page.locator("textarea.f-area");
+  // The Voice AI page also has a big transcript box, so look for the answer boxes inside the call panel only.
+  const boxes = page.locator(".verify-panel textarea");
   try {
     // With no microphone the call falls back to typing by itself.
     await boxes.first().waitFor({ timeout: 12000 });
@@ -134,7 +135,7 @@ async function callFraudTeam(page) {
 }
 
 async function typeAnswers(page, until) {
-  const boxes = page.locator("textarea.f-area");
+  const boxes = page.locator(".verify-panel textarea");
   const count = await boxes.count();
   for (let i = 0; i < Math.min(count, ANSWERS.length); i += 1) {
     await glide(page, boxes.nth(i));
@@ -259,6 +260,7 @@ async function takeScreenshots(browser) {
   await attempt("agent call", async () => {
     await callFraudTeam(page);
     await typeAnswers(page);
+    await page.locator(".verify-panel").first().scrollIntoViewIfNeeded();
     await shot("ai-agent-call");
     await sendAnswers(page);
     await page.locator(".verify-result").first().scrollIntoViewIfNeeded();

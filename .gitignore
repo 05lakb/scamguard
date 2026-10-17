@@ -22,8 +22,9 @@ venv/
 node_modules/
 dist/
 
-# Editor and OS clutter
+# Editor, assistant and OS clutter
 .vscode/
+.claude/
 .idea/
 .DS_Store
 Thumbs.db
@@ -42,6 +43,8 @@ redteam/output/
 # Local scratch output
 outputs/
 Claude outputs/
+pptx-output/
+.pptx-build/
 # Video project: installed packages and rendered clips
 video/node_modules/
 video/out/

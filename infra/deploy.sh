@@ -31,7 +31,8 @@ gcloud projects add-iam-policy-binding "${PROJECT_ID}" \
 #   max-instances 2   -> a flood of visitors cannot start many copies
 #   concurrency 20    -> each copy handles up to 20 requests at once
 #   memory 512Mi, 1 cpu, 300 second timeout (a live red-team run takes a few minutes)
-# The app runs as the "lmg-runtime" identity, which can only call Gemini. No keys are used.
+# The app runs as the "lmg-runtime" identity: Vertex AI User (Gemini) and, with FIRESTORE=1,
+# Cloud Datastore User (cases). No keys are used.
 gcloud run deploy "${SERVICE}" \
   --source . \
   --region "${REGION}" \

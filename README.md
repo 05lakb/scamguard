@@ -1,212 +1,290 @@
 # Last Mile Guard
 
-**Real-time protection for account-to-account transfers (UPI, IMPS, NEFT) before money moves.** Last Mile Guard checks a payment's behaviour, the customer's own words or call transcript, and the receiving account's network, then recommends **allow**, **warn/ask** or **hold for human review** with ranked, explainable reasons.
+**A second look before the money moves.** Last Mile Guard stops scams where a coached customer approves the payment themselves. It checks the payment, reads the customer's own words with Gemini, checks the receiving account, calls the customer inside the banking app when a payment is held, and gives a fraud analyst everything needed to decide.
 
-- **Stage:** synthetic-data prototype. No real bank or payment rail is connected; no money is ever moved.
-- **Pitch:** [idea](docs/PITCH_IDEA.md)
+Built for the **Google Cloud AI Builder Cup JAPAC 2026**, BFSI track (Intelligent Risk, Fraud & Financial Experiences).
 
-## The command centre
+| | |
+| --- | --- |
+| **Live app** | **https://lastmileguard.web.app** (Firebase Hosting → Cloud Run) |
+| Same service on Cloud Run | https://last-mile-guard-lcjgzaksea-uc.a.run.app |
+| Source code | https://github.com/05lakb/scamguard |
+| Stage | Working prototype with synthetic data. No bank, payment rail or real money is connected. |
 
-| Page | What it does | Backend |
+![Transactions: a held payment, the three engines and the AI agent's call](docs/screenshots/transactions-held.jpg)
+
+---
+
+## Contents
+
+1. [The problem](#the-problem)
+2. [What Last Mile Guard does](#what-last-mile-guard-does)
+3. [Try it on the live site (2 minutes)](#try-it-on-the-live-site-2-minutes)
+4. [Screenshots](#screenshots)
+5. [Architecture and Google Cloud](#architecture-and-google-cloud)
+6. [Tech stack](#tech-stack)
+7. [Run it locally, step by step](#run-it-locally-step-by-step)
+8. [Deploy to Google Cloud](#deploy-to-google-cloud)
+9. [API](#api)
+10. [Evaluation](#evaluation)
+11. [Safety and limits](#safety-and-limits)
+12. [Repository layout](#repository-layout)
+
+---
+
+## The problem
+
+In an authorised push-payment scam the victim sends the money from their own phone. A fake bank officer, police caller or "investment adviser" tells them what to do and what to say. Every security check passes, so the bank sees a normal payment, and instant transfers settle in seconds.
+
+| Figure | What it is | Source |
 | --- | --- | --- |
-| Landing | The problem (authorised account-to-account scams), features, how it works, why it matters, **Get started** | – |
-| Dashboard | Security overview, risk distribution, actions, top signals, the fraud intelligence suite, and the detection engines (FraudShield, ScamStop, MuleNet, decision layer) with live API/Gemini status | `GET /api/health` |
-| Transactions | Analyse one account-to-account transfer and see the whole investigation on one page: overall score, a score bar per engine, ranked reasons, the analyst decision (approve / hold / escalate) with audit trail, customer, device and location context, and the receiving-account network drawn by MuleNet (this payment shown going into the beneficiary) | `POST /api/assess` |
-| Voice AI | Live call detection (browser speech recognition), transcript upload (.txt/.srt/.vtt) or paste; scam-risk score, tactics, suspicious phrases, recommended action | `POST /api/conversation` |
-| Cases | Review queue for every warning and hold, with **Run test scenario** against the real backend | `POST /api/assess` |
-| Risk Profile | One customer's overall risk score with reasons, devices, beneficiaries, locations, transaction history (filter by decision) and fraud alerts | session cases |
-| Analytics | KPIs, risk distribution, decisions, top signals, analyst feedback, risk by location, recent assessments across all transactions | session cases |
-| Scenario Lab | Scenario library with live streamed checks, a five-step guided demo and the red-team arena | `POST /api/assess/stream`, `POST /api/arena` |
-| Evidence, Architecture | Evaluation results and how the system fits together (footer links) | – |
+| **$442 bn** | lost to scams in a year across 42 countries | GASA & Feedzai, 2025 |
+| **$16 bn** | US fraud losses reported in 2025, a record | US FTC, 2026 |
+| **₹22,845 crore** | lost by Indian citizens to cyber criminals in 2024 | Ministry of Home Affairs, reply to the Lok Sabha, 2025 |
 
-Sign-in asks only for a display name (kept in this browser); there are no accounts or passwords.
+## What Last Mile Guard does
 
-## What each part does
+| Step | What happens | Who decides |
+| --- | --- | --- |
+| 1. Check the payment | **FraudShield** scores the payment against the customer's usual behaviour (amount, new payee, device, location, live call, remote-access app, 15-day history). **MuleNet** checks the receiving account (links to flagged accounts, many senders, money moved straight on). | Plain, testable rules |
+| 2. Read the words | **ScamStop** sends the customer's note to **Gemini**, which returns a fixed form: scam type, pressure, secrecy, coaching, claimed history. When the evidence is thin it writes one neutral follow-up question. | Gemini reads; rules score |
+| 3. Decide | The scores are combined: **allow** below 40, **warn** from 40, **hold** from 70. Every point has a written reason. | Rules |
+| 4. Call in the app | On a hold the customer gets an in-app notice with a reference and taps **Call fraud team**. An AI agent speaks two questions; Gemini and Voice AI read the answers and recommend. | AI recommends only |
+| 5. A person decides | The analyst sees the reasons, the call and the AI's view on **Cases**, then approves, keeps on hold or escalates. Every decision is saved with name and time. | **The analyst** |
 
-1. **FraudShield — transaction fraud:** Check amount, timing, device, location change, payee, payment frequency, and recent payment history.
-2. **ScamStop — customer manipulation:** Read the customer's note for pressure, secrecy, or coaching; ask one follow-up round when evidence is unclear.
-3. **MuleNet — receiving-account risk:** Check account links, many recent senders, and rapid onward transfers.
-4. **Risk decision and explanation:** Combine the available evidence, rank the reasons, and recommend an action. A bank would make the final payment-control decision.
+Some holds cannot be talked away: a remote-control app, a receiving account linked to a flagged one, or hidden orders in the note keep the payment on hold for a person whatever the customer says. If Gemini is unavailable the rules still decide, and a hold is never released.
 
-## Agent and decision flow
+## Try it on the live site (2 minutes)
 
-```mermaid
-flowchart TB
-    P["Customer starts payment"] --> F["FraudShield: transaction checks"]
-    P --> S["ScamStop: note, links and optional follow-up"]
-    P --> M["MuleNet: account-network checks"]
-    F --> D["Risk decision and explanation"]
-    S --> D
-    M --> D
-    D --> L["Low risk: allow"]
-    D --> W["Medium risk: warn or ask"]
-    D --> H["High risk: recommend hold and analyst review"]
-```
+1. Open **https://lastmileguard.web.app**, press **Get started** and type any name (there are no accounts or passwords).
+2. **Transactions:** pick **Bank-impersonation call** and press **Analyse transaction**. The payment is held at risk 100, with the three engine scores and ranked reasons.
+3. In the notice that appears, press **Call fraud team**. Allow the microphone and answer the AI agent's two questions, or type the answers.
+4. You are brought back to the payment with the agent's recommendation. Press **Open the case (analyst)**.
+5. **Cases:** read why the payment was stopped and what the customer said, then **Approve**, **Keep on hold** or **Escalate**. The case shows what that decision means.
 
-- **Current implementation:** One FastAPI service. FraudShield and MuleNet use explainable rules; ScamStop uses Gemini for structured message reading and question writing. Plain, testable rules choose the recommendation. Gemini never approves or holds a payment.
-- **Target architecture:** A bank supplies trusted payment and account data, then controls warnings, holds, analyst review, and payment release. The diagram shows the intended flow; it does not imply a live bank integration.
+Also worth a look: **Voice AI** (score a call transcript), **Red Team** (Gemini plays new scams and genuine customers against the guard, live), **Evidence** (measured results, misses included) and **How it's built**.
 
-## What works today
+## Screenshots
 
-- **FraudShield:** Rule-based transaction and request-supplied history scoring in `backend/risk/behaviour.py`.
-- **ScamStop:** Gemini-assisted note reading and one follow-up round; deterministic decision rules in `backend/risk/`.
-- **MuleNet:** Rule-based checks on an optional, bounded **synthetic** transfer graph in `backend/risk/network.py`.
-- **Voice AI:** `backend/risk/conversation.py` scores a call transcript with Gemini when configured, or with transparent phrase rules (OTP/PIN requests, impersonation, threats, urgency, secrecy, remote-access apps, off-platform payment) when it is not. The response always says which reader ran.
-- **API:** `POST /api/assess` returns a recommendation, score, ranked reasons, audit breakdown and execution provenance; `POST /api/assess/stream` streams each pipeline stage live; `POST /api/conversation` scores a transcript; `GET /api/health` reports service health and whether AI reading is configured.
-- **Demo:** React command centre with seven tabs (Dashboard, Transactions, Voice AI, Cases, Risk Profile, Analytics, Scenario Lab), a full per-transaction investigation (case file, three-engine evidence, customer conversation, context and MuleNet graph), analyst queue with **Run test scenario** calling the real backend, guided demo, red-team arena, Evidence and Architecture pages, and four colour themes.
-- **Evaluation:** Synthetic scenarios, Python evaluations, red-team tools, Pytest, and web unit tests.
-- **Live console extras:** a link check that reads risky-looking links as text and never opens them (`backend/risk/links.py`), the customer's warning shown in Hindi, Spanish, French, Portuguese or Arabic with the English kept as the record, and a form to describe your own scenario and watch the red agent play it.
+| | |
+| --- | --- |
+| ![Landing page](docs/screenshots/landing.jpg) <br> Landing: the problem and the research | ![Transactions](docs/screenshots/transactions-held.jpg) <br> Transactions: held, with the AI agent's call |
+| ![AI agent call](docs/screenshots/ai-agent-call.jpg) <br> Voice AI: the in-app call with the AI agent | ![Cases review](docs/screenshots/cases-review.jpg) <br> Cases: the analyst's review and decision |
+| ![Voice AI](docs/screenshots/voice-ai.jpg) <br> Voice AI: a "digital arrest" call scored | ![Red team](docs/screenshots/red-team.jpg) <br> Red Team: Gemini attacks the guard live |
 
-## Testing against public fraud patterns
+## Architecture and Google Cloud
 
-The scam cases in the live arena and the evaluation are modelled on fraud patterns described on public advice pages: the US Federal Trade Commission's consumer alerts and Australia's Scamwatch (ACCC). A careful reader (`redteam/intel/reports.py`) contacts only those named sites over https, follows each site's `robots.txt`, refuses redirects off the list, paces itself, and stops at a hard limit. It runs in Cloud Shell only and never saves page text. Gemini then writes an invented customer for each pattern, with made-up names and amounts, and each case records the page it was modelled on. The site shows that source and a link. UK Action Fraud is not used because its `robots.txt` asks automated readers to stay away. Scamwatch content is used under its Creative Commons Attribution licence.
+![Architecture](docs/architecture/architecture.png)
 
-Half of those cases are held back in a locked test set and run once. The results, including the weak ones and the faults we found and fixed in our own test data and in the message reader, are on the Evidence page. They are small samples and do not establish performance on bank data. MuleNet has unit tests and one demo scenario, but no measured evaluation yet.
+| Google Cloud service | How Last Mile Guard uses it |
+| --- | --- |
+| **Gemini on Vertex AI** (`gemini-3.5-flash-lite`) | Reads the customer's note and call answers into a fixed JSON schema, writes the follow-up and call questions, scores call transcripts, translates warnings, and plays the red team. It never approves or holds a payment. |
+| **Cloud Run** | One container serves the FastAPI API and the React app. One warm instance during judging, at most two. |
+| **Firestore** | Stores cases, analyst decisions, call results and notes. Each browser only sees its own cases, and every document is deleted after 24 hours (TTL). |
+| **Firebase Hosting** | The public address `lastmileguard.web.app`, forwarding every request to Cloud Run. |
+| **Cloud Build + Artifact Registry** | Build the container from source on each deploy. |
+| **IAM service account** | Cloud Run runs as `lmg-runtime` with two roles: Vertex AI User and Cloud Datastore User. No API keys or key files. |
+| **Cloud Logging** | Request logs only; customer text is not logged. |
 
-## Google technology
+**Process flow (one held payment, end to end):**
 
-- **Gemini via Vertex AI (implemented when configured):** Extract structured scam signals from notes and answers, draft up to two neutral questions, and translate the customer's warning. Gemini does not approve or hold payments.
-- **Firestore (implemented, switched on with `LMG_FIRESTORE=1`):** Store every case, its audit record and each analyst decision, so the review queue survives a refresh (`backend/store.py`, `GET /api/cases`, `POST /api/cases/{id}/decision`).
-- **Cloud Run (deployment included):** Serve the FastAPI API and React build in one container.
-- **Cloud Build (deployment included):** Build the container during `gcloud run deploy --source`.
-- **Cloud service account (deployment supported):** Give Cloud Run access to Vertex AI without a key file in the service.
-- **Cloud Text-to-Speech (video only):** Narrate the explainer video in `video/`. Not in the payment path.
-- **Pub/Sub (planned):** Receive authenticated payment events from a bank workflow.
-- **BigQuery (planned):** Provide governed transaction, payee, and account-link history for scoring and evaluation.
+![Process flow](docs/architecture/process-flow.png)
+
+**Use cases (who does what):**
+
+![Use-case diagram](docs/architecture/use-case.png)
 
 ## Tech stack
 
-- **Web:** React, TypeScript, Vite, Vitest (`web/`).
-- **API:** Python, FastAPI, Pydantic, Uvicorn (`backend/`).
-- **AI:** Google Gen AI Python SDK and Gemini via Vertex AI (`backend/`).
-- **Risk engine:** Explainable Python behaviour, scam, link, network, and decision rules (`backend/risk/`).
-- **Deployment:** Docker and Cloud Run source deployment (`infra/`).
-- **Video:** Remotion scenes and a Text-to-Speech script, built in Cloud Shell (`video/`).
+| Layer | Technology | Where |
+| --- | --- | --- |
+| AI | Gemini 3.5 Flash-Lite on Vertex AI, Google Gen AI Python SDK | `backend/gemini_client.py` |
+| Risk engine | Python rules: FraudShield (behaviour), MuleNet (account network), ScamStop (message evidence), decision layer | `backend/risk/` |
+| AI agent call | Verification agent: Gemini-written question, safety question, re-check | `backend/verification.py` |
+| API | Python 3.12+, FastAPI, Pydantic, Uvicorn | `backend/app.py` |
+| Storage | Firestore (in the cloud) or in-memory (local) | `backend/store.py` |
+| Web app | React 19, TypeScript, Vite | `web/` |
+| Voice | Web Speech API in the browser (speech to text and text to speech) | `web/src/lib/speech.ts` |
+| Hosting | Firebase Hosting → Cloud Run, Docker multi-stage build | `firebase.json`, `Dockerfile`, `infra/deploy.sh` |
+| Tests | pytest (286 backend tests), Vitest (303 web tests) | `backend/tests/`, `web/src/**/*.test.ts` |
+| Evaluation | Synthetic scenarios, blind test, paired rules-vs-Gemini run, red-team generator | `data/`, `eval/`, `redteam/` |
 
-## Safety and current limits
+## Run it locally, step by step
 
-- The demo uses made-up payments, customer stories, and account links. The MuleNet graph arrives in the demo request; a production bank must source it from trusted records and bind it to the authenticated destination account. MuleNet only adds risk, so a supplied graph can never clear a payment.
-- Customer text is untrusted. Model output is constrained to a schema, and scoring and action thresholds stay in testable code. Emails and card numbers are blocked before anything is sent to the model.
-- The link check reads link text only and never opens or fetches a link. Translation applies only to the warning our rules wrote, never to the customer's words, and never changes the decision.
-- A visitor's own scenario has its own limits (one a minute and a few an hour for each visitor), checks input in the browser and on the server, and never logs or returns the story text.
-- When case storage is switched on (`LMG_FIRESTORE=1`), every finished assessment is saved to the Firestore `cases` collection with its reasons and audit record, and each analyst decision is saved under it with the analyst's display name and time. Saving never changes or holds up a recommendation; if Firestore fails, the check still answers and saving pauses for a minute. Each browser sends its own random session key; cases are saved only under a hash of that key, only that browser can list them or record a decision, and every case and decision expires after 24 hours (Firestore TTL on `expires_at`). There is no bank identity integration and no live payment hold or release mechanism.
-- After a hold, the customer can verify from the Transactions page: the AI analyst calls the number they enter (Twilio, only because they asked in the app), asks two questions (one written by Gemini from the case, one coaching check), and the payment is re-checked with the spoken answers, which Gemini and Voice AI read. The same questions can be typed instead. A remote-control app, a flagged receiving account or orders to the checker keep the hold whatever is said, and if the answers cannot be read the original decision stands. Twilio requests are signature-checked; only the last four digits of the number are kept. Calls need `TWILIO_ACCOUNT_SID`, `TWILIO_AUTH_TOKEN`, `TWILIO_FROM_NUMBER` and `LMG_PUBLIC_URL`; without them the typed answers still work.
-- Gemini can be unavailable; the API then falls back to payment and network rules. Input limits, request limits and a Gemini call budget protect the demo.
-- A calm, coached victim paying something ordinary can still get through. Synthetic and red-team results do not establish performance on real bank data.
+### Prerequisites
 
-## Next priorities
+| Tool | Version | Check with |
+| --- | --- | --- |
+| Git | any | `git --version` |
+| Python | 3.12 or newer | `python --version` |
+| Node.js | 20 or newer (LTS) | `node --version` |
+| Gemini API key | optional, from [Google AI Studio](https://aistudio.google.com/apikey) | – |
 
-1. Bind each payment to trusted bank transaction and account-network data; replace request-supplied evidence in the production path.
-2. Validate and calibrate combined scoring on held-back fraud, scam, mule, and legitimate cases.
-3. Add authenticated analyst review, durable case and audit storage, and bank-controlled hold and release.
-4. Add Pub/Sub ingestion, governed BigQuery lookups, monitoring, and automated CI checks.
+Without a Gemini key the app still runs end to end: message reading and Voice AI use transparent phrase rules instead, and the screen says so.
 
-## Live backend-verified analyst demonstration
+### 1. Get the code
 
-For an exact local test walkthrough, synthetic scenario selection, Gemini cache/fallback labels, and an independent PowerShell API test, see [Analyst backend demo](docs/ANALYST_DEMO.md). The backend returns a request ID and timing for every payment assessment, which the application displays next to the scored evidence.
+```bash
+git clone https://github.com/05lakb/scamguard.git
+cd scamguard
+```
 
-## Run and test locally
+Run every command below from this folder (the one that contains `backend/` and `web/`) unless a step says `cd web`.
 
-You need **Python 3.12+** and **Node.js 20+ (LTS)**. A Gemini key is optional: without one, message reading and Voice AI fall back to transparent rules and the screen says so.
-
-Run every command from the repository root (the folder that contains `backend/` and `web/`), unless a step says `cd web`.
-
-### 1. Install
+### 2. Install the backend
 
 **Windows (PowerShell)**
 
 ```powershell
+python -m venv .venv
+.\.venv\Scripts\Activate.ps1
 python -m pip install -r backend\requirements.txt
-cd web
-npm.cmd ci
-cd ..
 ```
-
-PowerShell blocks `npm` by default; `npm.cmd` runs the same tool without changing security settings.
 
 **macOS / Linux**
 
 ```bash
-python3 -m pip install -r backend/requirements.txt
-cd web && npm ci && cd ..
+python3 -m venv .venv
+source .venv/bin/activate
+python -m pip install -r backend/requirements.txt
 ```
 
-Optional: copy `.env.example` to `.env` and set `GEMINI_API_KEY` to enable Gemini reading. Never commit `.env`.
+### 3. Settings
 
-### 2. Run the automated tests
-
-| Check | Windows | macOS / Linux | Expected |
-| --- | --- | --- | --- |
-| Backend | `python -m pytest backend\tests` | `python3 -m pytest backend/tests` | all tests pass (211 at the time of writing) |
-| Web build (type check + bundle) | `cd web; npm.cmd run build` | `cd web && npm run build` | build completes with no errors |
-| Web unit tests | `cd web; npm.cmd test` | `cd web && npm test` | all Vitest suites pass |
-
-No test calls the internet or Gemini; the backend tests use fake readers.
-
-### 3. Start the app
-
-Use two terminals, both starting at the repository root.
+Copy the example settings file:
 
 ```bash
-# Terminal 1 - API on http://localhost:8080
+cp .env.example .env          # Windows PowerShell: Copy-Item .env.example .env
+```
+
+`.env` already contains `LMG_STORE=memory`, which keeps cases and analyst decisions in memory while the API runs. To use Gemini, paste your key after `GEMINI_API_KEY=`. Never commit `.env` (git ignores it).
+
+### 4. Install the web app
+
+```bash
+cd web
+npm ci                        # Windows PowerShell: npm.cmd ci
+cd ..
+```
+
+### 5. Start it (two terminals)
+
+**Terminal 1, the API on http://localhost:8080** (activate the virtual environment first, as in step 2):
+
+```bash
 python -m uvicorn backend.app:app --reload --port 8080
 ```
 
+**Terminal 2, the website on http://localhost:5173:**
+
 ```bash
-# Terminal 2 - website on http://localhost:5173
 cd web
-npm run dev        # Windows PowerShell: npm.cmd run dev
+npm run dev                   # Windows PowerShell: npm.cmd run dev
 ```
 
-Open http://localhost:5173. The website forwards `/api` calls to the API automatically.
+Open **http://localhost:5173**. The website forwards `/api` calls to the API on port 8080. Check the API on its own at http://localhost:8080/api/health; it returns `{"ok": true, "ai_configured": ..., "storage": "memory"}`.
 
-### 4. Try it in five minutes
+Then follow [Try it](#try-it-on-the-live-site-2-minutes) from step 1.
 
-1. Press **Get started** and enter any name (there are no accounts; the name only personalises the workspace).
-2. **Transactions:** choose *Bank-impersonation call* and press **Analyse transaction**. Expect a hold, a high risk score and ranked reasons. Scroll down to see the whole investigation for that payment on the same page: the analyst decision (approve, hold or escalate), customer, device and location context, and the receiving-account network scored by MuleNet.
-3. Choose *Everyday payment* and analyse again. Expect *allow* with no risk signals.
-4. **Voice AI:** choose *Bank OTP call* and press **Analyse for phishing**. Expect high risk, the tactics found and the suspicious sentences. Live microphone detection works in Chrome and Edge.
-5. **Cases:** every warning and hold from step 2 is waiting here. Open one and record a decision, or use **Run test scenario** to send a library scenario to the backend.
-6. **Risk Profile:** the overall risk score, why it is that high, and every device, beneficiary and location the customer used.
-7. **Analytics:** totals, top signals, analyst feedback and risk by location update from the transactions you analysed.
-8. **Scenario Lab:** pick a sample case and press **Check this payment**, or press **Guided demo** for the full five-step story. The step card sits above the panels and stays under the top bar as you scroll.
-9. Use the palette button in the top bar to switch between the four colour themes.
+### Or: one server, like production
 
-All data is synthetic. No money moves, and a person confirms every hold.
+Build the web app once; the API then serves it on the same port:
+
+```bash
+cd web && npm run build && cd ..          # Windows: cd web; npm.cmd run build; cd ..
+python -m uvicorn backend.app:app --port 8080
+```
+
+Open **http://localhost:8080**.
+
+### 6. Run the tests
+
+| Check | Command | Expected |
+| --- | --- | --- |
+| Backend | `python -m pytest backend/tests -q` | 286 passed |
+| Web type check and build | `cd web` then `npm run build` | build completes with no errors |
+| Web unit tests | `cd web` then `npm test` | 303 passed |
+
+No test calls the internet or Gemini; the backend tests use fake readers.
 
 ### Troubleshooting
 
 | Problem | Fix |
 | --- | --- |
-| `npm ... cannot be loaded because running scripts is disabled` | Use `npm.cmd` instead of `npm` in PowerShell. |
-| `npm ci` fails with `EPERM ... unlink` | Stop `npm run dev` (Ctrl+C) and close editors that have `web/` open, then run `npm ci` again. |
-| `'tsc' / 'vitest' is not recognized` | `npm ci` did not finish. Run it again from `web/`. |
-| `npm run build` builds a different project | You ran it from the wrong folder. Run it from `web/`. |
-| `No module named pytest` or `httpx` | Re-run `python -m pip install -r backend/requirements.txt`. |
-| `pytest` finds no tests | Run it from the repository root, not from a parent folder. |
-| Website shows "API offline" | Start the API (terminal 1) on port 8080. |
-| Voice AI says "phrase rules only" | Expected without a Gemini key. Add `GEMINI_API_KEY` to `.env` and restart the API. |
+| PowerShell: `running scripts is disabled` for `npm` or `Activate.ps1` | Use `npm.cmd` instead of `npm`. For the virtual environment run `Set-ExecutionPolicy -Scope Process Bypass` in that window, or call `.venv\Scripts\python.exe` directly. |
+| `No module named fastapi` / `pytest` | The virtual environment is not active. Activate it (step 2) or re-run the `pip install`. |
+| Website says **API offline** | Start terminal 1 (port 8080) and refresh. |
+| Cases page stays empty after a refresh | Make sure `.env` contains `LMG_STORE=memory`, then restart the API. |
+| Voice AI says **phrase rules only** | Expected without a key. Add `GEMINI_API_KEY` to `.env` and restart the API. |
+| Microphone does not work | Use Chrome or Edge and allow the microphone, or type the answers instead. |
+| `npm ci` fails with `EPERM` | Stop `npm run dev` and close editors that have `web/` open, then run it again. |
 
-Our own team runs installs, cloud commands and server tests in Cloud Shell, not on laptops.
+## Deploy to Google Cloud
 
-## Deploy the synthetic demo
+From Google Cloud Shell, in the repository folder:
 
-- Configure the Google Cloud project, required APIs, and the `lmg-runtime` service account for Vertex AI.
-- Run `PROJECT_ID=your-project-id bash infra/deploy.sh`.
-- Review the script's public access, region, resource caps, and cost settings before deployment. This is a public synthetic-data demo, not a bank production system.
-- **Public address (Firebase Hosting):** `firebase.json` sends every request on `https://lastmileguard.web.app` to the `last-mile-guard` Cloud Run service in `us-central1`. Hosting serves no files of its own. Deploy it from Cloud Shell with `firebase deploy --only hosting`.
+```bash
+# Cloud Run with Gemini on Vertex AI and Firestore case storage
+PROJECT_ID=your-project-id FIRESTORE=1 MIN_INSTANCES=1 bash infra/deploy.sh
+
+# Firebase Hosting in front of Cloud Run (firebase.json and .firebaserc are in the repo)
+firebase deploy --only hosting
+```
+
+The script needs the Vertex AI, Cloud Run, Cloud Build and Firestore APIs enabled, a Firestore database in `us-central1`, and a service account `lmg-runtime` with the Vertex AI User and Cloud Datastore User roles. It sets one warm instance (at most two), 1 CPU and 512 MiB, and uses no API keys. Set `MIN_INSTANCES=0` after judging to stop idle charges.
+
+## API
+
+| Method and path | What it does |
+| --- | --- |
+| `GET /api/health` | Service status, whether Gemini is configured, and which case store is active |
+| `POST /api/assess` | Assess one payment: action, score, ranked reasons and audit breakdown |
+| `POST /api/assess/stream` | The same assessment, streamed stage by stage |
+| `POST /api/conversation` | Score a call transcript (Voice AI) |
+| `GET /api/cases`, `GET /api/cases/{id}` | This browser's cases |
+| `POST /api/cases/{id}/decision` | Save the analyst's decision |
+| `POST /api/cases/{id}/notes` | Add an analyst note |
+| `POST /api/cases/{id}/verification`, `.../verification/answers` | Start the AI agent call and send the customer's answers |
+| `POST /api/callback-brief` | Prepare the analyst's call-back questions |
+| `POST /api/arena`, `POST /api/custom` | Red team: generated scenarios, or the visitor's own scenario |
+
+Cases belong to the browser that created them (a random session key sent in the `X-LMG-Session` header). Input sizes, request rates and Gemini calls are capped.
+
+## Evaluation
+
+All numbers are on synthetic data and are shown, with the raw files, on the app's **Evidence** page.
+
+| Test | Scams flagged | Genuine customers stopped |
+| --- | --- | --- |
+| Payment rules alone, 200 cases we built | 70% | 20% |
+| Full system, blind test of 50 cases written by someone else | 84% | 12% |
+| Full system, 4 fresh runs of 40 cases with a Gemini-played customer | 85% to 92% | 0% to 14% |
+
+- Latest blind run: **38 of 40** behaved as expected. Coached victims are the hardest case: 3 of 5 caught.
+- Paired run of 50 cases, rules versus rules + Gemini: median **7.1 s** for a fresh Gemini reading (95th percentile 16.8 s), **0** API errors or fallbacks.
+- Method and reproduction: [docs/PAIRED_EVALUATION.md](docs/PAIRED_EVALUATION.md); recorded results: [docs/EVALUATION_RESULTS.md](docs/EVALUATION_RESULTS.md).
+
+Small synthetic samples show direction, not a bank-grade rate.
+
+## Safety and limits
+
+- **Gemini reads, rules decide, a person releases.** Model output is constrained to a schema; thresholds and actions live in tested code.
+- Customer text is treated as untrusted. Emails and card numbers are blocked before anything is sent to the model. Links are read as text and never opened.
+- Cases are private to the browser that created them and deleted after 24 hours.
+- No real bank data, payment rail or money. The receiving-account network comes with the demo request; a bank would supply it from its own records.
+- A phone-call path through Twilio is built and signature-checked but switched off; the in-app call is used instead.
+- A calm, well-coached victim paying something ordinary can still get through.
 
 ## Repository layout
 
 | Path | Contents |
 | --- | --- |
-| `backend/` | API, Gemini client, risk engine, and backend tests |
-| `web/` | The React demo and web tests |
-| `data/` | Synthetic scenarios, the scam-pattern guide, and the dev half of the public-pattern cases |
-| `eval/` | Behaviour, message, flow, blind, and parity evaluations |
-| `redteam/` | Synthetic attacker, customer, reader of public pages, and reporting tools |
-| `infra/` | Cloud Run deployment and result-export scripts (`save_results.sh` checks files for secrets before saving) |
-| `docs/` | Pitch, colour palette, and design assets |
-| `video/` | The explainer video: narration, a Text-to-Speech script and animated scenes, built in Cloud Shell |
-
-`frontend/` is a placeholder directory; the active interface is in `web/`.
+| `backend/` | FastAPI app, Gemini client, risk engine (`risk/`), verification agent, case store, tests |
+| `web/` | React + TypeScript web app and its tests |
+| `data/` | Synthetic scenarios, scam-pattern guide and blind-test cases |
+| `eval/` | Evaluation runners and evidence exporters |
+| `redteam/` | Red-team generator, simulated customer and public-advice pattern tools |
+| `infra/` | Cloud Run deploy script and helper scripts |
+| `hosting/` | Firebase Hosting public folder (empty; Hosting forwards to Cloud Run) |
+| `docs/` | Architecture diagrams, screenshots, evaluation notes, branding, demo video |
+| `video/` | Source of the explainer video (Remotion scenes, narration script) |

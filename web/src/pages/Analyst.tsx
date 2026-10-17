@@ -5,7 +5,7 @@ import { CallbackBrief } from "../components/CallbackBrief";
 import { CallNotes } from "../components/CallNotes";
 import { JourneySteps } from "../components/JourneySteps";
 import type { FinishedCase, Scenario } from "./Console";
-import { EvidenceBars } from "../components/EvidenceBars";
+import { ReasonsByEngine } from "../components/ReasonsByEngine";
 import { Gauge } from "../components/Gauge";
 import { Icon, type IconName } from "../components/Icon";
 import { findByReference, needsReview, referenceOf, sourceLabel, type CaseItem, type CaseStatus } from "../lib/cases";
@@ -30,6 +30,16 @@ const STATUS_TEXT: Record<CaseStatus, string> = {
 };
 
 const SUGGESTION = { allow: "release the payment", warn: "release it with a warning", hold: "keep it on hold" } as const;
+
+// What happens after the analyst decides. Simulated: nothing reaches a bank.
+const OUTCOME: Record<Exclude<CaseStatus, "open">, { short: string; title: string; text: string; tone: "allow" | "hold"; icon: IconName }> = {
+  approved: { short: "Approved", tone: "allow", icon: "allow", title: "Payment released (simulated)",
+    text: "In a bank, the payment would now go to the payee and the customer would be told it went through. Your decision is saved with your name and the time." },
+  held: { short: "Kept on hold", tone: "hold", icon: "hold", title: "Payment stays blocked",
+    text: "The money stays in the customer's account. The customer is told why, and how to report the scam: helpline 1930 or cybercrime.gov.in." },
+  escalated: { short: "Escalated", tone: "hold", icon: "flag", title: "Sent to fraud investigations",
+    text: "The payment stays blocked while investigators look into it, and the receiving account can be reported as a possible mule account." },
+};
 
 function partsAsBars(item: CaseItem): Contribution[] {
   if (item.audit) return contributions({ audit: item.audit });
@@ -129,6 +139,7 @@ export function Analyst({ cases, decide, scenarios, onTestCase, initialCaseId, f
     return item.action === filter;
   });
   const selected = cases.find((item) => item.id === openId) ?? null;
+  const nextOpen = cases.find((item) => item.id !== openId && needsReview(item)) ?? null;
   const count = (test: (item: CaseItem) => boolean) => cases.filter(test).length;
   const filterCount = (id: Filter) => (id === "all" ? cases.length : id === "review" ? count(needsReview) : count((item) => item.action === id));
 
@@ -206,7 +217,7 @@ export function Analyst({ cases, decide, scenarios, onTestCase, initialCaseId, f
                     <span className={`dot ${item.action}`} aria-hidden="true" />
                     <span className="case-main">
                       <strong>{item.title}</strong>
-                      <span className="muted">{item.amount.toLocaleString()} {item.currency} · {ACTION_LABEL[item.action]}</span>
+                      <span className="muted">{item.amount.toLocaleString()} {item.currency} · {item.status === "open" ? ACTION_LABEL[item.action] : `Analyst: ${OUTCOME[item.status].short}`}</span>
                     </span>
                   </button>
                 </li>
@@ -223,14 +234,19 @@ export function Analyst({ cases, decide, scenarios, onTestCase, initialCaseId, f
               <Gauge score={selected.score} action={selected.action} />
               <div>
                 <h3 className="case-title">{selected.title}</h3>
-                <div className={`status ${selected.action}`}><Icon name={selected.action as IconName} size={18} /> {ACTION_LABEL[selected.action]}</div>
+                <div className="status-row">
+                  <div className={`status ${selected.action}`}><Icon name={selected.action as IconName} size={18} /> Engine: {ACTION_LABEL[selected.action]}</div>
+                  {selected.status !== "open" && (
+                    <div className={`status ${OUTCOME[selected.status].tone}`}><Icon name={OUTCOME[selected.status].icon} size={18} /> Analyst: {OUTCOME[selected.status].short}</div>
+                  )}
+                </div>
                 <p className="muted verdict-note">{selected.amount.toLocaleString()} {selected.currency} to {selected.payee}, {SEGMENT_LABEL(selected.segment)}
                   {(selected.device || selected.location) ? ` · ${[selected.device, selected.location].filter(Boolean).join(" · ")}` : ""}</p>
               </div>
             </div>
 
-            {selected.action !== "allow" && (
-              <div className={`decision-bar ${selected.status}`}>
+            {selected.action !== "allow" && selected.status === "open" && (
+              <div className="decision-bar open">
                 <div>
                   <span className="kicker">AI suggestion</span>
                   <strong>
@@ -238,29 +254,37 @@ export function Analyst({ cases, decide, scenarios, onTestCase, initialCaseId, f
                       ? `After the call, the AI agent suggests you ${SUGGESTION[selected.verification.outcome.action]}. You decide.`
                       : `The engine recommends: ${ACTION_LABEL[selected.action].toLowerCase()}. You decide.`}
                   </strong>
-                  <span className="muted small">Status: {STATUS_TEXT[selected.status]}</span>
                 </div>
-                {selected.status === "open" ? (
-                  <div className="row">
-                    <button className="btn small primary" onClick={() => decide(selected.id, "approved")}><Icon name="allow" size={14} /> Approve payment</button>
-                    <button className="btn small" onClick={() => decide(selected.id, "held")}><Icon name="hold" size={14} /> Keep on hold</button>
-                    <button className="btn small" onClick={() => decide(selected.id, "escalated")}><Icon name="flag" size={14} /> Escalate</button>
-                  </div>
-                ) : <span className={`pill ${selected.status === "approved" ? "allow" : "hold"}`}>{STATUS_TEXT[selected.status]}</span>}
+                <div className="row">
+                  <button className="btn small primary" onClick={() => decide(selected.id, "approved")}><Icon name="allow" size={14} /> Approve payment</button>
+                  <button className="btn small" onClick={() => decide(selected.id, "held")}><Icon name="hold" size={14} /> Keep on hold</button>
+                  <button className="btn small" onClick={() => decide(selected.id, "escalated")}><Icon name="flag" size={14} /> Escalate</button>
+                </div>
+              </div>
+            )}
+            {selected.status !== "open" && (
+              <div className={`decision-outcome ${OUTCOME[selected.status].tone}`} role="status">
+                <Icon name={OUTCOME[selected.status].icon} size={20} />
+                <div>
+                  <strong>{OUTCOME[selected.status].title}</strong>
+                  <p>{OUTCOME[selected.status].text}</p>
+                </div>
+                {nextOpen && <button className="btn small" onClick={() => setOpenId(nextOpen.id)}>Next case to review <Icon name="arrow" size={14} /></button>}
               </div>
             )}
 
             <div className="review-section">
               <h3 className="review-heading"><span className="review-no">1</span> Why the payment was stopped</h3>
-              <EvidenceBars items={partsAsBars(selected)} />
-              {!selected.audit && selected.reasons.length > 0 && (
+              <blockquote className="customer-note">
+                <span className="muted small">Customer's note</span>
+                {selected.message ?? <em className="muted">No note written</em>}
+                {selected.questions && <><span className="muted small">Guard asked</span>{selected.questions.join(" ")}</>}
+                {selected.answer !== undefined && <><span className="muted small">Customer answered</span>{selected.answer || <em className="muted">Declined to answer</em>}</>}
+              </blockquote>
+              <ReasonsByEngine items={partsAsBars(selected)} />
+              {!selected.audit && !selected.parts && selected.reasons.length > 0 && (
                 <ul className="reasons">{selected.reasons.map((reason) => <li key={reason}>{reason}</li>)}</ul>
               )}
-              <div className="thread compact">
-                <div className="bubble customer"><span className="who">Customer's note</span>{selected.message ?? <em className="muted">No note written</em>}</div>
-                {selected.questions && <div className="bubble guard"><span className="who">Guard asked</span>{selected.questions.join(" ")}</div>}
-                {selected.answer !== undefined && <div className="bubble customer"><span className="who">Customer</span>{selected.answer || <em className="muted">Declined to answer</em>}</div>}
-              </div>
             </div>
 
             {selected.action !== "allow" && (

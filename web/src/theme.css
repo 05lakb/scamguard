@@ -2568,3 +2568,29 @@ input, select, textarea {
 .prove-card em { display: block; margin-top: 6px; color: var(--accent); font-style: normal; font-size: 0.8rem; font-weight: 600; }
 .prove-icon { flex: none; display: inline-grid; place-items: center; width: 34px; height: 34px; border-radius: 10px; background: var(--accent-soft); color: var(--accent); }
 @media (max-width: 980px) { .prove-strip { grid-template-columns: 1fr; } }
+
+/* Cases review: why the payment was stopped, grouped by engine. */
+.customer-note { display: grid; gap: 4px; margin: 0 0 14px; padding: 12px 14px; border-left: 3px solid var(--line-strong); border-radius: 0 10px 10px 0; background: var(--surface-2); font-size: 0.92rem; }
+.customer-note .small { margin-top: 4px; text-transform: uppercase; letter-spacing: 0.05em; font-size: 0.7rem; }
+.engine-reasons { display: grid; grid-template-columns: repeat(auto-fit, minmax(230px, 1fr)); gap: 12px; }
+.engine-reason { padding: 12px 14px; border: 1px solid var(--line); border-radius: 12px; background: var(--surface); }
+.engine-reason header { display: flex; align-items: center; gap: 10px; margin-bottom: 8px; }
+.engine-reason header strong { display: block; font-size: 0.9rem; }
+.engine-reason header small { display: block; color: var(--muted); font-size: 0.75rem; }
+.engine-reason header b { margin-left: auto; font-family: var(--mono); font-size: 1rem; color: var(--hold); }
+.engine-reason-icon { display: inline-grid; place-items: center; width: 30px; height: 30px; border-radius: 9px; background: var(--accent-soft); color: var(--accent); flex: none; }
+.engine-reason ul { list-style: none; margin: 0; padding: 0; display: grid; gap: 4px; }
+.engine-reason li { display: flex; justify-content: space-between; gap: 10px; font-size: 0.85rem; }
+.engine-reason li em { font-style: normal; font-family: var(--mono); color: var(--muted); }
+.engine-reason.message { border-color: color-mix(in srgb, var(--hold) 40%, var(--line)); }
+.engine-lowered { display: flex; align-items: center; gap: 6px; margin: 10px 0 0; color: var(--allow); }
+
+/* Cases review: the analyst's decision and what happens next. */
+.status-row { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+.decision-outcome { display: flex; flex-wrap: wrap; align-items: center; gap: 12px; margin: 0 0 18px; padding: 14px 16px; border-radius: 12px; border: 1px solid var(--line); }
+.decision-outcome > div { flex: 1 1 320px; }
+.decision-outcome p { margin: 2px 0 0; color: var(--muted); font-size: 0.88rem; }
+.decision-outcome.allow { background: var(--allow-bg); border-color: var(--allow); color: var(--ink); }
+.decision-outcome.allow > svg { color: var(--allow); }
+.decision-outcome.hold { background: var(--hold-bg); border-color: var(--hold); }
+.decision-outcome.hold > svg { color: var(--hold); }

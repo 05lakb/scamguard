@@ -2717,3 +2717,65 @@ input, select, textarea {
 .score-band { margin-left: auto; padding: 4px 10px; border-radius: 999px; background: var(--hold-bg); color: var(--hold); font-size: 0.78rem; font-weight: 700; }
 .score-band.warn { background: var(--warn-bg); color: var(--warn); }
 .score-band.allow { background: var(--allow-bg); color: var(--allow); }
+
+/* ---------- landing: number bands, the scam-versus-answer list and the timeline (no boxes) ---------- */
+.stat-band { display: grid; grid-template-columns: 180px minmax(0, 1fr); gap: 20px; align-items: start; margin-top: 30px; padding-top: 22px; border-top: 1px solid var(--line); }
+.stat-band:not(:has(.stat-band-label)) { grid-template-columns: minmax(0, 1fr); }
+.stat-band-label { padding-top: 10px; color: var(--muted); font-size: 0.78rem; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase; }
+.stat-band-row { display: grid; }
+.stat { display: grid; align-content: start; gap: 6px; padding: 0 24px; border-left: 1px solid var(--line); }
+.stat:first-child { padding-left: 0; border-left: 0; }
+.stat strong { font-size: clamp(1.8rem, 2.6vw, 2.6rem); line-height: 1.05; font-weight: 800; letter-spacing: -0.02em; }
+.stat span { color: var(--ink); font-size: 0.95rem; line-height: 1.45; }
+.stat a, .stat small { color: var(--muted); font-size: 0.74rem; text-decoration: underline; text-underline-offset: 3px; }
+
+.versus { margin-top: 28px; border-top: 1px solid var(--line); }
+.versus-row { display: grid; grid-template-columns: minmax(0, 1fr) 40px minmax(0, 1fr); align-items: center; gap: 12px; padding: 18px 0; border-bottom: 1px solid var(--line); }
+.versus-head { padding: 12px 0; color: var(--muted); font-size: 0.78rem; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase; }
+.versus-scam, .versus-answer { display: flex; align-items: flex-start; gap: 10px; font-size: 1rem; line-height: 1.45; }
+.versus-scam { color: var(--muted); }
+.versus-scam svg { flex: none; margin-top: 3px; color: var(--hold); }
+.versus-answer { color: var(--ink); font-weight: 600; }
+.versus-answer svg { flex: none; margin-top: 3px; color: var(--allow); }
+.versus-arrow { display: grid; place-items: center; color: var(--accent); }
+
+.timeline { list-style: none; display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); margin: 34px 0 0; padding: 0; position: relative; }
+.timeline::before { content: ""; position: absolute; top: 19px; left: 20px; right: 20px; height: 2px; background: linear-gradient(90deg, var(--accent), var(--line)); }
+.timeline li { position: relative; display: grid; gap: 6px; padding-right: 18px; }
+.timeline-no { display: grid; place-items: center; width: 40px; height: 40px; margin-bottom: 8px; border-radius: 50%; background: var(--accent); color: var(--accent-ink); font-weight: 800; position: relative; }
+.timeline strong { font-size: 1.02rem; }
+.timeline span:not(.timeline-no) { color: var(--muted); font-size: 0.9rem; line-height: 1.45; }
+
+@media (max-width: 900px) {
+  .stat-band { grid-template-columns: minmax(0, 1fr); gap: 12px; }
+  .stat-band-row { grid-template-columns: repeat(2, minmax(0, 1fr)) !important; gap: 20px 0; }
+  .stat:nth-child(odd) { padding-left: 0; border-left: 0; }
+  .versus-row { grid-template-columns: minmax(0, 1fr); gap: 6px; }
+  .versus-head span:last-child, .versus-arrow { display: none; }
+  .timeline { grid-template-columns: minmax(0, 1fr); gap: 18px; }
+  .timeline::before { top: 20px; bottom: 20px; left: 19px; right: auto; width: 2px; height: auto; background: var(--line); }
+  .timeline li { grid-template-columns: 40px minmax(0, 1fr); column-gap: 14px; padding-right: 0; }
+  .timeline-no { grid-row: span 2; margin: 0; }
+}
+.stat-band .stat { background: none; border-radius: 0; box-shadow: none; padding-top: 0; padding-bottom: 0; min-height: 0; }
+.stat-band .stat:first-child { padding-left: 0; }
+
+/* ---------- landing hero: the example as a mini version of the real flow ---------- */
+.mini-flow { display: grid; gap: 14px; }
+.mini-steps { list-style: none; margin: 0; padding: 0; display: grid; gap: 0; position: relative; }
+.mini-steps li { display: grid; grid-template-columns: 28px minmax(0, 1fr); gap: 12px; padding: 10px 0; position: relative; }
+.mini-steps li:not(:last-child)::before { content: ""; position: absolute; left: 13px; top: 38px; bottom: -10px; width: 2px; background: var(--line); }
+.mini-no { display: grid; place-items: center; width: 28px; height: 28px; border-radius: 50%; background: var(--surface-2); border: 1px solid var(--line-strong); font-size: 0.78rem; font-weight: 800; color: var(--muted); position: relative; z-index: 1; }
+.mini-no.hold { background: var(--hold); border-color: transparent; color: #fff; }
+.mini-steps strong { font-size: 0.95rem; }
+.mini-steps q { display: block; margin-top: 6px; color: var(--muted); font-size: 0.84rem; line-height: 1.45; font-style: italic; quotes: "\201C" "\201D"; }
+.mini-checks { display: grid; gap: 10px; }
+.mini-check { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 4px 10px; align-items: baseline; }
+.mini-check small { color: var(--muted); font-size: 0.74rem; }
+.mini-check strong { font-size: 0.84rem; }
+.mini-check .mono { font-weight: 800; font-size: 0.9rem; }
+.mini-check .dist-track { grid-column: 1 / -1; height: 6px; margin: 0; }
+.mini-verdict { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; padding-top: 2px; }
+.mini-notice { display: grid; gap: 6px; padding: 10px 12px; border: 1px solid var(--line); border-radius: 10px; background: var(--surface-2); }
+.mini-notice > span:first-child { display: inline-flex; align-items: center; gap: 6px; }
+.btn.tiny { justify-self: start; padding: 4px 10px; min-height: 0; font-size: 0.74rem; pointer-events: none; }

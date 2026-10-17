@@ -152,6 +152,12 @@ async function sendAnswers(page) {
 }
 
 async function openCase(page) {
+  // After the answers are checked, the call page offers a way back to the payment (and returns by itself after a few
+  // seconds). Go back at once if it is still there, then open the case from the payment page.
+  const back = page.getByRole("button", { name: /Back to the payment/ }).first();
+  await back.waitFor({ timeout: 4000 }).catch(() => {});
+  if (await back.isVisible().catch(() => false)) await click(page, back);
+  await sleep(700);
   await click(page, page.getByRole("button", { name: /Open the case|case for the analyst|Open case/i }).first());
   await sleep(1200);
 }
@@ -208,16 +214,20 @@ async function recordVideo(browser) {
   const s4 = time.now();
   marks.scene4.start = s4;
   log("scene4 starts at", s4.toFixed(2), "s, planned length", L4.toFixed(1), "s");
-  await time.until(s4 + 0.12 * L4);
+  const note = (what) => log("scene4:", what, "at", (time.now() - s4).toFixed(1), "s into the scene");
+  await time.until(s4 + 0.10 * L4);
   await callFraudTeam(page);
-  await time.until(s4 + 0.30 * L4);
+  note("call panel and typing boxes ready");
   await typeAnswers(page);
-  await time.until(s4 + 0.44 * L4);
+  note("answers typed");
   await sendAnswers(page);
-  await time.until(s4 + 0.66 * L4);
+  note("answers checked");
   await openCase(page);
-  await time.until(s4 + 0.84 * L4);
+  note("case opened");
+  await time.until(s4 + 0.78 * L4);
   await decide(page).catch((error) => log("decision step skipped:", error.message.split("\n")[0]));
+  note("decision made");
+  await sleep(1800); // a short tail so the decision stays on screen
   await time.until(s4 + L4);
   marks.scene4.end = time.now();
   log("scene4 ended at", time.now().toFixed(2), "s (late by", Math.max(0, time.now() - (s4 + L4)).toFixed(1), "s)");

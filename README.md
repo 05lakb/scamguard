@@ -11,8 +11,6 @@ Built for the **Google Cloud AI Builder Cup JAPAC 2026**, BFSI track (Intelligen
 | Source code | https://github.com/05lakb/scamguard |
 | Stage | Working prototype with synthetic data. No bank, payment rail or real money is connected. |
 
-![Transactions: a held payment, the three engines and the AI agent's call](docs/screenshots/transactions-held.jpg)
-
 ---
 
 ## Contents
@@ -20,15 +18,14 @@ Built for the **Google Cloud AI Builder Cup JAPAC 2026**, BFSI track (Intelligen
 1. [The problem](#the-problem)
 2. [What Last Mile Guard does](#what-last-mile-guard-does)
 3. [Try it on the live site (2 minutes)](#try-it-on-the-live-site-2-minutes)
-4. [Screenshots](#screenshots)
-5. [Architecture and Google Cloud](#architecture-and-google-cloud)
-6. [Tech stack](#tech-stack)
-7. [Run it locally, step by step](#run-it-locally-step-by-step)
-8. [Deploy to Google Cloud](#deploy-to-google-cloud)
-9. [API](#api)
-10. [Evaluation](#evaluation)
-11. [Safety and limits](#safety-and-limits)
-12. [Repository layout](#repository-layout)
+4. [Architecture and Google Cloud](#architecture-and-google-cloud)
+5. [Tech stack](#tech-stack)
+6. [Run it locally, step by step](#run-it-locally-step-by-step)
+7. [Deploy to Google Cloud](#deploy-to-google-cloud)
+8. [API](#api)
+9. [Evaluation](#evaluation)
+10. [Safety and limits](#safety-and-limits)
+11. [Repository layout](#repository-layout)
 
 ---
 
@@ -63,14 +60,6 @@ Some holds cannot be talked away: a remote-control app, a receiving account link
 5. **Cases:** read why the payment was stopped and what the customer said, then **Approve**, **Keep on hold** or **Escalate**. The case shows what that decision means.
 
 Also worth a look: **Voice AI** (score a call transcript), **Red Team** (Gemini plays new scams and genuine customers against the guard, live), **Evidence** (measured results, misses included) and **How it's built**.
-
-## Screenshots
-
-| | |
-| --- | --- |
-| ![Landing page](docs/screenshots/landing.jpg) <br> Landing: the problem and the research | ![Transactions](docs/screenshots/transactions-held.jpg) <br> Transactions: held, with the AI agent's call |
-| ![AI agent call](docs/screenshots/ai-agent-call.jpg) <br> Voice AI: the in-app call with the AI agent | ![Cases review](docs/screenshots/cases-review.jpg) <br> Cases: the analyst's review and decision |
-| ![Voice AI](docs/screenshots/voice-ai.jpg) <br> Voice AI: a "digital arrest" call scored | ![Red team](docs/screenshots/red-team.jpg) <br> Red Team: Gemini attacks the guard live |
 
 ## Architecture and Google Cloud
 
@@ -286,5 +275,5 @@ Small synthetic samples show direction, not a bank-grade rate.
 | `redteam/` | Red-team generator, simulated customer and public-advice pattern tools |
 | `infra/` | Cloud Run deploy script and helper scripts |
 | `hosting/` | Firebase Hosting public folder (empty; Hosting forwards to Cloud Run) |
-| `docs/` | Architecture diagrams, screenshots, evaluation notes, branding, demo video |
+| `docs/` | Architecture diagrams, evaluation notes, branding, demo video |
 | `video/` | Source of the explainer video (Remotion scenes, narration script) |

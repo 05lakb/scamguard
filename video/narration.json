@@ -18,7 +18,7 @@
     {
       "id": "scene4",
       "kind": "screen",
-      "text": "The customer sees a hold notice with a reference, and taps Call fraud team inside the app, so it cannot be a scammer's call. An AI agent asks two questions about this payment. Here the answers are typed. Gemini and Voice AI read them for coaching and secrecy, and the case goes to the analyst, who decides. Only a person can release a held payment."
+      "text": "The customer sees a hold notice with a reference, and taps Call fraud team inside the app, so it cannot be a scammer's call. An AI agent asks two questions about this payment. Here the answers are typed. Gemini and Voice AI read them for coaching, secrecy and someone on the line, and recommend keeping the payment on hold. The case moves to the analyst, with the reasons, the call and the AI view in one place. The analyst keeps it on hold. Only a person can release a held payment."
     },
     {
       "id": "scene5",

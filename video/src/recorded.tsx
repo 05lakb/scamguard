@@ -1,7 +1,8 @@
 import { OffthreadVideo, staticFile, useVideoConfig } from "remotion";
 import marks from "../public/footage/marks.json";
+import durations from "../public/audio/durations.json";
 import { SceneFrame } from "./scenes";
-import { colors } from "./theme";
+import { LEAD_IN_SECONDS, TAIL_SECONDS, colors } from "./theme";
 
 // The two scenes that show the real site. The footage is one long recording of the live site; marks.json says
 // when each of these two scenes starts inside it, and the recorder paced its clicks to the narration.
@@ -9,7 +10,10 @@ import { colors } from "./theme";
 
 function RecordedScene({ id }: { id: "scene3" | "scene4" }) {
   const { fps } = useVideoConfig();
-  const start = marks[id].start;
+  const { start, end } = marks[id];
+  // If the real clicks took longer than the voice, play the footage a little faster so none of it is cut off.
+  const planned = durations[id].seconds + LEAD_IN_SECONDS + TAIL_SECONDS;
+  const rate = Math.min(1.7, Math.max(1, (end - start) / planned));
   return (
     <SceneFrame id={id} compact>
       <div
@@ -27,6 +31,7 @@ function RecordedScene({ id }: { id: "scene3" | "scene4" }) {
           src={staticFile("footage/demo.webm")}
           startFrom={Math.round(start * fps)}
           muted
+          playbackRate={rate}
           style={{ width: 1280, height: 620, objectFit: "cover" }}
         />
       </div>

@@ -125,7 +125,7 @@ async function callFraudTeam(page) {
   const boxes = page.locator(".verify-panel textarea");
   try {
     // With no microphone the call falls back to typing by itself.
-    await boxes.first().waitFor({ timeout: 12000 });
+    await boxes.first().waitFor({ timeout: 3500 });
   } catch {
     await page.getByRole("button", { name: /End call/ }).click().catch(() => {});
     await sleep(500);
@@ -140,7 +140,7 @@ async function typeAnswers(page, until) {
   for (let i = 0; i < Math.min(count, ANSWERS.length); i += 1) {
     await glide(page, boxes.nth(i));
     await boxes.nth(i).click();
-    await boxes.nth(i).pressSequentially(ANSWERS[i], { delay: 38 });
+    await boxes.nth(i).pressSequentially(ANSWERS[i], { delay: 24 });
     if (until) await until(i);
   }
 }
@@ -178,7 +178,7 @@ async function recordVideo(browser) {
   const time = clock();
   const L3 = lengthOf("scene3");
   const L4 = lengthOf("scene4");
-  const marks = { fps: FPS, scene3: { start: 0 }, scene4: { start: 0 } };
+  const marks = { fps: FPS, scene3: { start: 0, end: 0 }, scene4: { start: 0, end: 0 } };
 
   // A short lead-in so the landing page is already on screen when the first scene starts.
   await page.goto(SITE + "/", { waitUntil: "networkidle" }).catch(() => {});
@@ -188,36 +188,38 @@ async function recordVideo(browser) {
   const s3 = time.now();
   marks.scene3.start = s3;
   log("scene3 starts at", s3.toFixed(2), "s, planned length", L3.toFixed(1), "s");
-  await time.until(s3 + 0.10 * L3);
+  await time.until(s3 + 0.04 * L3);
   await signIn(page);
-  await time.until(s3 + 0.30 * L3);
+  await time.until(s3 + 0.22 * L3);
   await goTo(page, "#/analyzer");
-  await time.until(s3 + 0.38 * L3);
+  await time.until(s3 + 0.36 * L3);
   await pickScenario(page);
-  await time.until(s3 + 0.46 * L3);
+  await time.until(s3 + 0.48 * L3);
   await analyse(page);
-  await time.until(s3 + 0.74 * L3);
+  await time.until(s3 + 0.76 * L3);
   await scrollBy(page, 420);
   await time.until(s3 + 0.88 * L3);
   await scrollBy(page, 520);
   await time.until(s3 + L3);
+  marks.scene3.end = time.now();
   log("scene3 ended at", time.now().toFixed(2), "s (late by", Math.max(0, time.now() - (s3 + L3)).toFixed(1), "s)");
 
   // Scene 4: the in-app call, the typed answers, and the analyst's decision.
   const s4 = time.now();
   marks.scene4.start = s4;
   log("scene4 starts at", s4.toFixed(2), "s, planned length", L4.toFixed(1), "s");
-  await time.until(s4 + 0.04 * L4);
+  await time.until(s4 + 0.12 * L4);
   await callFraudTeam(page);
-  await time.until(s4 + 0.20 * L4);
-  await typeAnswers(page, async (i) => { await time.until(s4 + (0.34 + 0.12 * i) * L4); });
-  await time.until(s4 + 0.58 * L4);
+  await time.until(s4 + 0.30 * L4);
+  await typeAnswers(page);
+  await time.until(s4 + 0.44 * L4);
   await sendAnswers(page);
-  await time.until(s4 + 0.74 * L4);
+  await time.until(s4 + 0.66 * L4);
   await openCase(page);
-  await time.until(s4 + 0.86 * L4);
+  await time.until(s4 + 0.84 * L4);
   await decide(page).catch((error) => log("decision step skipped:", error.message.split("\n")[0]));
   await time.until(s4 + L4);
+  marks.scene4.end = time.now();
   log("scene4 ended at", time.now().toFixed(2), "s (late by", Math.max(0, time.now() - (s4 + L4)).toFixed(1), "s)");
   await sleep(800);
 

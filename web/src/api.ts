@@ -1,4 +1,4 @@
-// Talks to the server. The server keeps no memory between requests, so for the second round
+// Talks to the server. The check itself keeps no memory between requests, so for the second round
 // the first note and the questions are sent back along with the customer's answer.
 
 import type { AccountNetwork, Customer, Decision, Payment } from "./core/types";
@@ -21,6 +21,7 @@ export interface BackendExecution {
   network_checked: boolean;
   model: string | null;
   fallback_reason?: string | null;
+  saved?: boolean; // true when the server stored this case (Firestore on the deployed app)
 }
 
 // When a language was asked for, the warning also comes back translated. The English warning stays as the record.
@@ -285,6 +286,7 @@ export async function analyseConversation(transcript: string): Promise<Conversat
 export interface Health {
   ok: boolean;
   ai_configured?: boolean;
+  storage?: "firestore" | "memory" | "off";
 }
 
 export async function checkHealth(): Promise<Health | null> {
@@ -294,5 +296,55 @@ export async function checkHealth(): Promise<Health | null> {
     return (await response.json()) as Health;
   } catch {
     return null;
+  }
+}
+
+// ---------- saved cases ----------
+// The server saves every finished assessment as a case (Firestore on the deployed app),
+// so the analyst queue survives a refresh. Storage is optional: any failure here leaves
+// the page working with the cases it already has.
+
+export type AnalystStatus = "approved" | "held" | "escalated";
+
+export interface SavedCase {
+  id: string;
+  created_at: string;
+  payment: Payment;
+  customer: { segment: string; typical_amount: number };
+  message: string | null;
+  questions?: string[] | null;
+  answer?: string | null;
+  action: "allow" | "warn" | "hold";
+  score: number;
+  reasons: string[];
+  degraded?: boolean;
+  audit?: ServerDecision["audit"];
+  execution?: BackendExecution;
+  status: "open" | AnalystStatus;
+  reviewed_at?: string;
+  decisions?: { status: AnalystStatus; analyst: string; at: string }[];
+}
+
+export async function listSavedCases(): Promise<SavedCase[]> {
+  try {
+    const response = await fetch("/api/cases?limit=20");
+    if (!response.ok) return [];
+    const body = (await response.json()) as { cases?: SavedCase[] };
+    return Array.isArray(body.cases) ? body.cases : [];
+  } catch {
+    return [];
+  }
+}
+
+export async function saveDecision(caseId: string, status: AnalystStatus, analyst: string): Promise<boolean> {
+  try {
+    const response = await fetch(`/api/cases/${encodeURIComponent(caseId)}/decision`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ status, analyst: analyst.slice(0, 40) || "analyst" }),
+    });
+    return response.ok;
+  } catch {
+    return false;
   }
 }

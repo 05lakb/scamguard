@@ -1,8 +1,10 @@
 """The web server for the Last Mile Guard prototype.
 
 It serves the web pages and an assessment endpoint that checks a payment.
-It keeps no memory between requests: for the second round of a conversation, the
-browser sends the first note and the questions back with the customer's answer.
+The check itself keeps no memory between requests: for the second round of a conversation,
+the browser sends the first note and the questions back with the customer's answer.
+Finished assessments and analyst decisions are saved as cases (Firestore when switched on),
+so the analyst queue survives a page refresh. Saving never changes a recommendation.
 
 Safety built in:
   - every input is checked for type, range and length,
@@ -36,6 +38,7 @@ from backend.risk.decision import decide
 from backend.risk.evidence import load_scam_types, read_message
 from backend.risk.translate import translate_warning
 from backend.service import assess_steps
+from backend.store import case_record, store_from_environment
 
 log = logging.getLogger("lmg")
 logging.basicConfig(level=logging.INFO, format="%(message)s")
@@ -123,6 +126,15 @@ class AssessIn(BaseModel):
     language: Optional[Literal["en", "hi", "es", "fr", "pt", "ar"]] = None
 
 
+class DecisionIn(BaseModel):
+    """An analyst's decision on a saved case."""
+    status: Literal["approved", "held", "escalated"]
+    analyst: str = Field(default="analyst", min_length=1, max_length=40)
+
+
+CaseId = Annotated[str, Field(pattern=r"^[0-9a-f]{12}$")]
+
+
 class ConversationIn(BaseModel):
     """A call transcript or chat pasted, uploaded as text, or captured by the browser's speech recogniser."""
     transcript: str = Field(min_length=1, max_length=4000)
@@ -183,7 +195,9 @@ def visitor_key(request: Request):
     return request.client.host if request.client else "unknown"
 
 
-def create_app(reader=read_message, asker=clarify.ask_questions, arena_writer=None, translator=translate_warning):
+def create_app(reader=read_message, asker=clarify.ask_questions, arena_writer=None, translator=translate_warning,
+               store=None):
+    store = store if store is not None else store_from_environment()
     app = FastAPI(title="Last Mile Guard", docs_url=None, redoc_url=None, openapi_url=None)
     visitors = SlidingWindow(PER_VISITOR_PER_MINUTE, PER_VISITOR_PER_HOUR)
     gemini_budget = SlidingWindow(10**9, GEMINI_CALLS_PER_HOUR)  # one shared counter
@@ -221,7 +235,7 @@ def create_app(reader=read_message, asker=clarify.ask_questions, arena_writer=No
 
     @app.get("/api/health")
     def health():
-        return {"ok": True, "ai_configured": gemini_client.is_configured()}
+        return {"ok": True, "ai_configured": gemini_client.is_configured(), "storage": store.kind}
 
     @app.post("/api/conversation")
     def analyse_conversation(body: ConversationIn, request: Request):
@@ -328,6 +342,9 @@ def create_app(reader=read_message, asker=clarify.ask_questions, arena_writer=No
             "model": gemini_client.FAST_MODEL if message_mode.startswith("gemini_") else None,
             "fallback_reason": fallback_reason,
         }
+        # Save the case. A failed save is reported, never allowed to change the recommendation.
+        outcome["execution"]["saved"] = store.save_case(case_record(
+            request_id, payment, customer, body.message, body.questions, body.answer, outcome))
 
         log.info("assess request_id=%s action=%s score=%s round=%s mode=%s degraded=%s ms=%d",
                  outcome["execution"]["request_id"], outcome["action"], outcome["score"],
@@ -356,6 +373,27 @@ def create_app(reader=read_message, asker=clarify.ask_questions, arena_writer=No
                 yield json.dumps({"type": "error", "detail": "The assessment could not finish. No final result was received."}) + "\n"
         return StreamingResponse(lines(), media_type="application/x-ndjson",
                                  headers={"Cache-Control": "no-store", "X-Accel-Buffering": "no"})
+
+    @app.get("/api/cases")
+    def list_cases(limit: int = 20):
+        """The most recent saved cases that reached a recommendation (not ones still waiting for an answer)."""
+        limit = max(1, min(limit, 50))
+        cases = [case for case in store.recent_cases(limit * 2) if case.get("action") != "ask"][:limit]
+        return {"storage": store.kind, "cases": cases}
+
+    @app.post("/api/cases/{case_id}/decision")
+    def record_decision(case_id: CaseId, body: DecisionIn, request: Request):
+        """Save an analyst's approve, hold or escalate decision under the case."""
+        if not visitors.allow(visitor_key(request)):
+            return JSONResponse({"detail": "Too many requests. Please wait a minute and try again."}, status_code=429)
+        if store.kind == "off":
+            return JSONResponse({"detail": "Case storage is switched off on this server."}, status_code=503)
+        analyst = " ".join(body.analyst.split())[:40] or "analyst"
+        saved = store.record_decision(case_id, body.status, analyst)
+        if saved is None:
+            return JSONResponse({"detail": "The case was not found or could not be updated."}, status_code=404)
+        log.info("decision case=%s status=%s", case_id, body.status)  # the analyst's name is not logged
+        return saved
 
     @app.post("/api/arena")
     def arena_run(body: ArenaIn, request: Request):

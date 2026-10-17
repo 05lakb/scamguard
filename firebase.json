@@ -1,0 +1,16 @@
+{
+  "hosting": {
+    "site": "last-mile-guard",
+    "public": "hosting/public",
+    "ignore": ["firebase.json", "**/.*"],
+    "rewrites": [
+      {
+        "source": "**",
+        "run": {
+          "serviceId": "last-mile-guard",
+          "region": "us-central1"
+        }
+      }
+    ]
+  }
+}

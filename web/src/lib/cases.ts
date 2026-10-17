@@ -1,7 +1,7 @@
 // The shape of a case in the analyst queue, plus the recorded cases it starts with.
 
 import seed from "../data/analyst_seed.json";
-import type { ArenaRecord, ServerDecision } from "../api";
+import type { ArenaRecord, SavedCase, ServerDecision } from "../api";
 
 export type CaseStatus = "open" | "approved" | "held" | "escalated";
 
@@ -25,6 +25,8 @@ export interface CaseItem {
   parts?: { payment: number; message: number };
   status: CaseStatus;
   trail: { when: string; text: string }[];
+  // The server's id for this case, when it was saved; analyst decisions are saved under it.
+  savedId?: string;
   // Context captured by the Transaction Analyzer (optional for other sources).
   device?: string;
   location?: string;
@@ -119,4 +121,68 @@ export function caseFromArena(record: ArenaRecord, number: number, now: string):
     status: "open",
     trail,
   };
+}
+
+const STATUS_TEXT: Record<CaseStatus, string> = {
+  open: "",
+  approved: "Analyst approved the payment",
+  held: "Analyst kept the payment on hold",
+  escalated: "Analyst escalated the case",
+};
+
+const timeOf = (iso: string | undefined) => {
+  const date = iso ? new Date(iso) : null;
+  return date && !Number.isNaN(date.getTime())
+    ? date.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit", second: "2-digit" })
+    : "earlier";
+};
+
+// Turns a case saved on the server (Firestore) back into a case for the analyst queue.
+export function caseFromSaved(saved: SavedCase): CaseItem {
+  const when = timeOf(saved.created_at);
+  const trail = [
+    { when, text: "Synthetic payment assessed by the FastAPI backend" },
+    { when, text: "Case loaded from the server's saved cases" },
+  ];
+  if (saved.questions?.length) {
+    trail.push({ when, text: "The engine asked the customer a question" });
+    trail.push({ when, text: saved.answer ? "The customer answered" : "The customer declined to answer" });
+  }
+  trail.push({ when, text: `The engine decided: ${saved.action} (risk ${saved.score})` });
+  for (const decision of saved.decisions ?? []) {
+    trail.push({ when: timeOf(decision.at), text: `${STATUS_TEXT[decision.status]} (${decision.analyst})` });
+  }
+  const created = new Date(saved.created_at).getTime();
+  return {
+    id: `SAVED-${saved.id.slice(0, 6).toUpperCase()}`,
+    title: `Saved case: ${saved.payment.payee_name}`,
+    source: "live",
+    when,
+    amount: saved.payment.amount,
+    currency: saved.payment.currency,
+    payee: saved.payment.payee_name,
+    segment: saved.customer.segment,
+    message: saved.message,
+    questions: saved.questions ?? undefined,
+    answer: saved.answer ?? undefined,
+    action: saved.action,
+    score: saved.score,
+    reasons: saved.reasons,
+    audit: saved.audit,
+    execution: saved.execution,
+    status: saved.status,
+    trail,
+    channel: saved.payment.channel,
+    timestamp: Number.isNaN(created) ? undefined : created,
+    savedId: saved.id,
+  };
+}
+
+// Adds saved cases the page does not already show (matched by the server's id).
+// Order: this session's cases, then saved cases (newest first), then the recorded examples.
+export function mergeSaved(current: CaseItem[], saved: SavedCase[]): CaseItem[] {
+  const known = new Set(current.map((item) => item.savedId ?? item.execution?.request_id).filter(Boolean));
+  const fresh = saved.filter((item) => !known.has(item.id)).map(caseFromSaved);
+  if (!fresh.length) return current;
+  return [...current.filter((item) => item.source !== "recorded"), ...fresh, ...current.filter((item) => item.source === "recorded")];
 }

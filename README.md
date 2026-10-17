@@ -66,6 +66,7 @@ Half of those cases are held back in a locked test set and run once. The results
 ## Google technology
 
 - **Gemini via Vertex AI (implemented when configured):** Extract structured scam signals from notes and answers, draft up to two neutral questions, and translate the customer's warning. Gemini does not approve or hold payments.
+- **Firestore (implemented, switched on with `LMG_FIRESTORE=1`):** Store every case, its audit record and each analyst decision, so the review queue survives a refresh (`backend/store.py`, `GET /api/cases`, `POST /api/cases/{id}/decision`).
 - **Cloud Run (deployment included):** Serve the FastAPI API and React build in one container.
 - **Cloud Build (deployment included):** Build the container during `gcloud run deploy --source`.
 - **Cloud service account (deployment supported):** Give Cloud Run access to Vertex AI without a key file in the service.
@@ -88,7 +89,7 @@ Half of those cases are held back in a locked test set and run once. The results
 - Customer text is untrusted. Model output is constrained to a schema, and scoring and action thresholds stay in testable code. Emails and card numbers are blocked before anything is sent to the model.
 - The link check reads link text only and never opens or fetches a link. Translation applies only to the warning our rules wrote, never to the customer's words, and never changes the decision.
 - A visitor's own scenario has its own limits (one a minute and a few an hour for each visitor), checks input in the browser and on the server, and never logs or returns the story text.
-- The analyst queue exists only in browser state. No persistent case store, bank identity integration, or live payment hold or release mechanism exists. The API returns audit details but does not persist them.
+- When case storage is switched on (`LMG_FIRESTORE=1`), every finished assessment is saved to the Firestore `cases` collection with its reasons and audit record, and each analyst decision is saved under it with the analyst's display name and time. Saving never changes or holds up a recommendation; if Firestore fails, the check still answers and saving pauses for a minute. Cases are synthetic and visible to every visitor of the demo. There is no bank identity integration and no live payment hold or release mechanism.
 - Gemini can be unavailable; the API then falls back to payment and network rules. Input limits, request limits and a Gemini call budget protect the demo.
 - A calm, coached victim paying something ordinary can still get through. Synthetic and red-team results do not establish performance on real bank data.
 
@@ -192,6 +193,7 @@ Our own team runs installs, cloud commands and server tests in Cloud Shell, not 
 - Configure the Google Cloud project, required APIs, and the `lmg-runtime` service account for Vertex AI.
 - Run `PROJECT_ID=your-project-id bash infra/deploy.sh`.
 - Review the script's public access, region, resource caps, and cost settings before deployment. This is a public synthetic-data demo, not a bank production system.
+- **Public address (Firebase Hosting):** `firebase.json` sends every request on `https://last-mile-guard.web.app` to the `last-mile-guard` Cloud Run service in `us-central1`. Hosting serves no files of its own. Deploy it from Cloud Shell with `firebase deploy --only hosting`.
 
 ## Repository layout
 

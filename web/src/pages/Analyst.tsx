@@ -177,7 +177,9 @@ export function Analyst({ cases, decide, scenarios, onTestCase, initialCaseId, f
                   <button className="ghost" onClick={() => decide(selected.id, "escalated")}>Escalate</button>
                 </div>
               )}
-              {selected.action !== "allow" && <p className="muted small">Human review is simulated in the browser. Approval/hold/escalation updates this case's state and audit trail, but is not yet persisted in a backend case database or sent to a bank.</p>}
+              {selected.action !== "allow" && <p className="muted small">{selected.savedId
+                ? "Human review is simulated. Your decision is saved with this case on the server, with your name and the time, but it is never sent to a bank."
+                : "Human review is simulated in the browser. This case was not saved on the server, so the decision stays on this page and is never sent to a bank."}</p>}
               <details className="simple-result-details"><summary>Detailed findings from each check</summary><AgentEvidence item={selected} /></details>
 
               <h3 className="mini">Why, ranked by weight</h3>

@@ -1,10 +1,10 @@
 import { useEffect, useRef, useState, type FormEvent } from "react";
 import demo from "./data/demo.json";
-import { checkHealth, type ArenaRecord, type ConversationResult, type Health } from "./api";
+import { checkHealth, listSavedCases, saveDecision, type ArenaRecord, type ConversationResult, type Health } from "./api";
 import { Icon } from "./components/Icon";
 import { Logo } from "./components/Logo";
 import { ThemePicker, isTheme, type Theme } from "./components/ThemePicker";
-import { caseFromArena, needsReview, recordedCases, type CaseItem, type CaseStatus } from "./lib/cases";
+import { caseFromArena, mergeSaved, needsReview, recordedCases, type CaseItem, type CaseStatus } from "./lib/cases";
 import { NAV, type Page } from "./lib/pages";
 import { STORY, STORY_PAUSE_MS } from "./lib/story";
 import { Analyst } from "./pages/Analyst";
@@ -93,6 +93,8 @@ export function App() {
 
   useEffect(() => {
     void refreshHealth();
+    // Cases saved on the server (Firestore) join the queue, so it survives a refresh.
+    void listSavedCases().then((saved) => setCases((old) => mergeSaved(old, saved)));
   }, []);
 
   useEffect(() => {
@@ -179,7 +181,9 @@ export function App() {
       location: context?.location || undefined,
       channel: context?.channel ?? scenario.payment.channel,
       timestamp: Date.now(),
+      savedId: decision.execution?.saved ? decision.execution.request_id : undefined,
     };
+    if (item.savedId) trail.splice(1, 0, { when: now, text: `Case saved ${storePlace}` });
     setCases((old) => [item, ...old]);
     setReviewCaseId(item.id);
     return item.id;
@@ -191,10 +195,23 @@ export function App() {
     if (item) setCases((old) => [item, ...old]);
   }
 
+  const storePlace = health?.storage === "firestore" ? "to Firestore" : "on the server";
+
+  function addTrail(id: string, text: string) {
+    setCases((old) => old.map((item) => (item.id === id ? { ...item, trail: [...item.trail, { when: clock(), text }] } : item)));
+  }
+
   function decide(id: string, status: CaseStatus) {
     setCases((old) =>
       old.map((item) => (item.id === id ? { ...item, status, trail: [...item.trail, { when: clock(), text: STATUS_TRAIL[status] }] } : item)),
     );
+    // Saved cases also keep the decision on the server, with the analyst's name, for the audit trail.
+    const savedId = cases.find((item) => item.id === id)?.savedId;
+    if (savedId && status !== "open") {
+      void saveDecision(savedId, status, user ?? "analyst").then((ok) =>
+        addTrail(id, ok ? `Decision saved ${storePlace}` : "The decision could not be saved on the server; it is kept on this page only"),
+      );
+    }
   }
 
   function openCase(id?: string) {

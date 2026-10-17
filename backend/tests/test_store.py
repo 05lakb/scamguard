@@ -1,0 +1,225 @@
+"""Tests for case storage. A fake Firestore client stands in, so nothing goes to the cloud."""
+
+import sys
+from datetime import datetime
+from pathlib import Path
+
+import pytest
+
+pytest.importorskip("fastapi")
+from fastapi.testclient import TestClient  # noqa: E402
+
+sys.path.insert(0, str(Path(__file__).resolve().parents[2]))
+from backend import app as app_module  # noqa: E402
+from backend import store as store_module  # noqa: E402
+from backend.store import FirestoreStore, MemoryStore, NoStore, case_record  # noqa: E402
+from backend.tests.test_app import BODY, fake_asker, fake_reader  # noqa: E402
+
+# A known payee with a full note: the guard decides in one round instead of asking.
+LONG_NOTE = {**BODY, "payment": {**BODY["payment"], "is_new_payee": False},
+             "message": "Paying my landlord for this month's rent, same flat as last year, I checked the account with him."}
+
+
+def client_with(store):
+    return TestClient(app_module.create_app(reader=fake_reader, asker=fake_asker, store=store))
+
+
+# ---------- a tiny fake of the Firestore calls the store uses ----------
+
+class FakeSnapshot:
+    def __init__(self, data):
+        self._data = data
+        self.exists = data is not None
+
+    def to_dict(self):
+        return dict(self._data)
+
+
+class FakeDocument:
+    def __init__(self, db, path):
+        self.db, self.path = db, path
+
+    def set(self, data, timeout=None):
+        self.db.docs[self.path] = dict(data)
+
+    def get(self, timeout=None):
+        return FakeSnapshot(self.db.docs.get(self.path))
+
+    def update(self, fields, timeout=None):
+        self.db.docs[self.path].update(fields)
+
+    def collection(self, name):
+        return FakeCollection(self.db, f"{self.path}/{name}")
+
+
+class FakeCollection:
+    def __init__(self, db, path):
+        self.db, self.path = db, path
+        self._order, self._limit = None, None
+
+    def document(self, doc_id):
+        return FakeDocument(self.db, f"{self.path}/{doc_id}")
+
+    def add(self, data, timeout=None):
+        self.db.added.append((self.path, dict(data)))
+
+    def order_by(self, field, direction="ASCENDING"):
+        self._order = (field, direction)
+        return self
+
+    def limit(self, count):
+        self._limit = count
+        return self
+
+    def stream(self, timeout=None):
+        prefix = self.path + "/"
+        rows = [data for path, data in self.db.docs.items() if path.startswith(prefix) and "/" not in path[len(prefix):]]
+        field, direction = self._order
+        rows.sort(key=lambda row: row[field], reverse=direction == "DESCENDING")
+        return [FakeSnapshot(row) for row in rows[: self._limit]]
+
+
+class FakeFirestore:
+    def __init__(self, fail=False):
+        self.docs, self.added, self.fail, self.calls = {}, [], fail, 0
+
+    def collection(self, name):
+        self.calls += 1
+        if self.fail:
+            raise RuntimeError("firestore unavailable")
+        return FakeCollection(self, name)
+
+
+# ---------- the stored record ----------
+
+def nested_lists(value):
+    """Firestore rejects a list directly inside another list."""
+    if isinstance(value, dict):
+        return any(nested_lists(item) for item in value.values())
+    if isinstance(value, list):
+        return any(isinstance(item, list) or nested_lists(item) for item in value)
+    return False
+
+
+def test_saved_record_fits_firestore_and_keeps_the_audit():
+    store = MemoryStore()
+    response = client_with(store).post("/api/assess", json=LONG_NOTE)
+    assert response.status_code == 200
+    saved = next(iter(store.cases.values()))
+    assert saved["synthetic"] is True
+    assert saved["action"] == response.json()["action"] and saved["score"] == response.json()["score"]
+    assert saved["audit"]["behaviour_score"] == response.json()["audit"]["behaviour_score"]
+    assert "id" not in saved["customer"]
+    assert isinstance(saved["created_at"], datetime)
+    assert not nested_lists(saved)
+
+
+# ---------- the API ----------
+
+def test_assessment_is_saved_listed_and_reviewed():
+    store = MemoryStore()
+    client = client_with(store)
+    result = client.post("/api/assess", json=LONG_NOTE).json()
+    case_id = result["execution"]["request_id"]
+    assert result["execution"]["saved"] is True
+
+    listed = client.get("/api/cases").json()
+    assert listed["storage"] == "memory"
+    assert [case["id"] for case in listed["cases"]] == [case_id]
+    assert listed["cases"][0]["status"] == "open"
+
+    reviewed = client.post(f"/api/cases/{case_id}/decision", json={"status": "held", "analyst": "  Priya  "})
+    assert reviewed.status_code == 200
+    assert reviewed.json()["status"] == "held"
+    assert reviewed.json()["decisions"][-1]["analyst"] == "Priya"
+    assert client.get("/api/cases").json()["cases"][0]["status"] == "held"
+
+
+def test_cases_waiting_for_an_answer_are_not_listed():
+    store = MemoryStore()
+    client = client_with(store)
+    result = client.post("/api/assess", json=BODY).json()  # a two-word note to a new payee: the guard asks
+    assert result["action"] == "ask"
+    assert result["execution"]["saved"] is True
+    assert client.get("/api/cases").json()["cases"] == []
+
+
+def test_list_limit_is_bounded():
+    store = MemoryStore()
+    client = client_with(store)
+    for _ in range(3):
+        client.post("/api/assess", json=LONG_NOTE)
+    assert len(client.get("/api/cases?limit=2").json()["cases"]) == 2
+    assert len(client.get("/api/cases?limit=0").json()["cases"]) == 1
+
+
+def test_bad_decisions_are_rejected():
+    client = client_with(MemoryStore())
+    assert client.post("/api/cases/abcdef123456/decision", json={"status": "held"}).status_code == 404
+    assert client.post("/api/cases/not-a-case/decision", json={"status": "held"}).status_code == 422
+    assert client.post("/api/cases/abcdef123456/decision", json={"status": "allow"}).status_code == 422
+    assert client.post("/api/cases/abcdef123456/decision", json={"status": "held", "analyst": "x" * 41}).status_code == 422
+
+
+def test_storage_off_still_assesses():
+    client = client_with(NoStore())
+    result = client.post("/api/assess", json=LONG_NOTE)
+    assert result.status_code == 200
+    assert result.json()["execution"]["saved"] is False
+    assert client.get("/api/cases").json() == {"storage": "off", "cases": []}
+    assert client.post("/api/cases/abcdef123456/decision", json={"status": "held"}).status_code == 503
+    assert client.get("/api/health").json()["storage"] == "off"
+
+
+def test_failed_firestore_never_breaks_the_assessment():
+    fake = FakeFirestore(fail=True)
+    client = client_with(FirestoreStore(client=fake))
+    first = client.post("/api/assess", json=LONG_NOTE)
+    assert first.status_code == 200 and first.json()["execution"]["saved"] is False
+    calls = fake.calls
+    second = client.post("/api/assess", json=LONG_NOTE)  # saving is paused after a failure
+    assert second.status_code == 200 and second.json()["execution"]["saved"] is False
+    assert fake.calls == calls
+    assert client.get("/api/cases").json()["cases"] == []
+
+
+# ---------- the Firestore store itself ----------
+
+def test_firestore_store_writes_cases_and_decisions():
+    fake = FakeFirestore()
+    store = FirestoreStore(client=fake)
+    client = client_with(store)
+    first = client.post("/api/assess", json=LONG_NOTE).json()["execution"]["request_id"]
+    second = client.post("/api/assess", json=LONG_NOTE).json()["execution"]["request_id"]
+    assert f"cases/{first}" in fake.docs and f"cases/{second}" in fake.docs
+
+    listed = [case["id"] for case in client.get("/api/cases").json()["cases"]]
+    assert listed == [second, first]  # newest first
+    assert isinstance(client.get("/api/cases").json()["cases"][0]["created_at"], str)
+
+    reviewed = client.post(f"/api/cases/{first}/decision", json={"status": "escalated", "analyst": "Lalit"})
+    assert reviewed.status_code == 200
+    assert fake.docs[f"cases/{first}"]["status"] == "escalated"
+    assert fake.added == [(f"cases/{first}/decisions", {"status": "escalated", "analyst": "Lalit",
+                                                          "at": fake.docs[f"cases/{first}"]["reviewed_at"]})]
+    assert client.post("/api/cases/abcdef123456/decision", json={"status": "held"}).status_code == 404
+
+
+def test_case_record_keeps_follow_up_questions():
+    outcome = {"action": "ask", "score": 30, "questions": ["Who is this for?"], "round": 1,
+               "audit": {}, "execution": {}}
+    record = case_record("abcdef123456", {"amount": 5}, {"id": "web", "segment": "family"}, "rent", None, None, outcome)
+    assert record["questions"] == ["Who is this for?"]
+    assert record["customer"] == {"segment": "family"}
+
+
+def test_store_is_chosen_from_settings(monkeypatch):
+    monkeypatch.delenv("LMG_FIRESTORE", raising=False)
+    monkeypatch.delenv("LMG_STORE", raising=False)
+    assert isinstance(store_module.store_from_environment(), NoStore)
+    monkeypatch.setenv("LMG_STORE", "memory")
+    assert isinstance(store_module.store_from_environment(), MemoryStore)
+    monkeypatch.setenv("LMG_FIRESTORE", "1")
+    monkeypatch.setenv("GOOGLE_CLOUD_PROJECT", "demo-project")
+    chosen = store_module.store_from_environment()
+    assert isinstance(chosen, FirestoreStore) and chosen._project == "demo-project"

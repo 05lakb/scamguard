@@ -18,3 +18,10 @@ __pycache__
 
 # The video project is built in Cloud Shell and is not part of the website image.
 video/
+
+# Firebase Hosting config is deployed separately, not part of the image.
+hosting/
+firebase.json
+.firebaserc
+.firebase/
+firebase-debug.log

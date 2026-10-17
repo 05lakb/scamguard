@@ -9,6 +9,7 @@ PROJECT_ID="${PROJECT_ID:?Set PROJECT_ID first, for example: export PROJECT_ID=l
 REGION="${REGION:-us-central1}"          # a region inside Cloud Run's free allowance
 SERVICE="last-mile-guard"
 MIN_INSTANCES="${MIN_INSTANCES:-0}"      # use 1 during judging; warm instances incur idle charges
+FIRESTORE="${FIRESTORE:-0}"              # 1 saves cases and analyst decisions in Firestore (database must exist)
 if [[ ! "${MIN_INSTANCES}" =~ ^[0-2]$ ]]; then
   echo "MIN_INSTANCES must be 0, 1 or 2 (the configured maximum)." >&2
   exit 1
@@ -42,7 +43,7 @@ gcloud run deploy "${SERVICE}" \
   --cpu 1 \
   --memory 512Mi \
   --timeout 300 \
-  --set-env-vars "USE_VERTEX=1,GOOGLE_CLOUD_PROJECT=${PROJECT_ID},VERTEX_LOCATION=global,LMG_DISK_CACHE=0"
+  --set-env-vars "USE_VERTEX=1,GOOGLE_CLOUD_PROJECT=${PROJECT_ID},VERTEX_LOCATION=global,LMG_DISK_CACHE=0,LMG_FIRESTORE=${FIRESTORE}"
 
 echo
 echo "Done. The web address is:"

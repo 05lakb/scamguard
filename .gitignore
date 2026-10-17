@@ -45,3 +45,7 @@ Claude outputs/
 # Video project: installed packages and rendered clips
 video/node_modules/
 video/out/
+
+# Firebase CLI cache
+.firebase/
+firebase-debug.log

@@ -30,7 +30,7 @@ function RecordedScene({ id }: { id: RecordedId }) {
       >
         <span style={{ width: 10, height: 10, borderRadius: 5, background: colors.red }} />
         Live site: lastmileguard.web.app. Real footage, made-up data.
-        {rate > 1.3 ? <span style={{ marginLeft: "auto", color: colors.amber, fontWeight: 700 }}>Sped up {Math.round(rate)}x</span> : null}
+        {rate > 1.3 ? <span style={{ marginLeft: "auto", color: colors.amber, fontWeight: 700 }}>Sped up {rate.toFixed(1)}x</span> : null}
       </div>
       <div style={{ position: "absolute", left: 0, top: 40, width: 1280, height: 620, overflow: "hidden" }}>
         <OffthreadVideo

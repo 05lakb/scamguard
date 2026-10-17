@@ -15,8 +15,7 @@ import { chromium } from "playwright";
 import fs from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
-import os from "node:os";
-import { spawnSync } from "node:child_process";
+import { findFlash } from "./lag.mjs";
 
 const HERE = path.dirname(fileURLToPath(import.meta.url));
 const SITE = (process.env.SITE || "https://lastmileguard.web.app").replace(/\/$/, "");
@@ -188,37 +187,6 @@ async function scrollBy(page, pixels) {
   for (let i = 0; i < 6; i += 1) { await page.mouse.wheel(0, pixels / 6); await sleep(90); }
 }
 
-// ---------- measuring how far the video runs behind the clock ----------
-
-// A screen recording made this way can run a little behind the clock. The recorder flashes the whole screen magenta
-// at a known moment, then looks for that flash in the finished video. The gap is the lag, and the video uses it.
-function findFfmpeg() {
-  const candidates = [];
-  const playwrightRoot = path.join(os.homedir(), ".cache", "ms-playwright");
-  try {
-    for (const dir of fs.readdirSync(playwrightRoot)) if (dir.startsWith("ffmpeg-")) candidates.push(path.join(playwrightRoot, dir, "ffmpeg-linux"));
-  } catch { /* the folder may not exist */ }
-  return candidates.find((file) => fs.existsSync(file)) ?? null;
-}
-
-function findFlash(file) {
-  const ffmpeg = findFfmpeg();
-  if (!ffmpeg) { log("no ffmpeg found to measure the lag"); return null; }
-  const rate = 20;
-  const run = spawnSync(ffmpeg, ["-v", "error", "-i", file, "-t", "20", "-vf", "fps=" + rate + ",scale=16:9", "-f", "rawvideo", "-pix_fmt", "rgb24", "pipe:1"], { maxBuffer: 128 * 1024 * 1024 });
-  if (run.status !== 0 || !run.stdout || run.stdout.length === 0) { log("could not read the video to measure the lag:", String(run.stderr || "").split("\n")[0]); return null; }
-  const size = 16 * 9 * 3;
-  const frames = Math.floor(run.stdout.length / size);
-  for (let i = 0; i < frames; i += 1) {
-    let r = 0, g = 0, b = 0;
-    for (let p = 0; p < size; p += 3) { r += run.stdout[i * size + p]; g += run.stdout[i * size + p + 1]; b += run.stdout[i * size + p + 2]; }
-    const n = size / 3;
-    if (r / n > 170 && b / n > 170 && g / n < 100) return i / rate;
-  }
-  log("the magenta flash was not found in the first 20 s of the video");
-  return null;
-}
-
 // ---------- the video ----------
 
 async function recordVideo(browser) {
@@ -330,7 +298,8 @@ async function recordVideo(browser) {
   await context.close(); // the file is only finished once the page is closed
   const source = await video.path();
   fs.copyFileSync(source, path.join(FOOTAGE, "demo.webm"));
-  const seen = findFlash(path.join(FOOTAGE, "demo.webm"));
+  const seen = findFlash(path.join(FOOTAGE, "demo.webm"), 24, log);
+  marks.flashAt = flashAt;
   marks.lag = seen === null ? 0 : Math.min(8, Math.max(-1, seen - flashAt));
   log(seen === null ? "lag not measured, using 0" : "the video runs " + marks.lag.toFixed(2) + " s behind the clock (flash planned at " + flashAt.toFixed(2) + " s, seen at " + seen.toFixed(2) + " s)");
   fs.writeFileSync(path.join(FOOTAGE, "marks.json"), JSON.stringify(marks, null, 2) + "\n");

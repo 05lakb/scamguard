@@ -23,6 +23,9 @@ fi
 echo "3/6 Installing the video tools (in Cloud Shell only; install scripts are switched off)..."
 npm install --ignore-scripts --no-audit --no-fund
 
+echo "3b/6 Measuring how far the recording runs behind the clock..."
+node record/measure-lag.mjs
+
 echo "4/6 Getting the headless browser the renderer uses..."
 npx remotion browser ensure
 

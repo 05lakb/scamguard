@@ -8,14 +8,21 @@ under that case. Storage is a convenience around the check, never part of it:
   - after a failure, saving pauses for a minute instead of failing on every request,
   - storage is off unless LMG_FIRESTORE=1, so tests and laptops never touch the cloud.
 
+Privacy: each browser sends its own random session key. A case is saved only with a key,
+under a hash of that key (the key itself is never stored), and only the same browser can
+list it or record a decision on it. Every case and decision expires after 24 hours:
+expired records are never returned, and Firestore's TTL policy on `expires_at` deletes them.
+
 All records are synthetic demo payments. Nothing here moves or stops money.
 """
 
+import hashlib
 import logging
 import os
+import re
 import threading
 import time
-from datetime import datetime, timezone
+from datetime import datetime, timedelta, timezone
 
 log = logging.getLogger("lmg")
 
@@ -23,22 +30,40 @@ CASES = "cases"
 DECISIONS = "decisions"
 WRITE_TIMEOUT_SECONDS = 4
 PAUSE_AFTER_FAILURE_SECONDS = 60
+KEEP_FOR = timedelta(hours=24)
+MAX_CASES_PER_SESSION = 200
+SESSION_KEY = re.compile(r"^[A-Za-z0-9_-]{32,64}$")
 
 
 def utc_now():
     return datetime.now(timezone.utc)
 
 
+def owner_of(session_key):
+    """The stored owner for a browser's session key, or None if the key is missing or malformed."""
+    if not session_key or not SESSION_KEY.fullmatch(session_key):
+        return None
+    return hashlib.sha256(f"lmg-session|{session_key}".encode()).hexdigest()[:32]
+
+
 def _iso(value):
     return value.isoformat() if hasattr(value, "isoformat") else value
 
 
-def case_record(request_id, payment, customer, message, questions, answer, outcome):
+def _live(record, now):
+    expires = record.get("expires_at")
+    return expires is not None and expires > now
+
+
+def case_record(request_id, payment, customer, message, questions, answer, outcome, owner):
     """Build the stored case from one assessment. Only what the analyst queue needs."""
+    created = utc_now()
     return {
         "id": request_id,
+        "owner": owner,
         "synthetic": True,
-        "created_at": utc_now(),
+        "created_at": created,
+        "expires_at": created + KEEP_FOR,
         "round": outcome.get("round", 1),
         "payment": payment,
         "customer": {key: value for key, value in customer.items() if key != "id"},
@@ -57,12 +82,13 @@ def case_record(request_id, payment, customer, message, questions, answer, outco
 
 
 def public_case(record):
-    """Turn a stored case into JSON for the browser (timestamps as text)."""
-    item = dict(record)
-    for key in ("created_at", "reviewed_at"):
+    """Turn a stored case into JSON for its own browser: timestamps as text, no owner hash."""
+    item = {key: value for key, value in record.items() if key != "owner"}
+    for key in ("created_at", "reviewed_at", "expires_at"):
         if key in item:
             item[key] = _iso(item[key])
-    item["decisions"] = [{**decision, "at": _iso(decision.get("at"))} for decision in item.get("decisions", [])]
+    item["decisions"] = [{key: _iso(value) for key, value in decision.items() if key != "expires_at"}
+                         for decision in item.get("decisions", [])]
     return item
 
 
@@ -73,10 +99,10 @@ class NoStore:
     def save_case(self, record):
         return False
 
-    def record_decision(self, case_id, status, analyst):
+    def record_decision(self, case_id, owner, status, analyst):
         return None
 
-    def recent_cases(self, limit):
+    def recent_cases(self, owner, limit):
         return []
 
 
@@ -88,26 +114,39 @@ class MemoryStore:
         self.cases = {}
         self.lock = threading.Lock()
 
+    def _prune(self, now):
+        for case_id in [case_id for case_id, case in self.cases.items() if not _live(case, now)]:
+            del self.cases[case_id]
+
     def save_case(self, record):
+        if not record.get("owner"):
+            return False
         with self.lock:
             self.cases[record["id"]] = {**record, "decisions": []}
         return True
 
-    def record_decision(self, case_id, status, analyst):
+    def record_decision(self, case_id, owner, status, analyst):
+        now = utc_now()
         with self.lock:
+            self._prune(now)
             case = self.cases.get(case_id)
-            if case is None:
+            if case is None or not owner or case["owner"] != owner:
                 return None
-            decision = {"status": status, "analyst": analyst, "at": utc_now()}
+            decision = {"status": status, "analyst": analyst, "at": now, "expires_at": case["expires_at"]}
             case["decisions"].append(decision)
             case["status"] = status
-            case["reviewed_at"] = decision["at"]
+            case["reviewed_at"] = now
             return public_case(case)
 
-    def recent_cases(self, limit):
+    def recent_cases(self, owner, limit):
+        if not owner:
+            return []
+        now = utc_now()
         with self.lock:
-            items = sorted(self.cases.values(), key=lambda case: case["created_at"], reverse=True)
-            return [public_case(case) for case in items[:limit]]
+            self._prune(now)
+            mine = [case for case in self.cases.values() if case["owner"] == owner]
+            mine.sort(key=lambda case: case["created_at"], reverse=True)
+            return [public_case(case) for case in mine[:limit]]
 
 
 class FirestoreStore:
@@ -134,7 +173,7 @@ class FirestoreStore:
         self._paused_until = time.monotonic() + PAUSE_AFTER_FAILURE_SECONDS
 
     def save_case(self, record):
-        if not self._available():
+        if not record.get("owner") or not self._available():
             return False
         try:
             self.client.collection(CASES).document(record["id"]).set(record, timeout=WRITE_TIMEOUT_SECONDS)
@@ -143,32 +182,39 @@ class FirestoreStore:
             self._failed("save", error)
             return False
 
-    def record_decision(self, case_id, status, analyst):
-        """Add the analyst's decision under the case. None if the case is unknown or storage failed."""
-        if not self._available():
+    def record_decision(self, case_id, owner, status, analyst):
+        """Add the analyst's decision under the case. None if it is not this browser's live case, or storage failed."""
+        if not owner or not self._available():
             return None
         try:
             case_ref = self.client.collection(CASES).document(case_id)
             snapshot = case_ref.get(timeout=WRITE_TIMEOUT_SECONDS)
+            now = utc_now()
             if not snapshot.exists:
                 return None
-            decision = {"status": status, "analyst": analyst, "at": utc_now()}
+            case = snapshot.to_dict()
+            if case.get("owner") != owner or not _live(case, now):
+                return None
+            decision = {"status": status, "analyst": analyst, "at": now, "expires_at": case["expires_at"]}
             case_ref.collection(DECISIONS).add(decision, timeout=WRITE_TIMEOUT_SECONDS)
-            case_ref.update({"status": status, "reviewed_at": decision["at"]}, timeout=WRITE_TIMEOUT_SECONDS)
-            return public_case({**snapshot.to_dict(), "status": status, "reviewed_at": decision["at"],
-                                "decisions": [decision]})
+            case_ref.update({"status": status, "reviewed_at": now}, timeout=WRITE_TIMEOUT_SECONDS)
+            return public_case({**case, "status": status, "reviewed_at": now, "decisions": [decision]})
         except Exception as error:
             self._failed("decision", error)
             return None
 
-    def recent_cases(self, limit):
-        if not self._available():
+    def recent_cases(self, owner, limit):
+        """This browser's live cases, newest first. An equality filter only, so no extra index is needed."""
+        if not owner or not self._available():
             return []
         try:
-            query = (self.client.collection(CASES)
-                     .order_by("created_at", direction="DESCENDING")
-                     .limit(limit))
-            return [public_case(snapshot.to_dict()) for snapshot in query.stream(timeout=WRITE_TIMEOUT_SECONDS)]
+            from google.cloud.firestore_v1.base_query import FieldFilter
+            query = self.client.collection(CASES).where(filter=FieldFilter("owner", "==", owner)).limit(MAX_CASES_PER_SESSION)
+            now = utc_now()
+            mine = [snapshot.to_dict() for snapshot in query.stream(timeout=WRITE_TIMEOUT_SECONDS)]
+            mine = [case for case in mine if _live(case, now)]
+            mine.sort(key=lambda case: case["created_at"], reverse=True)
+            return [public_case(case) for case in mine[:limit]]
         except Exception as error:
             self._failed("list", error)
             return []

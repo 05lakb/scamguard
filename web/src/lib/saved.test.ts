@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { listSavedCases, saveDecision, type SavedCase } from "../api";
+import { listSavedCases, saveDecision, sessionKey, type SavedCase } from "../api";
 import { caseFromSaved, mergeSaved, recordedCases, type CaseItem } from "./cases";
 
 const saved: SavedCase = {
@@ -48,8 +48,10 @@ describe("saved cases", () => {
 
 describe("saved-case transport", () => {
   it("lists saved cases and treats any failure as an empty list", async () => {
-    vi.stubGlobal("fetch", vi.fn().mockResolvedValue(new Response(JSON.stringify({ storage: "firestore", cases: [saved] }))));
+    const listMock = vi.fn().mockResolvedValue(new Response(JSON.stringify({ storage: "firestore", cases: [saved] })));
+    vi.stubGlobal("fetch", listMock);
     expect(await listSavedCases()).toEqual([saved]);
+    expect(listMock.mock.calls[0][1].headers["X-LMG-Session"]).toBe(sessionKey());
     vi.stubGlobal("fetch", vi.fn().mockResolvedValue(new Response("", { status: 500 })));
     expect(await listSavedCases()).toEqual([]);
     vi.stubGlobal("fetch", vi.fn().mockRejectedValue(new Error("offline")));
@@ -63,7 +65,23 @@ describe("saved-case transport", () => {
     const [url, init] = fetchMock.mock.calls[0];
     expect(url).toBe("/api/cases/abcdef123456/decision");
     expect(JSON.parse(init.body)).toEqual({ status: "escalated", analyst: "Priya" });
+    expect(init.headers["X-LMG-Session"]).toBe(sessionKey());
     vi.stubGlobal("fetch", vi.fn().mockResolvedValue(new Response("", { status: 503 })));
     expect(await saveDecision("abcdef123456", "held", "")).toBe(false);
+  });
+});
+
+describe("browser session key", () => {
+  it("is random, well formed and stays the same for this browser", () => {
+    const key = sessionKey();
+    expect(key).toMatch(/^[0-9a-f]{40}$/);
+    expect(sessionKey()).toBe(key);
+  });
+
+  it("still works when browser storage is blocked", () => {
+    vi.stubGlobal("localStorage", { getItem: () => { throw new Error("blocked"); }, setItem: () => { throw new Error("blocked"); } });
+    const key = sessionKey();
+    expect(key).toMatch(/^[0-9a-f]{40}$/);
+    expect(sessionKey()).toBe(key);
   });
 });

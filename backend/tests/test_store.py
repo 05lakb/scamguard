@@ -1,7 +1,7 @@
 """Tests for case storage. A fake Firestore client stands in, so nothing goes to the cloud."""
 
 import sys
-from datetime import datetime
+from datetime import datetime, timedelta
 from pathlib import Path
 
 import pytest
@@ -12,16 +12,24 @@ from fastapi.testclient import TestClient  # noqa: E402
 sys.path.insert(0, str(Path(__file__).resolve().parents[2]))
 from backend import app as app_module  # noqa: E402
 from backend import store as store_module  # noqa: E402
-from backend.store import FirestoreStore, MemoryStore, NoStore, case_record  # noqa: E402
+from backend.store import FirestoreStore, MemoryStore, NoStore, case_record, owner_of  # noqa: E402
 from backend.tests.test_app import BODY, fake_asker, fake_reader  # noqa: E402
 
 # A known payee with a full note: the guard decides in one round instead of asking.
 LONG_NOTE = {**BODY, "payment": {**BODY["payment"], "is_new_payee": False},
              "message": "Paying my landlord for this month's rent, same flat as last year, I checked the account with him."}
 
+BROWSER_A = "a" * 40
+BROWSER_B = "b1" * 20
 
-def client_with(store):
-    return TestClient(app_module.create_app(reader=fake_reader, asker=fake_asker, store=store))
+
+def client_with(store, session=BROWSER_A):
+    headers = {"X-LMG-Session": session} if session else {}
+    return TestClient(app_module.create_app(reader=fake_reader, asker=fake_asker, store=store), headers=headers)
+
+
+def as_browser(client, session):
+    return {"X-LMG-Session": session} if session else {"X-LMG-Session": ""}
 
 
 # ---------- a tiny fake of the Firestore calls the store uses ----------
@@ -55,7 +63,7 @@ class FakeDocument:
 class FakeCollection:
     def __init__(self, db, path):
         self.db, self.path = db, path
-        self._order, self._limit = None, None
+        self._filters, self._limit = [], None
 
     def document(self, doc_id):
         return FakeDocument(self.db, f"{self.path}/{doc_id}")
@@ -63,8 +71,9 @@ class FakeCollection:
     def add(self, data, timeout=None):
         self.db.added.append((self.path, dict(data)))
 
-    def order_by(self, field, direction="ASCENDING"):
-        self._order = (field, direction)
+    def where(self, filter):
+        assert filter.op_string == "=="
+        self._filters.append((filter.field_path, filter.value))
         return self
 
     def limit(self, count):
@@ -74,8 +83,7 @@ class FakeCollection:
     def stream(self, timeout=None):
         prefix = self.path + "/"
         rows = [data for path, data in self.db.docs.items() if path.startswith(prefix) and "/" not in path[len(prefix):]]
-        field, direction = self._order
-        rows.sort(key=lambda row: row[field], reverse=direction == "DESCENDING")
+        rows = [row for row in rows if all(row.get(field) == value for field, value in self._filters)]
         return [FakeSnapshot(row) for row in rows[: self._limit]]
 
 
@@ -101,7 +109,7 @@ def nested_lists(value):
     return False
 
 
-def test_saved_record_fits_firestore_and_keeps_the_audit():
+def test_saved_record_fits_firestore_keeps_the_audit_and_expires():
     store = MemoryStore()
     response = client_with(store).post("/api/assess", json=LONG_NOTE)
     assert response.status_code == 200
@@ -111,7 +119,16 @@ def test_saved_record_fits_firestore_and_keeps_the_audit():
     assert saved["audit"]["behaviour_score"] == response.json()["audit"]["behaviour_score"]
     assert "id" not in saved["customer"]
     assert isinstance(saved["created_at"], datetime)
+    assert saved["expires_at"] - saved["created_at"] == timedelta(hours=24)
+    assert saved["owner"] == owner_of(BROWSER_A) and BROWSER_A not in str(saved)
     assert not nested_lists(saved)
+
+
+def test_session_keys_are_checked_and_hashed():
+    assert owner_of(None) is None and owner_of("") is None
+    assert owner_of("short") is None and owner_of("x" * 65) is None and owner_of("a" * 39 + "!") is None
+    assert owner_of(BROWSER_A) != owner_of(BROWSER_B)
+    assert len(owner_of(BROWSER_A)) == 32
 
 
 # ---------- the API ----------
@@ -127,12 +144,56 @@ def test_assessment_is_saved_listed_and_reviewed():
     assert listed["storage"] == "memory"
     assert [case["id"] for case in listed["cases"]] == [case_id]
     assert listed["cases"][0]["status"] == "open"
+    assert "owner" not in listed["cases"][0]
 
     reviewed = client.post(f"/api/cases/{case_id}/decision", json={"status": "held", "analyst": "  Priya  "})
     assert reviewed.status_code == 200
     assert reviewed.json()["status"] == "held"
     assert reviewed.json()["decisions"][-1]["analyst"] == "Priya"
     assert client.get("/api/cases").json()["cases"][0]["status"] == "held"
+
+
+def test_another_browser_cannot_see_or_decide_a_case():
+    store = MemoryStore()
+    client = client_with(store)
+    case_id = client.post("/api/assess", json=LONG_NOTE).json()["execution"]["request_id"]
+
+    assert client.get("/api/cases", headers=as_browser(client, BROWSER_B)).json()["cases"] == []
+    stolen = client.post(f"/api/cases/{case_id}/decision", json={"status": "approved"}, headers=as_browser(client, BROWSER_B))
+    assert stolen.status_code == 404
+    assert client.get("/api/cases").json()["cases"][0]["status"] == "open"
+
+
+def test_without_a_session_nothing_is_saved_listed_or_decided():
+    store = MemoryStore()
+    client = client_with(store, session=None)
+    result = client.post("/api/assess", json=LONG_NOTE)
+    assert result.status_code == 200 and result.json()["execution"]["saved"] is False
+    assert store.cases == {}
+    assert client.get("/api/cases").json()["cases"] == []
+    assert client.post("/api/cases/abcdef123456/decision", json={"status": "held"}).status_code == 401
+    malformed = client.post("/api/cases/abcdef123456/decision", json={"status": "held"}, headers={"X-LMG-Session": "short"})
+    assert malformed.status_code == 401
+
+
+def test_streamed_assessments_are_saved_for_their_browser():
+    store = MemoryStore()
+    client = client_with(store)
+    with client.stream("POST", "/api/assess/stream", json=LONG_NOTE) as response:
+        lines = list(response.iter_lines())
+    assert '"saved": true' in lines[-1]
+    assert len(client.get("/api/cases").json()["cases"]) == 1
+    assert client.get("/api/cases", headers=as_browser(client, BROWSER_B)).json()["cases"] == []
+
+
+def test_expired_cases_are_hidden_and_cannot_be_decided():
+    store = MemoryStore()
+    client = client_with(store)
+    case_id = client.post("/api/assess", json=LONG_NOTE).json()["execution"]["request_id"]
+    store.cases[case_id]["expires_at"] = store_module.utc_now() - timedelta(seconds=1)
+    assert client.get("/api/cases").json()["cases"] == []
+    assert client.post(f"/api/cases/{case_id}/decision", json={"status": "held"}).status_code == 404
+    assert store.cases == {}  # pruned
 
 
 def test_cases_waiting_for_an_answer_are_not_listed():
@@ -185,30 +246,48 @@ def test_failed_firestore_never_breaks_the_assessment():
 
 # ---------- the Firestore store itself ----------
 
-def test_firestore_store_writes_cases_and_decisions():
+def test_firestore_store_keeps_each_browser_to_its_own_cases():
     fake = FakeFirestore()
     store = FirestoreStore(client=fake)
     client = client_with(store)
     first = client.post("/api/assess", json=LONG_NOTE).json()["execution"]["request_id"]
     second = client.post("/api/assess", json=LONG_NOTE).json()["execution"]["request_id"]
-    assert f"cases/{first}" in fake.docs and f"cases/{second}" in fake.docs
+    other = client.post("/api/assess", json=LONG_NOTE, headers=as_browser(client, BROWSER_B)).json()["execution"]["request_id"]
+    assert all(f"cases/{case_id}" in fake.docs for case_id in (first, second, other))
+    assert fake.docs[f"cases/{first}"]["owner"] == owner_of(BROWSER_A)
 
-    listed = [case["id"] for case in client.get("/api/cases").json()["cases"]]
-    assert listed == [second, first]  # newest first
-    assert isinstance(client.get("/api/cases").json()["cases"][0]["created_at"], str)
+    listed = client.get("/api/cases").json()["cases"]
+    assert [case["id"] for case in listed] == [second, first]  # newest first, only this browser's
+    assert isinstance(listed[0]["created_at"], str) and "owner" not in listed[0]
+    assert [case["id"] for case in client.get("/api/cases", headers=as_browser(client, BROWSER_B)).json()["cases"]] == [other]
+
+    assert client.post(f"/api/cases/{first}/decision", json={"status": "approved"},
+                       headers=as_browser(client, BROWSER_B)).status_code == 404
+    assert fake.added == []
 
     reviewed = client.post(f"/api/cases/{first}/decision", json={"status": "escalated", "analyst": "Lalit"})
-    assert reviewed.status_code == 200
-    assert fake.docs[f"cases/{first}"]["status"] == "escalated"
+    assert reviewed.status_code == 200 and "owner" not in reviewed.json()
+    case = fake.docs[f"cases/{first}"]
+    assert case["status"] == "escalated"
     assert fake.added == [(f"cases/{first}/decisions", {"status": "escalated", "analyst": "Lalit",
-                                                          "at": fake.docs[f"cases/{first}"]["reviewed_at"]})]
+                                                          "at": case["reviewed_at"], "expires_at": case["expires_at"]})]
     assert client.post("/api/cases/abcdef123456/decision", json={"status": "held"}).status_code == 404
+
+
+def test_firestore_store_hides_expired_cases():
+    fake = FakeFirestore()
+    client = client_with(FirestoreStore(client=fake))
+    case_id = client.post("/api/assess", json=LONG_NOTE).json()["execution"]["request_id"]
+    fake.docs[f"cases/{case_id}"]["expires_at"] = store_module.utc_now() - timedelta(seconds=1)
+    assert client.get("/api/cases").json()["cases"] == []
+    assert client.post(f"/api/cases/{case_id}/decision", json={"status": "held"}).status_code == 404
 
 
 def test_case_record_keeps_follow_up_questions():
     outcome = {"action": "ask", "score": 30, "questions": ["Who is this for?"], "round": 1,
                "audit": {}, "execution": {}}
-    record = case_record("abcdef123456", {"amount": 5}, {"id": "web", "segment": "family"}, "rent", None, None, outcome)
+    record = case_record("abcdef123456", {"amount": 5}, {"id": "web", "segment": "family"}, "rent", None, None, outcome,
+                         owner_of(BROWSER_A))
     assert record["questions"] == ["Who is this for?"]
     assert record["customer"] == {"segment": "family"}
 

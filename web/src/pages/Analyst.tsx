@@ -179,7 +179,7 @@ export function Analyst({ cases, decide, scenarios, onTestCase, initialCaseId, f
                 </div>
               )}
               {selected.action !== "allow" && <p className="muted small">{selected.savedId
-                ? "Human review is simulated. Your decision is saved with this case on the server, with your name and the time, but it is never sent to a bank."
+                ? "Human review is simulated. Your decision is saved with this case, with your name and the time. Only this browser can see the case, it is deleted after 24 hours, and nothing is sent to a bank."
                 : "Human review is simulated in the browser. This case was not saved on the server, so the decision stays on this page and is never sent to a bank."}</p>}
               {selected.action !== "allow" && <CallbackBrief key={selected.id} item={selected} />}
               <details className="simple-result-details"><summary>Detailed findings from each check</summary><AgentEvidence item={selected} /></details>

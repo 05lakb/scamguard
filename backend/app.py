@@ -5,6 +5,7 @@ The check itself keeps no memory between requests: for the second round of a con
 the browser sends the first note and the questions back with the customer's answer.
 Finished assessments and analyst decisions are saved as cases (Firestore when switched on),
 so the analyst queue survives a page refresh. Saving never changes a recommendation.
+Cases belong to the browser that created them (its X-LMG-Session key) and expire after 24 hours.
 
 Safety built in:
   - every input is checked for type, range and length,
@@ -39,7 +40,7 @@ from backend.risk.decision import decide
 from backend.risk.evidence import load_scam_types, read_message
 from backend.risk.translate import translate_warning
 from backend.service import assess_steps
-from backend.store import case_record, store_from_environment
+from backend.store import case_record, owner_of, store_from_environment
 
 log = logging.getLogger("lmg")
 logging.basicConfig(level=logging.INFO, format="%(message)s")
@@ -59,6 +60,7 @@ FALLBACK_REASONS = {
 }
 
 MAX_BODY_BYTES = 20_000
+SESSION_HEADER = "x-lmg-session"
 PER_VISITOR_PER_MINUTE = int(os.getenv("LMG_RATE_PER_MINUTE", "12"))
 PER_VISITOR_PER_HOUR = int(os.getenv("LMG_RATE_PER_HOUR", "100"))
 GEMINI_CALLS_PER_HOUR = int(os.getenv("LMG_GEMINI_PER_HOUR", "300"))
@@ -267,7 +269,7 @@ def create_app(reader=read_message, asker=clarify.ask_questions, arena_writer=No
         log.info("conversation level=%s source=%s ms=%d", result["risk_level"], result["source"], result["duration_ms"])
         return result
 
-    def assessment_events(body: AssessIn):
+    def assessment_events(body: AssessIn, owner=None):
         payment = body.payment.model_dump()
         customer = {"id": "web", **body.customer.model_dump()}
         network = body.network.model_dump() if body.network else None
@@ -359,7 +361,7 @@ def create_app(reader=read_message, asker=clarify.ask_questions, arena_writer=No
         }
         # Save the case. A failed save is reported, never allowed to change the recommendation.
         outcome["execution"]["saved"] = store.save_case(case_record(
-            request_id, payment, customer, body.message, body.questions, body.answer, outcome))
+            request_id, payment, customer, body.message, body.questions, body.answer, outcome, owner))
 
         log.info("assess request_id=%s action=%s score=%s round=%s mode=%s degraded=%s ms=%d",
                  outcome["execution"]["request_id"], outcome["action"], outcome["score"],
@@ -371,7 +373,7 @@ def create_app(reader=read_message, asker=clarify.ask_questions, arena_writer=No
     def assess_payment(body: AssessIn, request: Request):
         if not visitors.allow(visitor_key(request)):
             return JSONResponse({"detail": "Too many requests. Please wait a minute and try again."}, status_code=429)
-        for event in assessment_events(body):
+        for event in assessment_events(body, owner_of(request.headers.get(SESSION_HEADER))):
             if event["type"] == "result":
                 return event["result"]
 
@@ -379,9 +381,11 @@ def create_app(reader=read_message, asker=clarify.ask_questions, arena_writer=No
     def stream_payment(body: AssessIn, request: Request):
         if not visitors.allow(visitor_key(request)):
             return JSONResponse({"detail": "Too many requests. Please wait a minute and try again."}, status_code=429)
+        owner = owner_of(request.headers.get(SESSION_HEADER))
+
         def lines():
             try:
-                for event in assessment_events(body):
+                for event in assessment_events(body, owner):
                     yield json.dumps(event) + "\n"
             except Exception:
                 log.warning("assessment stream could not finish")
@@ -390,10 +394,11 @@ def create_app(reader=read_message, asker=clarify.ask_questions, arena_writer=No
                                  headers={"Cache-Control": "no-store", "X-Accel-Buffering": "no"})
 
     @app.get("/api/cases")
-    def list_cases(limit: int = 20):
-        """The most recent saved cases that reached a recommendation (not ones still waiting for an answer)."""
+    def list_cases(request: Request, limit: int = 20):
+        """This browser's recent saved cases that reached a recommendation (not ones still waiting for an answer)."""
         limit = max(1, min(limit, 50))
-        cases = [case for case in store.recent_cases(limit * 2) if case.get("action") != "ask"][:limit]
+        owner = owner_of(request.headers.get(SESSION_HEADER))
+        cases = [case for case in store.recent_cases(owner, limit * 2) if case.get("action") != "ask"][:limit]
         return {"storage": store.kind, "cases": cases}
 
     @app.post("/api/cases/{case_id}/decision")
@@ -403,8 +408,11 @@ def create_app(reader=read_message, asker=clarify.ask_questions, arena_writer=No
             return JSONResponse({"detail": "Too many requests. Please wait a minute and try again."}, status_code=429)
         if store.kind == "off":
             return JSONResponse({"detail": "Case storage is switched off on this server."}, status_code=503)
+        owner = owner_of(request.headers.get(SESSION_HEADER))
+        if owner is None:
+            return JSONResponse({"detail": "A session key is required to record a decision."}, status_code=401)
         analyst = " ".join(body.analyst.split())[:40] or "analyst"
-        saved = store.record_decision(case_id, body.status, analyst)
+        saved = store.record_decision(case_id, owner, body.status, analyst)
         if saved is None:
             return JSONResponse({"detail": "The case was not found or could not be updated."}, status_code=404)
         log.info("decision case=%s status=%s", case_id, body.status)  # the analyst's name is not logged

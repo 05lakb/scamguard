@@ -3,6 +3,37 @@
 
 import type { AccountNetwork, Customer, Decision, Payment } from "./core/types";
 
+// ---------- this browser's session key ----------
+// Saved cases belong to the browser that created them. The key is random, kept in this browser
+// only, and the server stores just a hash of it. Without storage, a key lasts for this page load.
+
+const SESSION_STORAGE_KEY = "lmg-session";
+let memorySession: string | null = null;
+
+function newSessionKey(): string {
+  const bytes = new Uint8Array(20);
+  crypto.getRandomValues(bytes);
+  return Array.from(bytes, (byte) => byte.toString(16).padStart(2, "0")).join("");
+}
+
+export function sessionKey(): string {
+  try {
+    const saved = localStorage.getItem(SESSION_STORAGE_KEY);
+    if (saved && /^[A-Za-z0-9_-]{32,64}$/.test(saved)) return saved;
+    const fresh = newSessionKey();
+    localStorage.setItem(SESSION_STORAGE_KEY, fresh);
+    return fresh;
+  } catch {
+    memorySession ??= newSessionKey();
+    return memorySession;
+  }
+}
+
+const sessionHeaders = (json = true): Record<string, string> => ({
+  ...(json ? { "Content-Type": "application/json" } : {}),
+  "X-LMG-Session": sessionKey(),
+});
+
 export interface AssessRequest {
   payment: Payment;
   customer: Pick<Customer, "segment" | "typical_amount" | "typical_spend_15d">;
@@ -39,7 +70,7 @@ export async function assessPayment(request: AssessRequest): Promise<ServerDecis
   try {
     const response = await fetch("/api/assess", {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
+      headers: sessionHeaders(),
       body: JSON.stringify(request),
       signal: controller.signal,
     });
@@ -193,7 +224,7 @@ export async function streamAssessment(request: AssessRequest, onEvent: (event: 
   let reader: ReadableStreamDefaultReader<Uint8Array> | undefined;
   try {
     const response = await fetch("/api/assess/stream", {
-      method: "POST", headers: { "Content-Type": "application/json" },
+      method: "POST", headers: sessionHeaders(),
       body: JSON.stringify(request), signal: controller.signal,
     });
     if (response.status === 429) throw new Error("Too many requests. Please wait a minute and try again.");
@@ -300,8 +331,8 @@ export async function checkHealth(): Promise<Health | null> {
 }
 
 // ---------- saved cases ----------
-// The server saves every finished assessment as a case (Firestore on the deployed app),
-// so the analyst queue survives a refresh. Storage is optional: any failure here leaves
+// The server saves every finished assessment as a case (Firestore on the deployed app), so the
+// analyst queue survives a refresh. Only this browser sees its cases, and they expire after 24 hours. Storage is optional: any failure here leaves
 // the page working with the cases it already has.
 
 export type AnalystStatus = "approved" | "held" | "escalated";
@@ -327,7 +358,7 @@ export interface SavedCase {
 
 export async function listSavedCases(): Promise<SavedCase[]> {
   try {
-    const response = await fetch("/api/cases?limit=20");
+    const response = await fetch("/api/cases?limit=20", { headers: sessionHeaders(false) });
     if (!response.ok) return [];
     const body = (await response.json()) as { cases?: SavedCase[] };
     return Array.isArray(body.cases) ? body.cases : [];
@@ -340,7 +371,7 @@ export async function saveDecision(caseId: string, status: AnalystStatus, analys
   try {
     const response = await fetch(`/api/cases/${encodeURIComponent(caseId)}/decision`, {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
+      headers: sessionHeaders(),
       body: JSON.stringify({ status, analyst: analyst.slice(0, 40) || "analyst" }),
     });
     return response.ok;

@@ -8,7 +8,7 @@ import type { FinishedCase, Scenario } from "./Console";
 import { ReasonsByEngine } from "../components/ReasonsByEngine";
 import { Gauge } from "../components/Gauge";
 import { Icon, type IconName } from "../components/Icon";
-import { currentAction, findByReference, needsReview, referenceOf, sourceLabel, type CaseItem, type CaseStatus } from "../lib/cases";
+import { currentAction, findByReference, needsReview, referenceOf, reviewCount, sourceLabel, type CaseItem, type CaseStatus } from "../lib/cases";
 import { contributions, type Contribution } from "../lib/contrib";
 import { ACTION_LABEL, SEGMENT_LABEL } from "../lib/labels";
 
@@ -141,7 +141,7 @@ export function Analyst({ cases, decide, scenarios, onTestCase, initialCaseId, f
   const selected = cases.find((item) => item.id === openId) ?? null;
   const nextOpen = cases.find((item) => item.id !== openId && needsReview(item)) ?? null;
   const count = (test: (item: CaseItem) => boolean) => cases.filter(test).length;
-  const filterCount = (id: Filter) => (id === "all" ? cases.length : id === "review" ? count(needsReview) : count((item) => currentAction(item) === id));
+  const filterCount = (id: Filter) => (id === "all" ? cases.length : id === "review" ? reviewCount(cases) : count((item) => currentAction(item) === id));
 
   const filters = (
     <div className="filters" role="group" aria-label="Filter cases">
@@ -370,7 +370,7 @@ export function Analyst({ cases, decide, scenarios, onTestCase, initialCaseId, f
       </section>
 
       <div className="tiles">
-        <div className="tile"><span className="muted">Needs review</span><strong className="mono">{count(needsReview)}</strong></div>
+        <div className="tile"><span className="muted">Needs review</span><strong className="mono">{reviewCount(cases)}</strong></div>
         <div className="tile hold"><span className="muted">Hold recommended</span><strong className="mono">{count((c) => c.action === "hold")}</strong></div>
         <div className="tile warn"><span className="muted">Warnings</span><strong className="mono">{count((c) => c.action === "warn")}</strong></div>
         <div className="tile allow"><span className="muted">Allowed</span><strong className="mono">{count((c) => c.action === "allow")}</strong></div>

@@ -5,7 +5,7 @@ import { CUSTOMER_CALL_EVENT } from "./components/HoldNotification";
 import { Icon } from "./components/Icon";
 import { Logo } from "./components/Logo";
 import { ThemePicker, isTheme, type Theme } from "./components/ThemePicker";
-import { caseFromArena, findByReference, mergeSaved, needsReview, noteTrailText, recordedCases, verificationTrailText, type CaseItem, type CaseStatus } from "./lib/cases";
+import { caseFromArena, findByReference, mergeSaved, noteTrailText, recordedCases, reviewCount, verificationTrailText, type CaseItem, type CaseStatus } from "./lib/cases";
 import { NAV, type Page } from "./lib/pages";
 import { STORY, STORY_PAUSE_MS } from "./lib/story";
 import { Analyst } from "./pages/Analyst";
@@ -252,7 +252,7 @@ export function App() {
           setPage(entry.id);
         }}>
         <Icon name={entry.icon} size={15} /> {entry.label}
-        {entry.id === "analyst" && pending > 0 && <span className="badge">{pending}</span>}
+        {entry.id === "analyst" && pending > 0 && <span className="badge" title={`${pending} cases need review`} aria-label={`${pending} cases need review`}>{pending}</span>}
       </button>
     );
   }
@@ -286,7 +286,7 @@ export function App() {
 
   const step = story && story.phase !== "done" ? STORY[story.index] : null;
   const autoplay = step && story ? { scenarioId: step.scenarioId, autoAnswer: step.autoAnswer, nonce: story.nonce } : null;
-  const pending = cases.filter((item) => item.source !== "recorded" && needsReview(item)).length;
+  const pending = reviewCount(cases);
 
   const dialog = signIn && (
     <div className="modal-back" role="presentation" onClick={() => setSignIn(null)}>
@@ -339,7 +339,7 @@ export function App() {
         </details>
         <div className="top-right">
           <button className="icon-btn" onClick={startStory} aria-label="Play the guided demo" title="Guided demo"><Icon name="play" size={15} /></button>
-          <button className="icon-btn" onClick={() => openCase()} aria-label={`${pending} alerts awaiting review`} title="Alerts">
+          <button className="icon-btn" onClick={() => openCase()} aria-label={`${pending} cases need review`} title={`${pending} cases need review`}>
             <Icon name="bell" size={16} />{pending > 0 && <span className="ping" />}
           </button>
           <ThemePicker theme={theme} onChange={setTheme} />

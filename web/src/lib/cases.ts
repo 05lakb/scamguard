@@ -74,7 +74,10 @@ export function recordedCases(): CaseItem[] {
   }));
 }
 
-export const needsReview = (item: CaseItem) => item.action !== "allow" && item.status === "open";
+export const needsReview = (item: Pick<CaseItem, "action" | "status">) => item.action !== "allow" && item.status === "open";
+
+// The one "needs review" number: the menu badge, the bell and the Cases filter all show this.
+export const reviewCount = (cases: Pick<CaseItem, "action" | "status">[]) => cases.filter(needsReview).length;
 
 // Where the payment stands now: the analyst's decision overrides the engine's recommendation.
 export function currentAction(item: Pick<CaseItem, "action" | "status">): CaseItem["action"] {

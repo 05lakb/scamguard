@@ -25,8 +25,7 @@ interface Props {
   scenarios: Scenario[];
   cases: CaseItem[];
   onCase: (finished: FinishedCase, context: CaseContext) => string;
-  decide: (id: string, status: CaseStatus) => void;
-  // A verification with the customer finished: update the case with the re-check.
+  // Open this payment's case on the Cases page, where the analyst decides.
   openCase?: (caseId: string) => void;
   // The customer pressed "Call fraud team": the call continues on the Voice AI page.
   onStartCall?: (call: ActiveCall) => void;
@@ -180,7 +179,7 @@ interface Remembered {
 }
 let remembered: Remembered | null = null;
 
-export function Analyzer({ scenarios, cases, onCase, decide, openCase, onStartCall }: Props) {
+export function Analyzer({ scenarios, cases, onCase, openCase, onStartCall }: Props) {
   const [form, setForm] = useState<Form>(remembered?.form ?? BASE);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
@@ -470,7 +469,7 @@ export function Analyzer({ scenarios, cases, onCase, decide, openCase, onStartCa
       </div>
 
       {result && submitted && caseId && (
-        <Investigation result={result} used={submitted} caseId={caseId} cases={cases} decide={decide} />
+        <Investigation result={result} used={submitted} caseId={caseId} cases={cases} openCase={openCase} />
       )}
     </div>
   );
@@ -497,12 +496,12 @@ const STATUS_TEXT: Record<CaseStatus, string> = {
   escalated: "Escalated for investigation",
 };
 
-function Investigation({ result, used, caseId, cases, decide }: {
+function Investigation({ result, used, caseId, cases, openCase }: {
   result: ServerDecision;
   used: Form;
   caseId: string;
   cases: CaseItem[];
-  decide: (id: string, status: CaseStatus) => void;
+  openCase?: (caseId: string) => void;
 }) {
   const item = cases.find((c) => c.id === caseId);
   const earlier = cases.filter((c) => c.id !== caseId && c.source !== "recorded");
@@ -531,11 +530,16 @@ function Investigation({ result, used, caseId, cases, decide }: {
   );
 
   return (
-    <section className="investigation" aria-labelledby="investigation-title">
-      <div className="section-title" style={{ marginTop: 26 }}>
-        <p className="kicker">Step 03 · complete investigation</p>
-        <h2 id="investigation-title">Everything about this transaction</h2>
-      </div>
+    // Folded by default: the page leads with the result and the call; the detail is one click away.
+    <details className="investigation investigation-fold">
+      <summary className="section-title">
+        <span>
+          <span className="kicker">Full investigation</span>
+          <span className="fold-title">Everything about this transaction</span>
+          <span className="muted small">Case file and audit trail, the customer's context, and where the money would go (MuleNet).</span>
+        </span>
+        <Icon name="arrow" size={16} />
+      </summary>
 
       <section className="panel case-file">
         <PanelHead kicker={`Case ${caseId}`} title="Case file" icon="flag">
@@ -556,13 +560,15 @@ function Investigation({ result, used, caseId, cases, decide }: {
 
             <p className="sub-kicker">Analyst decision</p>
             <p className="muted small" style={{ marginTop: -4 }}>
-              {result.action === "allow" ? "The engine allowed this payment. You can still escalate it if something looks wrong." : "The engine recommends a person reviews this payment before any money moves."}
+              {status !== "open" ? `${STATUS_TEXT[status]}, on the Cases page.`
+                : result.action === "allow" ? "The engine allowed this payment; no review is needed."
+                : "The analyst decides on the Cases page, after the customer's call."}
             </p>
-            <div className="chip-row" style={{ marginBottom: 6 }}>
-              {result.action !== "allow" && <button className="btn small" disabled={status === "approved"} onClick={() => decide(caseId, "approved")}><Icon name="allow" size={14} /> Approve payment</button>}
-              {result.action !== "allow" && <button className="btn small" disabled={status === "held"} onClick={() => decide(caseId, "held")}><Icon name="hold" size={14} /> Keep on hold</button>}
-              <button className="btn small" disabled={status === "escalated"} onClick={() => decide(caseId, "escalated")}><Icon name="flag" size={14} /> Escalate</button>
-            </div>
+            {result.action !== "allow" && openCase && (
+              <div className="chip-row" style={{ marginBottom: 6 }}>
+                <button className="btn small" onClick={() => openCase(caseId)}><Icon name="flag" size={14} /> Open the case (analyst)</button>
+              </div>
+            )}
 
             <p className="sub-kicker">Audit trail</p>
             <ol className="audit-trail">
@@ -637,6 +643,6 @@ function Investigation({ result, used, caseId, cases, decide }: {
           <EmptyState icon="network" title="No account-network data for this run" text="Choose a pattern under “Receiving account (MuleNet)” in the form and analyse again to check where the money would go next." />
         )}
       </section>
-    </section>
+    </details>
   );
 }

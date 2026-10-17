@@ -2594,3 +2594,17 @@ input, select, textarea {
 .decision-outcome.allow > svg { color: var(--allow); }
 .decision-outcome.hold { background: var(--hold-bg); border-color: var(--hold); }
 .decision-outcome.hold > svg { color: var(--hold); }
+
+/* ---------- the full investigation on Transactions: folded until asked for ---------- */
+.investigation-fold { margin-top: 22px; }
+.investigation-fold > summary {
+  list-style: none; cursor: pointer; display: flex; align-items: center; justify-content: space-between; gap: 16px;
+  padding: 16px 20px; margin: 0 0 4px; border: 1px solid var(--line); border-radius: 14px; background: var(--surface);
+}
+.investigation-fold > summary::-webkit-details-marker { display: none; }
+.investigation-fold > summary > span { display: grid; gap: 4px; }
+.investigation-fold > summary .fold-title { font-size: 1.05rem; font-weight: 700; color: var(--ink); }
+.investigation-fold > summary > svg { flex: none; color: var(--accent); transform: rotate(90deg); transition: transform 0.15s ease; }
+.investigation-fold[open] > summary > svg { transform: rotate(-90deg); }
+.investigation-fold > summary:hover, .investigation-fold > summary:focus-visible { border-color: var(--accent); }
+.investigation-fold[open] > summary { margin-bottom: 16px; }

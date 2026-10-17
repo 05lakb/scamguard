@@ -352,7 +352,7 @@ export function App() {
       <main className="app-main">
         {page !== "dashboard" && <button className="back-link" onClick={() => setPage("dashboard")}><Icon name="back" size={12} /> Dashboard</button>}
         {page === "dashboard" && <Dashboard user={user} cases={cases} health={health} refresh={refreshHealth} goTo={(p) => setPage(p)} />}
-        {page === "analyzer" && <Analyzer scenarios={scenarios} cases={cases} onCase={addCase} decide={decide} openCase={openCase}
+        {page === "analyzer" && <Analyzer scenarios={scenarios} cases={cases} onCase={addCase} openCase={openCase}
           onStartCall={(call) => { setActiveCall(call); setPage("voice"); }} />}
         {page === "voice" && <VoiceAI onAnalysed={(result) => setVoice((old) => [result, ...old])} call={activeCall}
           onCallDone={(verification) => { if (activeCall) verified(activeCall.caseId, verification); }}

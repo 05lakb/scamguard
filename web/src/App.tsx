@@ -9,7 +9,6 @@ import { caseFromArena, findByReference, mergeSaved, noteTrailText, recordedCase
 import { NAV, type Page } from "./lib/pages";
 import { STORY, STORY_PAUSE_MS } from "./lib/story";
 import { Analyst } from "./pages/Analyst";
-import { Analytics } from "./pages/Analytics";
 import { Analyzer, type CaseContext } from "./pages/Analyzer";
 import { Architecture } from "./pages/Architecture";
 import { type FinishedCase, type Scenario } from "./pages/Console";
@@ -351,14 +350,13 @@ export function App() {
 
       <main className="app-main">
         {page !== "dashboard" && <button className="back-link" onClick={() => setPage("dashboard")}><Icon name="back" size={12} /> Dashboard</button>}
-        {page === "dashboard" && <Dashboard user={user} cases={cases} health={health} refresh={refreshHealth} goTo={(p) => setPage(p)} />}
+        {page === "dashboard" && <Dashboard user={user} cases={cases} voice={voice} health={health} refresh={refreshHealth} goTo={(p) => setPage(p)} open={openCase} />}
         {page === "analyzer" && <Analyzer scenarios={scenarios} cases={cases} onCase={addCase} openCase={openCase}
           onStartCall={(call) => { setActiveCall(call); setPage("voice"); }} />}
         {page === "voice" && <VoiceAI onAnalysed={(result) => setVoice((old) => [result, ...old])} call={activeCall}
           onCallDone={(verification) => { if (activeCall) verified(activeCall.caseId, verification); }}
           onBackToPayment={() => { setActiveCall(null); setPage("analyzer"); }} />}
         {page === "profile" && <RiskProfile cases={cases} open={openCase} goAnalyze={() => setPage("analyzer")} />}
-        {page === "analytics" && <Analytics cases={cases} voice={voice} health={health} refresh={refreshHealth} open={openCase} />}
         {page === "analyst" && <Analyst initialCaseId={reviewCaseId} focusId={focus} cases={cases} decide={decide} scenarios={scenarios} onTestCase={(finished) => addCase(finished, undefined, "test")} logCall={(id, reference) => addTrail(id, `Analyst opened the case from the caller's reference ${reference}`)} addNote={(id, kind, text) => addNote(id, kind, text, user ?? "analyst")} />}
         {page === "lab" && (
           <>
@@ -391,7 +389,7 @@ export function App() {
                       <p>Payment behaviour, scam signals and account links inform a recommendation before money moves. A person stays in charge of every hold.</p>
                     </div>
                     <div className="story-controls">
-                      <button className="ghost small-btn" onClick={() => { setStory(null); setPage("analytics"); }}>See the analytics</button>
+                      <button className="ghost small-btn" onClick={() => { setStory(null); setPage("dashboard"); }}>See the dashboard</button>
                       <button className="ghost small-btn" onClick={() => setStory(null)}>Close</button>
                     </div>
                   </>

@@ -1,16 +1,18 @@
 import { useState } from "react";
-import type { Health } from "../api";
+import type { ConversationResult, Health } from "../api";
 import { HOST_LABEL, hostKind } from "../lib/hosting";
 import { Icon, type IconName } from "../components/Icon";
 import { DistRow, EmptyState, PanelHead, StatCard, type Tone } from "../components/ui";
-import type { CaseItem } from "../lib/cases";
-import { insights } from "../lib/insights";
+import { sourceLabel, type CaseItem } from "../lib/cases";
+import { groupBy, insights, levelOf, money } from "../lib/insights";
 import type { Page } from "../lib/pages";
 
 interface Props {
   user: string;
   cases: CaseItem[];
+  voice: ConversationResult[];
   health: Health | null | undefined;
+  open: (id: string) => void;
   refresh: () => void;
   goTo: (page: Page) => void;
 }
@@ -20,7 +22,6 @@ const SUITE: { page: Page; icon: IconName; tone: Tone; kicker: string; title: st
   { page: "voice", icon: "mic", tone: "violet", kicker: "Social engineering", title: "Voice Phishing AI", text: "Detect OTP requests, impersonation, threats and urgency in a call transcript.", cta: "Open voice scanner" },
   { page: "analyst", icon: "flag", tone: "amber", kicker: "Operations", title: "Cases", text: "Every warning and hold in one queue. Approve, keep on hold or escalate, with an audit trail.", cta: "Open cases" },
   { page: "profile", icon: "user", tone: "teal", kicker: "User intelligence", title: "User Risk Profile", text: "One customer's payments, devices, beneficiaries and locations, with an overall risk score and the reasons behind it.", cta: "View risk profile" },
-  { page: "analytics", icon: "chart", tone: "blue", kicker: "Intelligence", title: "Fraud Analytics", text: "Risk distribution, decisions, top signals, analyst feedback and risk by location across all transactions.", cta: "View analytics" },
 ];
 
 // Where a judge sees the proof: the live red team, the measured results, and how it is built.
@@ -37,11 +38,14 @@ const ENGINES: { id: string; icon: IconName; tone: Tone; name: string; role: str
   { id: "decision", icon: "shield", tone: "blue", name: "Decision layer", role: "Combines and explains", checks: ["Warn from 40, hold from 70", "Asks the customer when unsure", "Ranked reasons and audit trail"] },
 ];
 
-export function Dashboard({ user, cases, health, refresh, goTo }: Props) {
+export function Dashboard({ user, cases, voice, health, refresh, goTo, open }: Props) {
   const [scope, setScope] = useState<"session" | "all">("session");
   const rows = scope === "session" ? cases.filter((item) => item.source !== "recorded") : cases;
   const stats = insights(rows);
   const online = health?.ok === true;
+  const voiceHigh = voice.filter((v) => v.risk_level === "high").length;
+  const places = groupBy(rows, (item) => item.location);
+  const changed = rows.filter((item) => item.audit?.behaviour_signals.some((signal) => signal.name === "location_change")).length;
 
   return (
     <div>
@@ -78,13 +82,15 @@ export function Dashboard({ user, cases, health, refresh, goTo }: Props) {
         ))}
       </section>
 
-      <section className="stats-grid" aria-label="Security overview">
+      <section className="stats-grid four" aria-label="Security overview">
         <StatCard icon="activity" tone="teal" label="Total transactions" value={stats.total} hint="Payments assessed" />
         <StatCard icon="warn" tone="red" label="Fraud alerts" value={stats.hold + stats.warn} hint="Warnings and holds" />
         <StatCard icon="trend" tone="amber" label="Needs review" value={stats.needsReview} hint="Open alerts for an analyst" />
         <StatCard icon="ban" tone="violet" label="Held" value={stats.hold} hint="Hold recommended" />
         <StatCard icon="money" tone="green" label="Amount at risk" value={stats.atRisk} hint="In flagged payments" />
         <StatCard icon="pulse" tone="blue" label="Average risk" value={stats.averageScore.toFixed(1)} hint="Across assessed payments" />
+        <StatCard icon="flag" tone="red" label="Confirmed fraud" value={stats.confirmed} hint="Analyst kept on hold or escalated" />
+        <StatCard icon="mic" tone="violet" label="Voice scans" value={`${voice.length}`} hint={`${voiceHigh} high-risk calls`} />
       </section>
 
       <div className="grid-2">
@@ -106,17 +112,75 @@ export function Dashboard({ user, cases, health, refresh, goTo }: Props) {
         </section>
       </div>
 
+      <div className="grid-2" style={{ marginTop: 16 }}>
+        <section className="panel">
+          <PanelHead kicker="AI explainability" title="Top risk signals" icon="pulse" />
+          {stats.topSignals.length ? (
+            <ol className="signal-list">
+              {stats.topSignals.map((signal, index) => (
+                <li key={signal.label}><span className="n">{String(index + 1).padStart(2, "0")}</span><span>{signal.label}</span><strong className="mono">{signal.count}</strong></li>
+              ))}
+            </ol>
+          ) : (
+            <EmptyState icon="pulse" title="No signals yet" text="Analyse a transaction or a call transcript and the strongest risk signals will be ranked here." action={<button className="btn small primary" onClick={() => goTo("analyzer")}>Analyse a transaction</button>} />
+          )}
+        </section>
+        <section className="panel">
+          <PanelHead kicker="Analyst feedback" title="Human review" icon="user" />
+          <div className="action-tiles">
+            <div className="action-tile tone-green"><Icon name="shield" size={20} /><strong>{stats.confirmed}</strong><span>Confirmed</span></div>
+            <div className="action-tile tone-red"><Icon name="close" size={20} /><strong>{stats.falsePositives}</strong><span>False positive</span></div>
+            <div className="action-tile tone-amber"><Icon name="warn" size={20} /><strong>{stats.needsReview}</strong><span>Pending</span></div>
+          </div>
+          <div className="subscores" style={{ marginTop: 14 }}>
+            <div><span className="muted">Reviewed cases</span><strong className="mono">{stats.reviewed}</strong></div>
+            <div><span className="muted">False-positive rate</span><strong className="mono">{stats.falsePositiveRate}%</strong></div>
+          </div>
+        </section>
+      </div>
+
       <section className="panel" style={{ marginTop: 16 }}>
-        <PanelHead kicker="AI explainability" title="Top risk signals" icon="pulse" />
-        {stats.topSignals.length ? (
-          <ol className="signal-list">
-            {stats.topSignals.map((signal, index) => (
-              <li key={signal.label}><span className="n">{String(index + 1).padStart(2, "0")}</span><span>{signal.label}</span><strong className="mono">{signal.count}</strong></li>
+        <PanelHead kicker="Location intelligence" title="Risk by location" icon="map">
+          <span className="muted small">{places.length} location{places.length === 1 ? "" : "s"} · {changed} unusual-location flag{changed === 1 ? "" : "s"}</span>
+        </PanelHead>
+        {places.length ? (
+          <div className="geo-map">
+            {places.map((place) => (
+              <article className={`geo-tile ${levelOf(place.worst)}`} key={place.key}>
+                <strong><Icon name="map" size={14} /> {place.key}</strong>
+                <span className="muted small">{place.total} payment{place.total === 1 ? "" : "s"} · worst {place.worst}/100</span>
+                <div className="meter" aria-label={`${place.high} high, ${place.medium} medium, ${place.low} low`}>
+                  <i style={{ width: `${(place.high / place.total) * 100}%` }} />
+                  <i style={{ width: `${(place.medium / place.total) * 100}%` }} />
+                  <i style={{ width: `${(place.low / place.total) * 100}%` }} />
+                </div>
+              </article>
             ))}
-          </ol>
-        ) : (
-          <EmptyState icon="pulse" title="No signals yet" text="Analyse a transaction or a call transcript and the strongest risk signals will be ranked here." action={<button className="btn small primary" onClick={() => goTo("analyzer")}>Analyse a transaction</button>} />
-        )}
+          </div>
+        ) : <EmptyState icon="map" title="No locations yet" text="Locations come from the Transactions page. Analyse a payment with a location to see risk by place." />}
+      </section>
+
+      <section className="panel" style={{ marginTop: 16 }}>
+        <PanelHead kicker="Activity" title="Recent assessments" icon="list" />
+        {rows.length ? (
+          <div className="table-wrap">
+            <table className="data-table">
+              <thead><tr><th>Transaction</th><th>Amount</th><th>Risk</th><th>Decision</th><th>Source</th><th><span className="sr-only">Open</span></th></tr></thead>
+              <tbody>
+                {rows.slice(0, 10).map((item) => (
+                  <tr key={item.id}>
+                    <td><strong>{item.title}</strong><small>{item.id} · {item.when}</small></td>
+                    <td className="mono">{money(item.amount, item.currency)}</td>
+                    <td><span className={`lvl ${levelOf(item.score)}`}>{levelOf(item.score).toUpperCase()} · {item.score}</span></td>
+                    <td><span className={`act ${item.action}`}>{item.action}</span></td>
+                    <td className="muted">{sourceLabel(item.source)}</td>
+                    <td><button className="btn small" onClick={() => open(item.id)}>Investigate <Icon name="arrow" size={13} /></button></td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        ) : <EmptyState icon="activity" title="No assessments in this session" text="Check a payment on Transactions, run the Red Team, or include recorded examples above." />}
       </section>
 
       <div className="section-title"><p className="kicker">Use it</p><h2>Fraud intelligence suite</h2></div>

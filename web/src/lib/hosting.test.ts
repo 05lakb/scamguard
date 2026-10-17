@@ -16,7 +16,7 @@ describe("where the app is served from", () => {
 describe("top menu", () => {
   it("lists the product first, then the proof", () => {
     expect(NAV.filter((entry) => entry.group === "use").map((entry) => entry.label))
-      .toEqual(["Dashboard", "Transactions", "Voice AI", "Cases", "Risk Profile", "Analytics"]);
+      .toEqual(["Dashboard", "Transactions", "Voice AI", "Cases", "Risk Profile"]);
     expect(NAV.filter((entry) => entry.group === "prove").map((entry) => entry.label))
       .toEqual(["Red Team", "Evidence", "How it's built"]);
   });

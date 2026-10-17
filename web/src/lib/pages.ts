@@ -3,7 +3,7 @@
 import type { IconName } from "../components/Icon";
 
 export type Page =
-  | "dashboard" | "analyzer" | "voice" | "analyst" | "profile" | "analytics" | "lab" | "evidence" | "architecture";
+  | "dashboard" | "analyzer" | "voice" | "analyst" | "profile" | "lab" | "evidence" | "architecture";
 
 // "use": the product. "prove": the red team, the measured evidence, and how it is built.
 export const NAV: { id: Page; label: string; icon: IconName; group: "use" | "prove" }[] = [
@@ -12,7 +12,6 @@ export const NAV: { id: Page; label: string; icon: IconName; group: "use" | "pro
   { id: "voice", label: "Voice AI", icon: "mic", group: "use" },
   { id: "analyst", label: "Cases", icon: "flag", group: "use" },
   { id: "profile", label: "Risk Profile", icon: "user", group: "use" },
-  { id: "analytics", label: "Analytics", icon: "chart", group: "use" },
   { id: "lab", label: "Red Team", icon: "flask", group: "prove" },
   { id: "evidence", label: "Evidence", icon: "list", group: "prove" },
   { id: "architecture", label: "How it's built", icon: "cloud", group: "prove" },

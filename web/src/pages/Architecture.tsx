@@ -18,7 +18,7 @@ const WORKSPACES = [
   { name: "Transactions", detail: "Payment analysis & case file" },
   { name: "Voice AI", detail: "The customer's call · transcript analysis" },
   { name: "Cases", detail: "Analyst review & decision" },
-  { name: "Risk Profile · Analytics", detail: "Session-scoped investigation views" },
+  { name: "Dashboard · Risk Profile", detail: "Session-scoped overview and investigation views" },
   { name: "Red Team", detail: "Generated scams vs the guard · own scenarios" },
 ];
 
@@ -59,7 +59,7 @@ export function Architecture({ health }: { health?: Health | null }) {
           <article className="arch-card arch-actors">
             <span className="arch-index">CLIENT</span><span className="arch-icon"><Icon name="user" size={22} /></span>
             <h3>Browser workspace</h3><p>React interface served by the same FastAPI service.</p>
-            <ul><li>Use it: Dashboard · Transactions · Voice AI · Cases · Risk Profile · Analytics</li><li>Prove it: Red Team · Evidence · How it's built</li></ul>
+            <ul><li>Use it: Dashboard · Transactions · Voice AI · Cases · Risk Profile</li><li>Prove it: Red Team · Evidence · How it's built</li></ul>
             <div className="arch-mini-note"><Icon name="lock" size={14} /> Display name + per-browser session key; no bank login</div>
           </article>
 

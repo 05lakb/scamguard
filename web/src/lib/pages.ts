@@ -5,14 +5,15 @@ import type { IconName } from "../components/Icon";
 export type Page =
   | "dashboard" | "analyzer" | "voice" | "analyst" | "profile" | "analytics" | "lab" | "evidence" | "architecture";
 
-export const NAV: { id: Page; label: string; icon: IconName; secondary?: boolean }[] = [
-  { id: "dashboard", label: "Dashboard", icon: "grid" },
-  { id: "analyzer", label: "Transactions", icon: "activity" },
-  { id: "voice", label: "Voice AI", icon: "mic" },
-  { id: "analyst", label: "Cases", icon: "flag" },
-  { id: "profile", label: "Risk Profile", icon: "user" },
-  { id: "analytics", label: "Analytics", icon: "chart" },
-  { id: "lab", label: "Scenario Lab", icon: "flask" },
-  { id: "evidence", label: "Evidence", icon: "list", secondary: true },
-  { id: "architecture", label: "Architecture", icon: "cloud", secondary: true },
+// "use": the product. "prove": the red team, the measured evidence, and how it is built.
+export const NAV: { id: Page; label: string; icon: IconName; group: "use" | "prove" }[] = [
+  { id: "dashboard", label: "Dashboard", icon: "grid", group: "use" },
+  { id: "analyzer", label: "Transactions", icon: "activity", group: "use" },
+  { id: "voice", label: "Voice AI", icon: "mic", group: "use" },
+  { id: "analyst", label: "Cases", icon: "flag", group: "use" },
+  { id: "profile", label: "Risk Profile", icon: "user", group: "use" },
+  { id: "analytics", label: "Analytics", icon: "chart", group: "use" },
+  { id: "lab", label: "Red Team", icon: "flask", group: "prove" },
+  { id: "evidence", label: "Evidence", icon: "list", group: "prove" },
+  { id: "architecture", label: "How it's built", icon: "cloud", group: "prove" },
 ];

@@ -2541,3 +2541,30 @@ input, select, textarea {
 .call-findings li { margin: 3px 0; }
 .call-result-foot { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 12px; margin-top: 10px; padding-top: 10px; border-top: 1px solid var(--line); }
 .call-result-foot p { margin: 0; flex: 1 1 340px; }
+
+/* Top menu: "Use it" pages, a divider, then "Prove it" pages (folded under More on small screens). */
+.topnav-divider { flex: none; align-self: center; width: 1px; height: 22px; margin: 0 6px; background: var(--line-strong); }
+.topnav-prove { display: contents; }
+.topnav-more { display: none; position: relative; flex: none; }
+.topnav-more > summary { list-style: none; display: inline-flex; align-items: center; min-height: 36px; padding: 0 12px; border: 1px solid var(--line); border-radius: 9px; color: var(--muted); font-size: 0.84rem; cursor: pointer; }
+.topnav-more > summary::-webkit-details-marker { display: none; }
+.topnav-more[open] > summary { color: var(--accent); border-color: var(--accent); }
+.topnav-more-menu { position: absolute; right: 0; top: calc(100% + 6px); z-index: 30; display: grid; gap: 2px; min-width: 190px; padding: 6px; border: 1px solid var(--line); border-radius: 12px; background: var(--surface); box-shadow: var(--shadow-lg); }
+.topnav-more-menu button { display: flex; align-items: center; gap: 8px; min-height: 36px; padding: 0 10px; border: 0; border-radius: 8px; background: none; color: var(--ink); font-size: 0.86rem; text-align: left; cursor: pointer; }
+.topnav-more-menu button:hover, .topnav-more-menu button.on { background: var(--accent-soft); color: var(--accent); }
+@media (max-width: 900px) {
+  .topnav-divider, .topnav-prove { display: none; }
+  .topnav-more { display: block; }
+}
+
+/* Dashboard: the way to the proof. */
+.prove-strip { display: grid; grid-template-columns: minmax(150px, 0.7fr) repeat(3, minmax(0, 1fr)); gap: 12px; align-items: stretch; margin: 0 0 16px; padding: 14px; border: 1px solid var(--line); border-radius: 16px; background: var(--surface); }
+.prove-strip > div { display: grid; align-content: center; gap: 4px; padding: 4px 6px; }
+.prove-strip > div .kicker { margin: 0; }
+.prove-card { display: flex; gap: 10px; align-items: flex-start; padding: 12px; border: 1px solid var(--line); border-radius: 12px; background: var(--surface-2); color: var(--ink); text-align: left; cursor: pointer; }
+.prove-card:hover, .prove-card:focus-visible { border-color: var(--accent); outline: none; }
+.prove-card strong { display: block; margin-bottom: 2px; }
+.prove-card small { display: block; color: var(--muted); font-size: 0.78rem; line-height: 1.45; }
+.prove-card em { display: block; margin-top: 6px; color: var(--accent); font-style: normal; font-size: 0.8rem; font-weight: 600; }
+.prove-icon { flex: none; display: inline-grid; place-items: center; width: 34px; height: 34px; border-radius: 10px; background: var(--accent-soft); color: var(--accent); }
+@media (max-width: 980px) { .prove-strip { grid-template-columns: 1fr; } }

@@ -133,7 +133,7 @@ export function Analytics({ cases, voice, health, refresh, open }: Props) {
               </tbody>
             </table>
           </div>
-        ) : <EmptyState icon="activity" title="No assessments in this session" text="Use the Transaction Analyzer or Scenario Lab, or include recorded examples above." />}
+        ) : <EmptyState icon="activity" title="No assessments in this session" text="Check a payment on Transactions, run the Red Team, or include recorded examples above." />}
       </section>
     </div>
   );

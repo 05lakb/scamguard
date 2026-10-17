@@ -1,5 +1,6 @@
 import { useState } from "react";
 import type { Health } from "../api";
+import { HOST_LABEL, hostKind } from "../lib/hosting";
 import { Icon, type IconName } from "../components/Icon";
 import { DistRow, EmptyState, PanelHead, StatCard, type Tone } from "../components/ui";
 import type { CaseItem } from "../lib/cases";
@@ -20,8 +21,13 @@ const SUITE: { page: Page; icon: IconName; tone: Tone; kicker: string; title: st
   { page: "analyst", icon: "flag", tone: "amber", kicker: "Operations", title: "Cases", text: "Every warning and hold in one queue. Approve, keep on hold or escalate, with an audit trail.", cta: "Open cases" },
   { page: "profile", icon: "user", tone: "teal", kicker: "User intelligence", title: "User Risk Profile", text: "One customer's payments, devices, beneficiaries and locations, with an overall risk score and the reasons behind it.", cta: "View risk profile" },
   { page: "analytics", icon: "chart", tone: "blue", kicker: "Intelligence", title: "Fraud Analytics", text: "Risk distribution, decisions, top signals, analyst feedback and risk by location across all transactions.", cta: "View analytics" },
-  { page: "lab", icon: "flask", tone: "violet", kicker: "Red team", title: "Scenario Lab", text: "Replay realistic scam and genuine scenarios, or let the red team attack the engine live.", cta: "Open scenario lab" },
-  { page: "evidence", icon: "list", tone: "green", kicker: "Proof", title: "Evaluation evidence", text: "What was tested, how the engine scored on held-back cases, and the known limits.", cta: "See the evidence" },
+];
+
+// Where a judge sees the proof: the live red team, the measured results, and how it is built.
+const PROVE: { page: Page; icon: IconName; title: string; text: string; cta: string }[] = [
+  { page: "lab", icon: "flask", title: "Red Team", text: "Gemini invents new scam and genuine customers and plays them against the guard live: caught, missed or false alarm.", cta: "Watch the red team" },
+  { page: "evidence", icon: "list", title: "Evidence", text: "What was measured on 50 test payments, including the weak results, with the raw data to download.", cta: "See the evidence" },
+  { page: "architecture", icon: "cloud", title: "How it's built", text: "Cloud Run, Gemini on Vertex AI, Firestore and the guardrails: what decides, and what only reads.", cta: "See how it's built" },
 ];
 
 const ENGINES: { id: string; icon: IconName; tone: Tone; name: string; role: string; checks: string[] }[] = [
@@ -61,6 +67,16 @@ export function Dashboard({ user, cases, health, refresh, goTo }: Props) {
           <button className={`chip-btn ${scope === "all" ? "on" : ""}`} aria-pressed={scope === "all"} onClick={() => setScope("all")}>Include recorded examples</button>
         </div>
       </div>
+
+      <section className="prove-strip" aria-label="Prove it">
+        <div><p className="kicker">Prove it</p><strong>Use the product, then see the proof.</strong></div>
+        {PROVE.map((item) => (
+          <button key={item.page} className="prove-card" onClick={() => goTo(item.page)}>
+            <span className="prove-icon"><Icon name={item.icon} size={18} /></span>
+            <span><strong>{item.title}</strong><small>{item.text}</small><em>{item.cta} →</em></span>
+          </button>
+        ))}
+      </section>
 
       <section className="stats-grid" aria-label="Security overview">
         <StatCard icon="activity" tone="teal" label="Total transactions" value={stats.total} hint="Payments assessed" />
@@ -103,7 +119,7 @@ export function Dashboard({ user, cases, health, refresh, goTo }: Props) {
         )}
       </section>
 
-      <div className="section-title"><p className="kicker">Security modules</p><h2>Fraud intelligence suite</h2></div>
+      <div className="section-title"><p className="kicker">Use it</p><h2>Fraud intelligence suite</h2></div>
       <div className="suite-grid">
         {SUITE.map((item) => (
           <article className="suite-card" key={item.page}>
@@ -149,8 +165,8 @@ export function Dashboard({ user, cases, health, refresh, goTo }: Props) {
         <div className="infra-grid" style={{ marginTop: 14 }}>
           <div className="infra-item"><Icon name="server" size={18} /><div><small>Assessment API · FastAPI</small><strong className={online ? "ok" : health === undefined ? "wait" : "bad"}>{online ? "Online" : health === undefined ? "Checking" : "Offline"}</strong></div></div>
           <div className="infra-item"><Icon name="brain" size={18} /><div><small>Gemini · Vertex AI</small><strong className={health?.ai_configured ? "ok" : "wait"}>{health?.ai_configured ? "Configured" : "Not configured"}</strong></div></div>
-          <div className="infra-item"><Icon name="cloud" size={18} /><div><small>Hosting</small><strong className="ok">Cloud Run ready</strong></div></div>
-          <div className="infra-item"><Icon name="lock" size={18} /><div><small>Case store</small><strong className="ok">Browser session</strong></div></div>
+            <div className="infra-item"><Icon name="cloud" size={18} /><div><small>Hosting</small><strong className={hostKind(location.hostname) === "local" ? "wait" : "ok"}>{HOST_LABEL[hostKind(location.hostname)]}</strong></div></div>
+            <div className="infra-item"><Icon name="lock" size={18} /><div><small>Case store</small><strong className={health?.storage === "firestore" ? "ok" : health?.storage === "memory" ? "wait" : health?.storage === "off" ? "bad" : "wait"}>{health?.storage === "firestore" ? "Firestore · live" : health?.storage === "memory" ? "In-memory" : health?.storage === "off" ? "Persistence off" : "Checking"}</strong></div></div>
         </div>
       </section>
 

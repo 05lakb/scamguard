@@ -242,6 +242,21 @@ export function App() {
       : item)));
   }
 
+  function navButton(entry: (typeof NAV)[number]) {
+    return (
+      <button key={entry.id} className={page === entry.id ? "on" : ""} aria-current={page === entry.id ? "page" : undefined}
+        onClick={(event) => {
+          if (entry.id !== "lab") setStory(null);
+          if (entry.id === "analyst") setFocus(null);
+          event.currentTarget.closest("details")?.removeAttribute("open");
+          setPage(entry.id);
+        }}>
+        <Icon name={entry.icon} size={15} /> {entry.label}
+        {entry.id === "analyst" && pending > 0 && <span className="badge">{pending}</span>}
+      </button>
+    );
+  }
+
   function decide(id: string, status: CaseStatus) {
     setCases((old) =>
       old.map((item) => (item.id === id ? { ...item, status, trail: [...item.trail, { when: clock(), text: STATUS_TRAIL[status] }] } : item)),
@@ -310,13 +325,18 @@ export function App() {
           <span><strong>Last Mile Guard</strong><small>Real-time fraud defence</small></span>
         </button>
         <nav className="topnav" aria-label="Command centre">
-          {NAV.filter((entry) => !entry.secondary).map((entry) => (
-            <button key={entry.id} className={page === entry.id ? "on" : ""} aria-current={page === entry.id ? "page" : undefined} onClick={() => { if (entry.id !== "lab") setStory(null); if (entry.id === "analyst") setFocus(null); setPage(entry.id); }}>
-              <Icon name={entry.icon} size={15} /> {entry.label}
-              {entry.id === "analyst" && pending > 0 && <span className="badge">{pending}</span>}
-            </button>
-          ))}
+          {NAV.filter((entry) => entry.group === "use").map(navButton)}
+          <span className="topnav-divider" aria-hidden="true" />
+          <span className="topnav-prove" role="group" aria-label="Prove it">
+            {NAV.filter((entry) => entry.group === "prove").map(navButton)}
+          </span>
         </nav>
+        <details className="topnav-more">
+          <summary aria-label="More pages: Red Team, Evidence, How it's built">More</summary>
+          <div className="topnav-more-menu">
+            {NAV.filter((entry) => entry.group === "prove").map(navButton)}
+          </div>
+        </details>
         <div className="top-right">
           <button className="icon-btn" onClick={startStory} aria-label="Play the guided demo" title="Guided demo"><Icon name="play" size={15} /></button>
           <button className="icon-btn" onClick={() => openCase()} aria-label={`${pending} alerts awaiting review`} title="Alerts">
@@ -342,7 +362,7 @@ export function App() {
         {page === "analyst" && <Analyst initialCaseId={reviewCaseId} focusId={focus} cases={cases} decide={decide} scenarios={scenarios} onTestCase={(finished) => addCase(finished, undefined, "test")} logCall={(id, reference) => addTrail(id, `Analyst opened the case from the caller's reference ${reference}`)} addNote={(id, kind, text) => addNote(id, kind, text, user ?? "analyst")} />}
         {page === "lab" && (
           <>
-            <header className="page-head"><div><p className="kicker live"><span className="dot" /> Red team & scenario library</p><h1>Scenario <span className="grad">Lab</span></h1><p className="page-sub">Replay realistic scam and genuine payments against the live engine, or let the red team attack it.</p></div><div className="page-head-side"><button className="btn small primary" onClick={startStory}><Icon name="play" size={14} /> Guided demo</button></div></header>
+            <header className="page-head"><div><p className="kicker live"><span className="dot" /> Prove it · live test</p><h1>Red <span className="grad">Team</span></h1><p className="page-sub">Watch generated scams attack the live engine, try one case step by step, or write your own scenario.</p></div><div className="page-head-side"><button className="btn small primary" onClick={startStory}><Icon name="play" size={14} /> Guided demo</button></div></header>
             {story && (
               <aside className="story story-docked" role="region" aria-label="Guided demo" aria-live="polite">
                 {step ? (
@@ -382,14 +402,14 @@ export function App() {
           </>
         )}
         {page === "evidence" && <Evidence />}
-        {page === "architecture" && <Architecture />}
+        {page === "architecture" && <Architecture health={health} />}
       </main>
 
       <footer className="app-foot">
         <span>Last Mile Guard · fraud intelligence command centre</span>
         <span className="chip-row">
-          <button className="btn link small" onClick={() => setPage("evidence")}>Evaluation evidence</button>
-          <button className="btn link small" onClick={() => setPage("architecture")}>Architecture</button>
+          <button className="btn link small" onClick={() => setPage("evidence")}>Evidence</button>
+          <button className="btn link small" onClick={() => setPage("architecture")}>How it's built</button>
           <span>Recommendations only · synthetic data</span>
         </span>
       </footer>

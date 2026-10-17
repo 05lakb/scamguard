@@ -23,14 +23,14 @@ const MODES: { id: Mode; label: string }[] = [
 
 const HEADING: Record<Mode, { title: string; text: string }> = {
   single: { title: "See a payment check, from start to finish.", text: "Choose a case, watch the checks, then review the recommendation." },
-  arena: { title: "Test Last Mile Guard against generated cases.", text: "Advanced testing with synthetic scam and genuine-payment scenarios." },
+  arena: { title: "Red team: new scams against the guard, live.", text: "Gemini invents scam and genuine customers the guard has never seen and plays them against it. Each result shows caught, missed or false alarm." },
   custom: { title: "Describe your own scenario.", text: "Write any story, real or imagined, and watch the red agent play it against the guard." },
 };
 
 // The Live console has three modes: try one case by hand, watch the red team attack the guard,
 // or describe your own scenario and watch the red agent play it.
 export function ConsoleArea({ scenarios, onCase, onArenaCase, autoplay, onFinished, onReview }: Props) {
-  const [mode, setMode] = useState<Mode>("single");
+  const [mode, setMode] = useState<Mode>("arena"); // Red Team opens on the red-team run; the guided demo uses "single"
   const shown: Mode = autoplay ? "single" : mode; // the guided story always uses the single-case view
 
   return (

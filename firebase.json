@@ -1,6 +1,6 @@
 {
   "hosting": {
-    "site": "last-mile-guard",
+    "site": "lastmileguard",
     "public": "hosting/public",
     "ignore": ["firebase.json", "**/.*"],
     "rewrites": [

@@ -193,7 +193,7 @@ Our own team runs installs, cloud commands and server tests in Cloud Shell, not 
 - Configure the Google Cloud project, required APIs, and the `lmg-runtime` service account for Vertex AI.
 - Run `PROJECT_ID=your-project-id bash infra/deploy.sh`.
 - Review the script's public access, region, resource caps, and cost settings before deployment. This is a public synthetic-data demo, not a bank production system.
-- **Public address (Firebase Hosting):** `firebase.json` sends every request on `https://last-mile-guard.web.app` to the `last-mile-guard` Cloud Run service in `us-central1`. Hosting serves no files of its own. Deploy it from Cloud Shell with `firebase deploy --only hosting`.
+- **Public address (Firebase Hosting):** `firebase.json` sends every request on `https://lastmileguard.web.app` to the `last-mile-guard` Cloud Run service in `us-central1`. Hosting serves no files of its own. Deploy it from Cloud Shell with `firebase deploy --only hosting`.
 
 ## Repository layout
 

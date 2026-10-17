@@ -98,8 +98,9 @@ async function goTo(page, hash) {
 
 async function signIn(page, name = "Demo") {
   await click(page, page.getByRole("button", { name: /^Get started$|Open command centre/ }).first());
-  const box = page.locator("input[type=text]").first();
-  await box.waitFor({ timeout: 8000 });
+  // The name box is the one field in the sign-in window (it has the id analyst-name and no type attribute).
+  const box = page.locator("#analyst-name, [role=dialog] input").first();
+  await box.waitFor({ timeout: 10000 });
   await box.pressSequentially(name, { delay: 90 });
   await sleep(300);
   await box.press("Enter");

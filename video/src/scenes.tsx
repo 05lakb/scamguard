@@ -2,7 +2,7 @@ import { createContext, useContext, type ReactNode } from "react";
 import { AbsoluteFill, Audio, Sequence, interpolate, spring, staticFile, useCurrentFrame, useVideoConfig } from "remotion";
 import durations from "../public/audio/durations.json";
 import narration from "../narration.json";
-import { AFTER_FIX, BEFORE_FIX, LOSS_FIGURES, type BarData } from "./data";
+import { BLIND_TEST, LATEST_RUN, LOSS_FIGURES, type BarData } from "./data";
 import { LEAD_IN_SECONDS, TAIL_SECONDS, colors, font } from "./theme";
 
 export type SceneId = keyof typeof durations;
@@ -29,7 +29,7 @@ export function Reveal({ at, children, style }: { at: number; children: ReactNod
 }
 
 // The caption at the bottom: the sentence being spoken right now, so the video also works without sound.
-function Captions({ id }: { id: SceneId }) {
+function Captions({ id, compact }: { id: SceneId; compact?: boolean }) {
   const frame = useCurrentFrame();
   const { fps } = useVideoConfig();
   const text = narration.scenes.find((scene) => scene.id === id)?.text ?? "";
@@ -47,17 +47,17 @@ function Captions({ id }: { id: SceneId }) {
     if (position < used) break;
   }
   return (
-    <div style={{ position: "absolute", left: 80, right: 80, bottom: 36, display: "flex", justifyContent: "center" }}>
+    <div style={{ position: "absolute", left: compact ? 40 : 80, right: compact ? 40 : 80, bottom: compact ? 8 : 36, display: "flex", justifyContent: "center" }}>
       <div
         style={{
           background: "rgba(7, 13, 25, 0.85)",
           border: `1px solid ${colors.line}`,
           borderRadius: 14,
-          padding: "12px 22px",
-          fontSize: 26,
+          padding: compact ? "6px 18px" : "12px 22px",
+          fontSize: compact ? 21 : 26,
           lineHeight: 1.35,
           textAlign: "center",
-          maxWidth: 1080,
+          maxWidth: compact ? 1200 : 1080,
         }}
       >
         {sentences[index]}
@@ -67,7 +67,7 @@ function Captions({ id }: { id: SceneId }) {
 }
 
 // The frame around every scene: background, the voice, and the captions.
-export function SceneFrame({ id, children }: { id: SceneId; children: ReactNode }) {
+export function SceneFrame({ id, children, compact }: { id: SceneId; children: ReactNode; compact?: boolean }) {
   const { fps } = useVideoConfig();
   return (
     <SceneLength.Provider value={framesFor(id, fps)}>
@@ -76,7 +76,7 @@ export function SceneFrame({ id, children }: { id: SceneId; children: ReactNode 
         <Sequence from={Math.round(LEAD_IN_SECONDS * fps)}>
           <Audio src={staticFile(`audio/${id}.wav`)} />
         </Sequence>
-        <Captions id={id} />
+        <Captions id={id} compact={compact} />
       </AbsoluteFill>
     </SceneLength.Provider>
   );
@@ -139,7 +139,7 @@ export function Problem() {
       <div style={{ position: "absolute", right: 110, top: 70, width: 380 }}>
         <div style={{ transform: `scale(${pop})`, transformOrigin: "top center", background: colors.panel, border: `1px solid ${colors.line}`, borderRadius: 28, padding: 28 }}>
           <div style={{ fontSize: 22, color: colors.muted }}>Pay to a new payee</div>
-          <div style={{ fontSize: 46, fontWeight: 700, margin: "6px 0 18px" }}>2,400 USD</div>
+          <div style={{ fontSize: 46, fontWeight: 700, margin: "6px 0 18px" }}>98,500 INR</div>
           <div style={{ display: "inline-flex", alignItems: "center", gap: 10, background: colors.greenDark, color: colors.green, borderRadius: 10, padding: "8px 16px", fontSize: 24 }}>
             Approved by you
           </div>
@@ -207,7 +207,7 @@ function Bar({ bar, at }: { bar: BarData; at: number }) {
   return (
     <Reveal at={at}>
       <div style={{ display: "flex", justifyContent: "space-between", fontSize: 21, marginBottom: 6 }}>
-        <span>{bar.label} <span style={{ color: colors.muted }}>({bar.n})</span></span>
+        <span>{bar.label}{bar.n === null ? null : <span style={{ color: colors.muted }}> ({bar.n})</span>}</span>
         <span style={{ fontWeight: 700, color: good ? colors.green : colors.amber }}>
           {Math.round(width)}%
         </span>
@@ -227,19 +227,19 @@ export function Evidence() {
         <Reveal at={0.0}><Title>We measured it, including the bad news</Title></Reveal>
       </div>
       <div style={{ position: "absolute", left: 80, top: 140, width: 520 }}>
-        <Reveal at={0.06}><div style={{ fontSize: 24, color: colors.muted, marginBottom: 14 }}>Held-back test, run once, before the fix</div></Reveal>
-        <Bar bar={BEFORE_FIX[0]} at={0.12} />
-        <Bar bar={BEFORE_FIX[1]} at={0.24} />
+        <Reveal at={0.06}><div style={{ fontSize: 24, color: colors.muted, marginBottom: 14 }}>Blind test: 50 cases written by someone else</div></Reveal>
+        <Bar bar={BLIND_TEST[0]} at={0.12} />
+        <Bar bar={BLIND_TEST[1]} at={0.24} />
       </div>
       <div style={{ position: "absolute", right: 80, top: 140, width: 520 }}>
-        <Reveal at={0.45}><div style={{ fontSize: 24, color: colors.muted, marginBottom: 14 }}>After the fix, on a fresh test</div></Reveal>
-        <Bar bar={AFTER_FIX[0]} at={0.5} />
-        <Bar bar={AFTER_FIX[1]} at={0.6} />
+        <Reveal at={0.45}><div style={{ fontSize: 24, color: colors.muted, marginBottom: 14 }}>Latest fresh run: 40 cases, Gemini plays the customer</div></Reveal>
+        <Bar bar={LATEST_RUN[0]} at={0.5} />
+        <Bar bar={LATEST_RUN[1]} at={0.6} />
       </div>
       <div style={{ position: "absolute", left: 80, right: 80, top: 450, display: "flex", justifyContent: "center" }}>
         <Reveal at={0.78}>
           <div style={{ background: colors.amberDark, color: colors.amber, borderRadius: 12, padding: "12px 24px", fontSize: 26, textAlign: "center" }}>
-            Still open: a calm, coached victim can slip through. Samples are small.
+            Small, synthetic samples show direction, not a bank-grade rate.
           </div>
         </Reveal>
       </div>
@@ -249,9 +249,9 @@ export function Evidence() {
 
 // ---------- Scene 6: built on Google Cloud ----------
 
-function Box({ title, detail, at, left, top, tone }: { title: string; detail: string; at: number; left: number; top: number; tone: string }) {
+function Box({ title, detail, at, left, top, tone, width = 300 }: { title: string; detail: string; at: number; left: number; top: number; tone: string; width?: number }) {
   return (
-    <Reveal at={at} style={{ position: "absolute", left, top, width: 300 }}>
+    <Reveal at={at} style={{ position: "absolute", left, top, width }}>
       <div style={{ background: colors.panel, border: `2px solid ${tone}`, borderRadius: 16, padding: 20, textAlign: "center" }}>
         <div style={{ fontSize: 30, fontWeight: 700, color: tone }}>{title}</div>
         <div style={{ fontSize: 21, color: colors.muted, marginTop: 6 }}>{detail}</div>
@@ -260,10 +260,10 @@ function Box({ title, detail, at, left, top, tone }: { title: string; detail: st
   );
 }
 
-function Arrow({ at, left, top }: { at: number; left: number; top: number }) {
+function Arrow({ at, left, top, width = 120 }: { at: number; left: number; top: number; width?: number }) {
   return (
-    <Reveal at={at} style={{ position: "absolute", left, top, width: 120 }}>
-      <svg width="120" height="30" viewBox="0 0 120 30" aria-hidden="true">
+    <Reveal at={at} style={{ position: "absolute", left, top, width }}>
+      <svg width={width} height="30" viewBox="0 0 120 30" preserveAspectRatio="none" aria-hidden="true">
         <line x1="4" y1="15" x2="104" y2="15" stroke={colors.muted} strokeWidth="4" strokeLinecap="round" />
         <polyline points="92,4 108,15 92,26" fill="none" stroke={colors.muted} strokeWidth="4" strokeLinecap="round" strokeLinejoin="round" />
       </svg>
@@ -277,14 +277,16 @@ export function Architecture() {
       <div style={{ position: "absolute", left: 80, top: 44 }}>
         <Reveal at={0.0}><Title>Built on Google Cloud</Title></Reveal>
       </div>
-      <Box title="Browser" detail="Customer or judge" at={0.1} left={80} top={190} tone={colors.blue} />
-      <Arrow at={0.22} left={390} top={225} />
-      <Box title="Cloud Run" detail="Web app, guard rules, limits" at={0.3} left={500} top={190} tone={colors.teal} />
-      <Arrow at={0.42} left={810} top={225} />
-      <Box title="Vertex AI" detail="Gemini reads the words" at={0.5} left={920} top={190} tone={colors.green} />
+      <Box title="Browser" detail="Customer or judge" at={0.08} left={60} top={170} width={250} tone={colors.blue} />
+      <Arrow at={0.18} left={318} top={205} width={64} />
+      <Box title="Firebase Hosting" detail="lastmileguard.web.app" at={0.24} left={390} top={170} width={250} tone={colors.amber} />
+      <Arrow at={0.34} left={648} top={205} width={64} />
+      <Box title="Cloud Run" detail="Web app, rules, limits" at={0.4} left={720} top={170} width={250} tone={colors.teal} />
+      <Arrow at={0.5} left={978} top={205} width={64} />
+      <Box title="Vertex AI" detail="Gemini reads the words" at={0.56} left={1050} top={170} width={190} tone={colors.green} />
       <div style={{ position: "absolute", left: 80, right: 80, top: 360, display: "flex", flexWrap: "wrap", gap: 16, justifyContent: "center" }}>
-        {["Service identity, no keys in the code", "Rate limits and a cost guard", "A person confirms every hold", "All the data is made up"].map((tag, index) => (
-          <Reveal key={tag} at={0.62 + index * 0.08}>
+        {["Firestore: cases deleted after 24 hours", "Service identity, no keys in the code", "Rate limits and a cost guard", "A person confirms every hold", "All the data is made up"].map((tag, index) => (
+          <Reveal key={tag} at={0.62 + index * 0.06}>
             <div style={{ background: colors.panel, border: `1px solid ${colors.line}`, borderRadius: 999, padding: "10px 22px", fontSize: 24 }}>{tag}</div>
           </Reveal>
         ))}
@@ -302,6 +304,7 @@ export function Close() {
         <Reveal at={0.02}><Shield size={190} /></Reveal>
         <Reveal at={0.1}><div style={{ fontSize: 76, fontWeight: 700, letterSpacing: -1 }}>Last Mile Guard</div></Reveal>
         <Reveal at={0.22}><div style={{ fontSize: 34, color: colors.teal }}>A second look before the money moves</div></Reveal>
+        <Reveal at={0.4}><div style={{ fontSize: 30, color: colors.muted, marginTop: 6 }}>lastmileguard.web.app</div></Reveal>
       </AbsoluteFill>
     </SceneFrame>
   );

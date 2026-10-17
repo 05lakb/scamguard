@@ -20,17 +20,36 @@ const SAMPLE = [
   { label: "Customer on a live phone call", points: 25 },
 ];
 
-// Government and NPCI figures, each with the report that quotes it. No figure here is our own estimate.
-const NUMBERS = [
+// Every figure below is quoted from the report it links to. None is our own estimate.
+const GLOBAL_NUMBERS = [
+  {
+    value: "$442 bn", text: "lost to scams by consumers in 42 countries in a single year. 23% of adults surveyed lost money to a scam.",
+    source: "Global State of Scams 2025, GASA and Feedzai",
+    url: "https://www.feedzai.com/global-state-of-scams-report-2025/",
+  },
+  {
+    value: "$16 bn", text: "in fraud losses reported in the US in 2025, a record. $3.5 bn went to imposters, often starting with a fake bank security alert.",
+    source: "US Federal Trade Commission, June 2026",
+    url: "https://www.ftc.gov/news-events/news/press-releases/2026/06/ftc-data-show-people-reported-losing-3-point-5-billion-imposter-scams-2025",
+  },
+  {
+    value: "A$2.18 bn", text: "lost to scams in Australia in 2025. Investment scams alone took A$838 million.",
+    source: "Scamwatch Targeting Scams report, ACCC, March 2026",
+    url: "https://www.scamwatch.gov.au/research-and-resources/targeting-scams-report",
+  },
+  {
+    value: "+35%", text: "rise in attempted banking scams in a year, across more than 370 financial institutions in 21 countries.",
+    source: "BioCatch, September 2026",
+    url: "https://www.biocatch.com/press-release/global-banking-scams-increase-by-35",
+  },
+];
+
+// India: the world's largest instant-payment system, and our deep-dive case study.
+const INDIA_NUMBERS = [
   {
     value: "₹22,845 cr", text: "lost by Indian citizens to cyber criminals in 2024, about three times the ₹7,465 crore lost in 2023.",
     source: "Ministry of Home Affairs, Lok Sabha reply, July 2025",
     url: "https://www.theweek.in/wire-updates/business/2025/07/22/del23-lsq-cyber-fraud.html",
-  },
-  {
-    value: "36.4 lakh", text: "financial-fraud incidents reported on the national cybercrime portals (NCRP and CFCFRMS) in 2024, up from 24.4 lakh in 2023.",
-    source: "Ministry of Home Affairs, Lok Sabha reply, July 2025",
-    url: "https://www.outlookmoney.com/news/cyber-fraud-cases-surge-in-2024-citizens-lost-rs-22845-crore-says-govt",
   },
   {
     value: "₹1,935 cr", text: "lost to \"digital arrest\" scams in 2024 across 1.23 lakh complaints: fake police calls that make the victim transfer the money themselves.",
@@ -48,7 +67,7 @@ const NUMBERS = [
 const FINDINGS: { icon: IconName; finding: string; text: string; built: string }[] = [
   {
     icon: "lock", finding: "Every security check passes",
-    text: "In UPI and IMPS scams the phone, PIN and biometrics are the customer's own. Nothing is hacked: the fraud happens in the customer's mind, so systems that look for stolen credentials see a normal payment.",
+    text: "In an instant bank transfer scam the phone, PIN and biometrics are the customer's own. Nothing is hacked: the fraud happens in the customer's mind, so systems that look for stolen credentials see a normal payment.",
     built: "We read the customer's own words, not just the device.",
   },
   {
@@ -84,7 +103,7 @@ const DIFFERENT: { icon: IconName; title: string; text: string }[] = [
 ];
 
 const FLOW: { title: string; text: string }[] = [
-  { title: "Payment arrives", text: "A UPI, IMPS or NEFT transfer, with the customer's note and the receiving account's links." },
+  { title: "Payment arrives", text: "An instant bank transfer, with the customer's note and the receiving account's links." },
   { title: "Three checks", text: "FraudShield scores the payment, ScamStop (Gemini) reads the note or call, MuleNet checks the receiving account." },
   { title: "Ask if unclear", text: "One round of questions when the evidence is thin, then the answer is read the same way." },
   { title: "Explain", text: "Allow, warn or hold, with the strongest reasons ranked by weight and a full audit record." },
@@ -121,10 +140,11 @@ export function Landing({ signedIn, enter, theme, setTheme }: Props) {
 
       <section className="land-hero">
         <div>
-          <span className="badge-pill"><Icon name="pulse" size={14} /> Built for UPI, IMPS and NEFT transfers</span>
+          <span className="badge-pill"><Icon name="pulse" size={14} /> Built for instant account-to-account transfers</span>
           <h1>The customer approves the payment. <span className="grad">The scammer wrote the script.</span></h1>
           <p className="lead">
-            Last Mile Guard checks an account-to-account transfer in the seconds before it leaves. It reads what the customer says,
+            Last Mile Guard checks an instant bank transfer (UPI, IMPS, Faster Payments, PayNow and others) in the seconds before
+            it leaves. It reads what the customer says,
             checks it against the bank's own records, asks one question when the story is unclear, and explains every hold
             so a person can make the final call.
           </p>
@@ -157,12 +177,24 @@ export function Landing({ signedIn, enter, theme, setTheme }: Props) {
 
       <section className="land-section" id="research">
         <p className="kicker">Our research</p>
-        <h2>India's fastest payments are its <span className="grad">fastest-growing scam route.</span></h2>
+        <h2>Instant payments became <span className="grad">the scammer's favourite route.</span></h2>
         <p className="section-sub">
-          We started from official figures for India, then studied how these scams work. Each figure below links to the report that quotes it.
+          The same scam plays out around the world: the customer is talked into sending the money themselves. We started from global figures,
+          then studied India closely. Each figure links to the report that quotes it.
         </p>
+        <h3 className="land-subhead">Around the world</h3>
         <div className="why-grid four">
-          {NUMBERS.map((row) => (
+          {GLOBAL_NUMBERS.map((row) => (
+            <article className="why-card" key={row.value}>
+              <strong className="grad">{row.value}</strong>
+              <p>{row.text}</p>
+              <small><a href={row.url} target="_blank" rel="noreferrer noopener">{row.source}</a></small>
+            </article>
+          ))}
+        </div>
+        <h3 className="land-subhead">Case study: India, the world's largest instant-payment system</h3>
+        <div className="why-grid">
+          {INDIA_NUMBERS.map((row) => (
             <article className="why-card" key={row.value}>
               <strong className="grad">{row.value}</strong>
               <p>{row.text}</p>
@@ -184,8 +216,8 @@ export function Landing({ signedIn, enter, theme, setTheme }: Props) {
         </div>
         <div className="problem-statement" style={{ marginTop: 28 }}>
           <Icon name="flag" size={20} />
-          <p><strong>Problem statement:</strong> detect social-engineering scams in UPI, IMPS and NEFT transfers before the money leaves the account,
-            explain the decision clearly, and avoid blocking genuine customers.</p>
+          <p><strong>Problem statement:</strong> detect social-engineering scams in instant account-to-account transfers, wherever they happen,
+            before the money leaves the account, explain the decision clearly, and avoid blocking genuine customers.</p>
         </div>
       </section>
 

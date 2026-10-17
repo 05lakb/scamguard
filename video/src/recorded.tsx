@@ -15,10 +15,14 @@ const MAX_RATE: Record<RecordedId, number> = { scene3: 1.7, scene4: 1.7, scene4v
 function RecordedScene({ id }: { id: RecordedId }) {
   const { fps } = useVideoConfig();
   const { start, end } = marks[id];
-  const lag = (marks as { lag?: number }).lag ?? 0; // how far the recording runs behind the recorder's clock
+  // The recording runs a little behind the recorder's clock, and the gap grows as the recording goes on (about 4%).
+  // marks.lag is a fixed gap, if it could be measured; marks.drift is the growing part.
+  const lag = (marks as { lag?: number }).lag ?? 0;
+  const drift = (marks as { drift?: number }).drift ?? 0;
+  const footageAt = (clock: number) => clock * (1 + drift) + lag;
   // If the real clicks took longer than the voice, play the footage a little faster so none of it is cut off.
   const planned = durations[id].seconds + LEAD_IN_SECONDS + TAIL_SECONDS;
-  const rate = Math.min(MAX_RATE[id], Math.max(1, (end - start) / planned));
+  const rate = Math.min(MAX_RATE[id], Math.max(1, (footageAt(end) - footageAt(start)) / planned));
   return (
     <SceneFrame id={id} compact>
       <div
@@ -35,7 +39,7 @@ function RecordedScene({ id }: { id: RecordedId }) {
       <div style={{ position: "absolute", left: 0, top: 40, width: 1280, height: 620, overflow: "hidden" }}>
         <OffthreadVideo
           src={staticFile("footage/demo.webm")}
-          startFrom={Math.max(0, Math.round((start + lag) * fps))}
+          startFrom={Math.max(0, Math.round(footageAt(start) * fps))}
           muted
           playbackRate={rate}
           style={{ width: 1280, height: 620, objectFit: "cover" }}

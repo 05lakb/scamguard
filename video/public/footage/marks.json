@@ -1,20 +1,22 @@
 {
   "fps": 30,
+  "lag": 0,
   "scene3": {
-    "start": 2.2,
-    "end": 24
+    "start": 3.598,
+    "end": 25.397
   },
   "scene4": {
-    "start": 24,
-    "end": 56
+    "start": 25.397,
+    "end": 53.197
   },
   "scene4v": {
-    "start": 56,
-    "end": 66
+    "start": 53.197,
+    "end": 68.031
   },
   "scene4r": {
-    "start": 66,
-    "end": 160
+    "start": 68.031,
+    "end": 100.863
   },
-  "lag": 0
+  "flashAt": 1.6909999999999998,
+  "drift": 0.04
 }

@@ -63,7 +63,7 @@ Also worth a look: **Voice AI** (score a call transcript), **Red Team** (Gemini 
 
 ## Architecture and Google Cloud
 
-![Architecture](docs/architecture/architecture.png)
+Diagrams: [architecture](docs/architecture/architecture.png) · [process flow](docs/architecture/process-flow.png) · [use cases](docs/architecture/use-case.png)
 
 | Google Cloud service | How Last Mile Guard uses it |
 | --- | --- |
@@ -74,14 +74,6 @@ Also worth a look: **Voice AI** (score a call transcript), **Red Team** (Gemini 
 | **Cloud Build + Artifact Registry** | Build the container from source on each deploy. |
 | **IAM service account** | Cloud Run runs as `lmg-runtime` with two roles: Vertex AI User and Cloud Datastore User. No API keys or key files. |
 | **Cloud Logging** | Request logs only; customer text is not logged. |
-
-**Process flow (one held payment, end to end):**
-
-![Process flow](docs/architecture/process-flow.png)
-
-**Use cases (who does what):**
-
-![Use-case diagram](docs/architecture/use-case.png)
 
 ## Tech stack
 

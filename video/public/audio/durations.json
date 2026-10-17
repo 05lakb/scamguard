@@ -1,9 +1,47 @@
 {
-  "scene1": { "seconds": 30, "hash": "", "voice": "estimate" },
-  "scene2": { "seconds": 31, "hash": "", "voice": "estimate" },
-  "scene3": { "seconds": 47, "hash": "", "voice": "estimate" },
-  "scene4": { "seconds": 28, "hash": "", "voice": "estimate" },
-  "scene5": { "seconds": 32, "hash": "", "voice": "estimate" },
-  "scene6": { "seconds": 17, "hash": "", "voice": "estimate" },
-  "scene7": { "seconds": 4, "hash": "", "voice": "estimate" }
+  "scene1": {
+    "seconds": 30,
+    "hash": "",
+    "voice": "estimate"
+  },
+  "scene2": {
+    "seconds": 31,
+    "hash": "",
+    "voice": "estimate"
+  },
+  "scene3": {
+    "seconds": 47,
+    "hash": "",
+    "voice": "estimate"
+  },
+  "scene4": {
+    "seconds": 28,
+    "hash": "",
+    "voice": "estimate"
+  },
+  "scene4v": {
+    "seconds": 9,
+    "hash": "",
+    "voice": "estimate"
+  },
+  "scene4r": {
+    "seconds": 13,
+    "hash": "",
+    "voice": "estimate"
+  },
+  "scene5": {
+    "seconds": 32,
+    "hash": "",
+    "voice": "estimate"
+  },
+  "scene6": {
+    "seconds": 17,
+    "hash": "",
+    "voice": "estimate"
+  },
+  "scene7": {
+    "seconds": 4,
+    "hash": "",
+    "voice": "estimate"
+  }
 }

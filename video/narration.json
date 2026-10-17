@@ -21,9 +21,19 @@
       "text": "The customer sees a hold notice with a reference, and taps Call fraud team inside the app, so it cannot be a scammer's call. An AI agent asks two questions about this payment. Here the answers are typed. Gemini and Voice AI read them for coaching, secrecy and someone on the line, and recommend keeping the payment on hold. The case moves to the analyst, with the reasons, the call and the AI view in one place. The analyst keeps it on hold. Only a person can release a held payment."
     },
     {
+      "id": "scene4v",
+      "kind": "screen",
+      "text": "The same engine reads a pasted call. This digital-arrest script, a fake police officer demanding money, is flagged high risk, with every tactic listed."
+    },
+    {
+      "id": "scene4r",
+      "kind": "screen",
+      "text": "To test it, Gemini plays both the scammer and the customer, with new cases it invents. Four run live, and the answer key is revealed only after the guard decides. Misses are shown, not hidden."
+    },
+    {
       "id": "scene5",
       "kind": "animated",
-      "text": "We measured it, including the bad news. On a blind test of fifty cases written by someone else, the full system flagged eighty-four percent of scams. In the latest fresh run, thirty-eight of forty behaved as expected. Coached victims are the hardest: we caught three of five. Samples are small."
+      "text": "We measured it, including the bad news. On a blind test of fifty cases written by someone else, the full system flagged eighty-four percent of scams, and stopped twelve percent of genuine customers. In the latest fresh run, thirty-eight of forty cases behaved as expected. The hardest case is the coached victim: we caught three of five. These are small, synthetic samples, so they show direction, not a bank-grade rate."
     },
     {
       "id": "scene6",

@@ -170,6 +170,18 @@ async function decide(page) {
   await sleep(600);
 }
 
+async function startRedTeam(page) {
+  // The site allows only a few live runs an hour per visitor. If it asks to wait, wait and try again.
+  for (let attempt = 1; attempt <= 4; attempt += 1) {
+    await click(page, page.getByRole("button", { name: /Start a live run|Run again/ }).first());
+    await sleep(3500);
+    const refused = await page.getByText(/Please wait|are paused|already going/i).first().isVisible().catch(() => false);
+    if (!refused) return;
+    log("the site asked to wait before another live run; waiting 70 s (try " + attempt + " of 4)");
+    await sleep(70000);
+  }
+}
+
 async function scrollBy(page, pixels) {
   for (let i = 0; i < 6; i += 1) { await page.mouse.wheel(0, pixels / 6); await sleep(90); }
 }
@@ -185,7 +197,7 @@ async function recordVideo(browser) {
   const time = clock();
   const L3 = lengthOf("scene3");
   const L4 = lengthOf("scene4");
-  const marks = { fps: FPS, scene3: { start: 0, end: 0 }, scene4: { start: 0, end: 0 } };
+  const marks = { fps: FPS, scene3: { start: 0, end: 0 }, scene4: { start: 0, end: 0 }, scene4v: { start: 0, end: 0 }, scene4r: { start: 0, end: 0 } };
 
   // A short lead-in so the landing page is already on screen when the first scene starts.
   await page.goto(SITE + "/", { waitUntil: "networkidle" }).catch(() => {});
@@ -232,6 +244,43 @@ async function recordVideo(browser) {
   await time.until(s4 + L4);
   marks.scene4.end = time.now();
   log("scene4 ended at", time.now().toFixed(2), "s (late by", Math.max(0, time.now() - (s4 + L4)).toFixed(1), "s)");
+  // Scene: the Voice AI page reads a pasted digital-arrest call.
+  const LV = lengthOf("scene4v");
+  const sv = time.now();
+  marks.scene4v.start = sv;
+  log("scene4v (Voice AI) starts at", sv.toFixed(2), "s, planned length", LV.toFixed(1), "s");
+  await goTo(page, "#/voice");
+  await time.until(sv + 0.10 * LV);
+  await click(page, page.getByRole("button", { name: /^Digital arrest$/ }));
+  await time.until(sv + 0.30 * LV);
+  await click(page, page.getByRole("button", { name: /Analyse for phishing/ }));
+  await page.getByText(/risk level/i).first().waitFor({ timeout: 45000 });
+  await time.until(sv + 0.62 * LV);
+  await scrollBy(page, 360);
+  await sleep(1200);
+  await time.until(sv + LV);
+  marks.scene4v.end = time.now();
+  log("scene4v ended at", marks.scene4v.end.toFixed(2), "s");
+
+  // Scene: the live red team, four cases. The real run takes a minute or two, so the video plays it sped up.
+  const LR = lengthOf("scene4r");
+  const sr = time.now();
+  marks.scene4r.start = sr;
+  log("scene4r (red team) starts at", sr.toFixed(2), "s, planned length", LR.toFixed(1), "s");
+  await goTo(page, "#/lab");
+  await time.until(sr + 0.08 * LR);
+  await page.getByLabel(/Scenarios/).selectOption("4");
+  await startRedTeam(page);
+  await page.getByRole("button", { name: /Skip animation/ }).click().catch(() => {});
+  await page.getByText(/This run in summary/).waitFor({ timeout: 240000 });
+  await sleep(800);
+  await page.getByText(/Live feed/i).first().scrollIntoViewIfNeeded();
+  await sleep(2200);
+  await page.getByText(/This run in summary/).scrollIntoViewIfNeeded();
+  await sleep(2500);
+  await time.until(sr + LR);
+  marks.scene4r.end = time.now();
+  log("scene4r ended at", marks.scene4r.end.toFixed(2), "s; real run took", (marks.scene4r.end - sr).toFixed(1), "s");
   await sleep(800);
 
   const video = page.video();

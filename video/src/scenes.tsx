@@ -236,11 +236,14 @@ export function Evidence() {
         <Bar bar={LATEST_RUN[0]} at={0.5} />
         <Bar bar={LATEST_RUN[1]} at={0.6} />
       </div>
-      <div style={{ position: "absolute", left: 80, right: 80, top: 450, display: "flex", justifyContent: "center" }}>
-        <Reveal at={0.78}>
+      <div style={{ position: "absolute", left: 80, right: 80, top: 430, display: "flex", flexDirection: "column", alignItems: "center", gap: 14 }}>
+        <Reveal at={0.74}>
           <div style={{ background: colors.amberDark, color: colors.amber, borderRadius: 12, padding: "12px 24px", fontSize: 26, textAlign: "center" }}>
-            Small, synthetic samples show direction, not a bank-grade rate.
+            Hardest case: the coached victim. 3 of 5 caught.
           </div>
+        </Reveal>
+        <Reveal at={0.86}>
+          <div style={{ fontSize: 24, color: colors.muted, textAlign: "center" }}>Small, synthetic samples show direction, not a bank-grade rate.</div>
         </Reveal>
       </div>
     </SceneFrame>

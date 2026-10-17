@@ -8,7 +8,7 @@ import type { FinishedCase, Scenario } from "./Console";
 import { ReasonsByEngine } from "../components/ReasonsByEngine";
 import { Gauge } from "../components/Gauge";
 import { Icon, type IconName } from "../components/Icon";
-import { findByReference, needsReview, referenceOf, sourceLabel, type CaseItem, type CaseStatus } from "../lib/cases";
+import { currentAction, findByReference, needsReview, referenceOf, sourceLabel, type CaseItem, type CaseStatus } from "../lib/cases";
 import { contributions, type Contribution } from "../lib/contrib";
 import { ACTION_LABEL, SEGMENT_LABEL } from "../lib/labels";
 
@@ -32,12 +32,12 @@ const STATUS_TEXT: Record<CaseStatus, string> = {
 const SUGGESTION = { allow: "release the payment", warn: "release it with a warning", hold: "keep it on hold" } as const;
 
 // What happens after the analyst decides. Simulated: nothing reaches a bank.
-const OUTCOME: Record<Exclude<CaseStatus, "open">, { short: string; title: string; text: string; tone: "allow" | "hold"; icon: IconName }> = {
-  approved: { short: "Approved", tone: "allow", icon: "allow", title: "Payment released (simulated)",
+const OUTCOME: Record<Exclude<CaseStatus, "open">, { short: string; now: string; title: string; text: string; tone: "allow" | "hold"; icon: IconName }> = {
+  approved: { short: "Approved", now: "Allowed · approved by analyst", tone: "allow", icon: "allow", title: "Payment released (simulated)",
     text: "In a bank, the payment would now go to the payee and the customer would be told it went through. Your decision is saved with your name and the time." },
-  held: { short: "Kept on hold", tone: "hold", icon: "hold", title: "Payment stays blocked",
+  held: { short: "Kept on hold", now: "On hold · kept by analyst", tone: "hold", icon: "hold", title: "Payment stays blocked",
     text: "The money stays in the customer's account. The customer is told why, and how to report the scam: helpline 1930 or cybercrime.gov.in." },
-  escalated: { short: "Escalated", tone: "hold", icon: "flag", title: "Sent to fraud investigations",
+  escalated: { short: "Escalated", now: "On hold · escalated by analyst", tone: "hold", icon: "flag", title: "Sent to fraud investigations",
     text: "The payment stays blocked while investigators look into it, and the receiving account can be reported as a possible mule account." },
 };
 
@@ -136,12 +136,12 @@ export function Analyst({ cases, decide, scenarios, onTestCase, initialCaseId, f
   const visible = cases.filter((item) => {
     if (filter === "all") return true;
     if (filter === "review") return needsReview(item);
-    return item.action === filter;
+    return currentAction(item) === filter;
   });
   const selected = cases.find((item) => item.id === openId) ?? null;
   const nextOpen = cases.find((item) => item.id !== openId && needsReview(item)) ?? null;
   const count = (test: (item: CaseItem) => boolean) => cases.filter(test).length;
-  const filterCount = (id: Filter) => (id === "all" ? cases.length : id === "review" ? count(needsReview) : count((item) => item.action === id));
+  const filterCount = (id: Filter) => (id === "all" ? cases.length : id === "review" ? count(needsReview) : count((item) => currentAction(item) === id));
 
   const filters = (
     <div className="filters" role="group" aria-label="Filter cases">
@@ -214,7 +214,7 @@ export function Analyst({ cases, decide, scenarios, onTestCase, initialCaseId, f
               {visible.map((item) => (
                 <li key={item.id}>
                   <button className={`case-row ${selected.id === item.id ? "on" : ""}`} onClick={() => setOpenId(item.id)}>
-                    <span className={`dot ${item.action}`} aria-hidden="true" />
+                    <span className={`dot ${currentAction(item)}`} aria-hidden="true" />
                     <span className="case-main">
                       <strong>{item.title}</strong>
                       <span className="muted">{item.amount.toLocaleString()} {item.currency} · {item.status === "open" ? ACTION_LABEL[item.action] : `Analyst: ${OUTCOME[item.status].short}`}</span>
@@ -235,9 +235,13 @@ export function Analyst({ cases, decide, scenarios, onTestCase, initialCaseId, f
               <div>
                 <h3 className="case-title">{selected.title}</h3>
                 <div className="status-row">
-                  <div className={`status ${selected.action}`}><Icon name={selected.action as IconName} size={18} /> Engine: {ACTION_LABEL[selected.action]}</div>
-                  {selected.status !== "open" && (
-                    <div className={`status ${OUTCOME[selected.status].tone}`}><Icon name={OUTCOME[selected.status].icon} size={18} /> Analyst: {OUTCOME[selected.status].short}</div>
+                  {selected.status === "open" ? (
+                    <div className={`status ${selected.action}`}><Icon name={selected.action as IconName} size={18} /> {ACTION_LABEL[selected.action]}</div>
+                  ) : (
+                    <>
+                      <div className={`status ${OUTCOME[selected.status].tone}`}><Icon name={OUTCOME[selected.status].icon} size={18} /> {OUTCOME[selected.status].now}</div>
+                      <span className="muted small">The engine had recommended: {ACTION_LABEL[selected.action].toLowerCase()}</span>
+                    </>
                   )}
                 </div>
                 <p className="muted verdict-note">{selected.amount.toLocaleString()} {selected.currency} to {selected.payee}, {SEGMENT_LABEL(selected.segment)}

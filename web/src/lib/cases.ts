@@ -76,6 +76,13 @@ export function recordedCases(): CaseItem[] {
 
 export const needsReview = (item: CaseItem) => item.action !== "allow" && item.status === "open";
 
+// Where the payment stands now: the analyst's decision overrides the engine's recommendation.
+export function currentAction(item: Pick<CaseItem, "action" | "status">): CaseItem["action"] {
+  if (item.status === "approved") return "allow";
+  if (item.status === "held" || item.status === "escalated") return "hold";
+  return item.action;
+}
+
 export const KIND_LABEL: Record<string, string> = {
   obvious_scam: "Obvious scam",
   quiet_scam: "Quiet scam",

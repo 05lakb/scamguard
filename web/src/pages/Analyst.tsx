@@ -12,6 +12,7 @@ import { currentAction, findByReference, needsReview, referenceOf, reviewCount, 
 import { contributions, type Contribution } from "../lib/contrib";
 import { ACTION_LABEL, SEGMENT_LABEL } from "../lib/labels";
 import { heldBy, whyStillHeld } from "../lib/callWhy";
+import { AgentInvestigation } from "../components/AgentInvestigation";
 
 type Filter = "review" | "hold" | "warn" | "allow" | "all";
 
@@ -287,6 +288,7 @@ export function Analyst({ cases, decide, scenarios, onTestCase, initialCaseId, f
                 {selected.answer !== undefined && <><span className="muted small">Customer answered</span>{selected.answer || <em className="muted">Declined to answer</em>}</>}
               </blockquote>
               <ReasonsByEngine items={partsAsBars(selected)} />
+              <AgentInvestigation investigation={selected.investigation} />
               {!selected.audit && !selected.parts && selected.reasons.length > 0 && (
                 <ul className="reasons">{selected.reasons.map((reason) => <li key={reason}>{reason}</li>)}</ul>
               )}

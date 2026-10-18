@@ -9,6 +9,7 @@ import type { ActiveCall } from "../components/VerificationPanel";
 import { Icon, type IconName } from "../components/Icon";
 import { NetworkGraph } from "../components/NetworkGraph";
 import { PlaybookMatch } from "../components/ScamPlaybook";
+import { AgentInvestigation } from "../components/AgentInvestigation";
 import { PageHead, ScoreRing, Toggle, toneForAction } from "../components/ui";
 import type { AccountNetwork, Payment } from "../core/types";
 import { caseReference, type CaseItem, type CaseStatus } from "../lib/cases";
@@ -506,6 +507,8 @@ export function Analyzer({ scenarios, cases, onCase, openCase, onStartCall, live
               tags={(shown?.audit.message_reading?.tactics ?? []).filter((t) => t !== "none").map((t) => t.replaceAll("_", " "))}
               empty={shown && !shown.audit.message_reading ? (used.note.trim() ? "The reader was unavailable, so the payment checks decided." : "No note was written, so there was nothing to read.") : null} />
           </div>
+
+          <AgentInvestigation investigation={result?.investigation} running={stages.investigate} />
 
           {shown?.audit.message_reading && (
             <PlaybookMatch reading={shown.audit.message_reading} facts={{ onCall: used.onCall, newPayee: used.newPayee, remote: used.remote }} />

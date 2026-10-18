@@ -62,7 +62,27 @@ export type ServerDecision = Decision & {
   execution?: BackendExecution;
   customer_warning_translated?: string;
   warning_language?: string;
+  investigation?: Investigation | null;
 };
+
+// The AI investigator: the read-only lookups Gemini chose, and its cited summary. Never part of the decision.
+export interface InvestigationStep {
+  tool: string;
+  reason: string;
+  query?: string | null;
+  result: Record<string, unknown>;
+}
+export interface Investigation {
+  status: "complete" | "incomplete" | "budget" | "failed";
+  model?: string;
+  steps: InvestigationStep[];
+  summary: string;
+  concerns: string[];
+  callback_question: string;
+  cited: string[];
+  dropped_citations: string[];
+  note: string;
+}
 
 export async function assessPayment(request: AssessRequest): Promise<ServerDecision> {
   const controller = new AbortController();
@@ -202,7 +222,7 @@ async function streamFrom(
 }
 
 // Live stage events are emitted by the assessment pipeline, not browser timers.
-export type AssessmentStage = "request" | "behaviour" | "network" | "message" | "clarify" | "decision";
+export type AssessmentStage = "request" | "behaviour" | "network" | "message" | "clarify" | "decision" | "investigate";
 export interface AssessmentEvent {
   type: "stage";
   request_id: string;
@@ -213,6 +233,8 @@ export interface AssessmentEvent {
   score?: number;
   mode?: "live" | "cached" | "test";
   summary?: string;
+  tool?: string;
+  reason?: string;
 }
 
 export async function streamAssessment(request: AssessRequest, onEvent: (event: AssessmentEvent) => void, signal?: AbortSignal): Promise<ServerDecision> {
@@ -356,6 +378,7 @@ export interface SavedCase {
   decisions?: { status: AnalystStatus; analyst: string; at: string }[];
   notes?: CaseNote[];
   verification?: Verification | null;
+  investigation?: Investigation | null;
 }
 
 // The case's call log: the customer's call, the analyst's notes from it, and Voice AI checks of those notes.

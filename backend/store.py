@@ -79,6 +79,7 @@ def case_record(request_id, payment, customer, message, questions, answer, outco
         "degraded": bool(outcome.get("degraded")),
         "audit": outcome.get("audit", {}),
         "execution": outcome.get("execution", {}),
+        "investigation": outcome.get("investigation"),
         "status": "open",
     }
 

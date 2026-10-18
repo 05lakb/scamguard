@@ -10,7 +10,7 @@ const STEPS: { stage: AssessmentStage; title: string; role: string; icon: IconNa
   { stage: "decision", title: "Recommendation", role: "Combine evidence", icon: "shield" },
 ];
 const LABELS = { running: "Running", complete: "Complete", skipped: "Not used", failed: "Unavailable", waiting: "Waiting", stopped: "Interrupted" };
-const names: Record<AssessmentStage, string> = { request: "Request", behaviour: "FraudShield", network: "MuleNet", message: "ScamStop", clarify: "Follow-up", decision: "Decision" };
+const names: Record<AssessmentStage, string> = { request: "Request", behaviour: "FraudShield", network: "MuleNet", message: "ScamStop", clarify: "Follow-up", decision: "Decision", investigate: "AI investigator" };
 
 export function LiveExecution({ events, busy, error }: { events: AssessmentEvent[]; busy: boolean; error: string }) {
   const [selection, setSelection] = useState<AssessmentStage | null>(null);

@@ -214,6 +214,7 @@ export function App() {
       score: decision.score,
       reasons: decision.reasons,
       audit: decision.audit,
+      investigation: decision.investigation ?? null,
       execution: decision.execution,
       status: "open",
       trail,

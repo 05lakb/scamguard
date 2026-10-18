@@ -1,7 +1,7 @@
 // The shape of a case in the analyst queue, plus the recorded cases it starts with.
 
 import seed from "../data/analyst_seed.json";
-import type { ArenaRecord, CaseNote, SavedCase, ServerDecision, Verification } from "../api";
+import type { ArenaRecord, CaseNote, Investigation, SavedCase, ServerDecision, Verification } from "../api";
 
 export type CaseStatus = "open" | "approved" | "held" | "escalated";
 
@@ -31,6 +31,8 @@ export interface CaseItem {
   notes?: CaseNote[];
   // A verification with the customer after a hold: the questions, their answers and the re-check.
   verification?: Verification | null;
+  // The AI investigator's lookups and cited summary, when it ran.
+  investigation?: Investigation | null;
   // Context captured by the Transaction Analyzer (optional for other sources).
   device?: string;
   location?: string;
@@ -194,6 +196,7 @@ export function caseFromSaved(saved: SavedCase): CaseItem {
     savedId: saved.id,
     notes: saved.notes ?? [],
     verification: saved.verification ?? null,
+    investigation: saved.investigation ?? null,
   };
 }
 

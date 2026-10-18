@@ -36,6 +36,7 @@ from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel, Field
 
 from backend import arena as arena_module
+from backend import investigator as investigator_module
 from backend import gemini_client
 from backend.risk import clarify, conversation
 from backend.risk.callback import callback_brief
@@ -238,8 +239,11 @@ def visitor_key(request: Request):
 
 
 def create_app(reader=read_message, asker=clarify.ask_questions, arena_writer=None, translator=translate_warning,
-               store=None, callback_writer=None, twilio=None, call_placer=None):
+               store=None, callback_writer=None, twilio=None, call_placer=None, investigator="auto"):
     store = store if store is not None else store_from_environment()
+    # The AI investigator runs with the real reader on a configured server; automated tests pass their own.
+    if investigator == "auto":
+        investigator = investigator_module.investigate if (gemini_client.is_configured() and reader is read_message) else None
     twilio = twilio if twilio is not None else verify.TwilioConfig()
     place_call = call_placer or verify.place_call
     call_visitors = SlidingWindow(2, CALLS_PER_VISITOR_PER_HOUR)  # verification calls cost money: a few per visitor
@@ -358,6 +362,27 @@ def create_app(reader=read_message, asker=clarify.ask_questions, arena_writer=No
                             score=outcome["audit"]["network_score"])
             if active_stage != "clarify":
                 yield event("clarify", "skipped", "Follow-up generation unavailable in this fallback run.")
+
+        # The AI investigator: on a warning or hold, Gemini chooses read-only lookups and writes a cited summary
+        # for the analyst. It runs after the rules have decided and never changes the score or the action.
+        if investigator and outcome.get("action") in ("warn", "hold") and not outcome.get("degraded"):
+            yield event("investigate", "running", "The AI investigator is choosing what to look up.")
+            try:
+                found = investigator(payment, customer, body.message, outcome, scam_types, allow=lambda: gemini_budget.allow("gemini"))
+                while True:
+                    try:
+                        step = next(found)
+                    except StopIteration as done:
+                        investigation = done.value
+                        break
+                    yield event("investigate", "running", f"Looked up {step['tool']}: {step['reason']}", tool=step["tool"], reason=step["reason"])
+                outcome["investigation"] = investigation
+                yield event("investigate", "complete", f"{len(investigation['steps'])} lookups chosen by Gemini; {len(investigation['cited'])} cited.")
+            except Exception as error:  # the investigation is extra evidence: a failure never touches the decision
+                log.warning("investigation failed: %s", type(error).__name__)
+                outcome["investigation"] = {"status": "failed", "steps": [], "summary": "", "concerns": [], "cited": [],
+                                            "dropped_citations": [], "callback_question": "", "note": investigator_module.NOTE}
+                yield event("investigate", "failed", "The investigator was unavailable. The decision is unchanged.")
 
         # Put the warning in the customer's language, if asked. The English warning stays as the record.
         if body.language and body.language != "en" and outcome.get("customer_warning"):

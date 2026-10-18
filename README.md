@@ -24,8 +24,9 @@ Built for the **Google Cloud AI Builder Cup JAPAC 2026**, BFSI track (Intelligen
 7. [Deploy to Google Cloud](#deploy-to-google-cloud)
 8. [API](#api)
 9. [Evaluation](#evaluation)
-10. [Safety and limits](#safety-and-limits)
-11. [Repository layout](#repository-layout)
+10. [Grounding and guardrails](#grounding-and-guardrails)
+11. [Safety and limits](#safety-and-limits)
+12. [Repository layout](#repository-layout)
 
 ---
 
@@ -340,6 +341,25 @@ How to read it: with Gemini, the guard asks instead of guessing. A scam that was
 - Payment rules alone on our own 200 cases: 70% of scams flagged, 20% of genuine customers interrupted.
 - Earlier development runs, with a simulated customer answering the question, reported higher catch rates. Their run reports were not kept, so the Evidence page lists them as unverified notes, and we do not quote them as results.
 - Method: [docs/PAIRED_EVALUATION.md](docs/PAIRED_EVALUATION.md). Recorded results: [docs/EVALUATION_RESULTS.md](docs/EVALUATION_RESULTS.md).
+
+## Grounding and guardrails
+
+Gemini is used to read and write text, never to look things up or decide. Its inputs and outputs are fixed:
+
+| What Gemini gets | What it never gets |
+| --- | --- |
+| The customer's own words: the payment note, the answers on the call, or a call transcript. Email addresses and card numbers are blocked before anything is sent. | Web search, tools or function calls. It cannot fetch anything. |
+| A fixed guide of eight scam types with their red flags: [`data/typologies.json`](data/typologies.json). | Answer keys, evaluation labels or expected outcomes. |
+| A fixed answer form: typed fields such as pressure, secrecy, coaching and claimed history, at temperature 0. | Any authority over the decision. |
+
+How a wrong or manipulated reading is contained:
+
+- **The customer's text is data, not instructions.** The prompt says so, and code separately looks for hidden orders such as "approve this" or "ignore the rules". Finding one forces a hold for a person, whatever Gemini says.
+- **Claims are checked against the bank's records.** If the customer says "I've paid them before" but the payee is new, the rules add risk instead of trusting the claim.
+- **The answer is validated.** Gemini's reply must fit the form (`backend/risk/evidence.py`). Anything else is rejected.
+- **Rules decide, people release.** Plain rules add up the points (warn from 40, hold from 70) and every point has a written reason. Only an analyst can release a held payment.
+- **If Gemini is unavailable,** the payment and account rules still decide, the screen says so, and a hold is never released.
+- These cases, including hidden orders in a note, are covered by the backend tests in `backend/tests/`.
 
 ## Safety and limits
 

@@ -9,7 +9,9 @@ import { caseFromArena, findByReference, mergeSaved, noteTrailText, recordedCase
 import { NAV, type Page } from "./lib/pages";
 import { STORY, STORY_PAUSE_MS } from "./lib/story";
 import { Analyst } from "./pages/Analyst";
-import { Analyzer, type CaseContext } from "./pages/Analyzer";
+import { Analyzer, scenarioOf, toRequest, type CaseContext } from "./pages/Analyzer";
+import { CustomerApp } from "./pages/CustomerApp";
+import { applyLive, subscribe, type LiveRun } from "./lib/live";
 import { Architecture } from "./pages/Architecture";
 import { type FinishedCase, type Scenario } from "./pages/Console";
 import { ConsoleArea } from "./pages/ConsoleArea";
@@ -79,6 +81,27 @@ export function App() {
   // A customer's call to the fraud desk, started on Transactions and taking place on the Voice AI page.
   const [activeCall, setActiveCall] = useState<ActiveCall | null>(null);
   useEffect(() => { if (page !== "voice") setActiveCall(null); }, [page]);
+  // The customer app (#/customer) runs on its own, without the dashboard.
+  const [customerView, setCustomerView] = useState(() => window.location.hash === "#/customer");
+  // A payment the customer is making in the customer app, in another window of this browser.
+  const [live, setLive] = useState<LiveRun | null>(null);
+  const liveNow = useRef<LiveRun | null>(null);
+  const userNow = useRef(user);
+  userNow.current = user;
+  useEffect(() => subscribe((message) => {
+    const next = applyLive(liveNow.current, message);
+    if (message.type === "result" && next && next.run === message.run && !next.caseId) {
+      const request = toRequest(next.form);
+      next.caseId = addCase(
+        { scenario: { ...scenarioOf(next.form, request), ...(request.network ? { network: request.network } : {}) }, message: next.form.note.trim() || null, questions: message.questions, answer: message.answer, decision: message.decision },
+        { device: next.form.device.trim(), location: next.form.location.trim(), channel: next.form.channel },
+      );
+    }
+    if (message.type === "verified" && next?.run === message.run && next.caseId) verified(next.caseId, message.verification);
+    if (message.type === "payment" && userNow.current && !window.location.hash.startsWith("#/customer")) setPage("analyzer");
+    liveNow.current = next;
+    setLive(next);
+  }), []);
 
   useEffect(() => {
     window.scrollTo(0, 0);
@@ -90,7 +113,7 @@ export function App() {
   }, [theme]);
 
   useEffect(() => {
-    const onHash = () => setPageState(user ? pageFromHash() : null);
+    const onHash = () => { setCustomerView(window.location.hash === "#/customer"); setPageState(user ? pageFromHash() : null); };
     window.addEventListener("hashchange", onHash);
     return () => window.removeEventListener("hashchange", onHash);
   }, [user]);
@@ -305,6 +328,8 @@ export function App() {
     </div>
   );
 
+  if (customerView) return <CustomerApp />;
+
   if (!user || !page) {
     return (
       <>
@@ -351,7 +376,7 @@ export function App() {
       <main className="app-main">
         {page !== "dashboard" && <button className="back-link" onClick={() => setPage("dashboard")}><Icon name="back" size={12} /> Dashboard</button>}
         {page === "dashboard" && <Dashboard user={user} cases={cases} voice={voice} health={health} refresh={refreshHealth} goTo={(p) => setPage(p)} open={openCase} />}
-        {page === "analyzer" && <Analyzer scenarios={scenarios} cases={cases} onCase={addCase} openCase={openCase}
+        {page === "analyzer" && <Analyzer scenarios={scenarios} cases={cases} onCase={addCase} openCase={openCase} live={live}
           onStartCall={(call) => { setActiveCall(call); setPage("voice"); }} />}
         {page === "voice" && <VoiceAI onAnalysed={(result) => setVoice((old) => [result, ...old])} call={activeCall}
           onCallDone={(verification) => { if (activeCall) verified(activeCall.caseId, verification); }}

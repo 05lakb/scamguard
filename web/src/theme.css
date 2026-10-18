@@ -2818,3 +2818,239 @@ input, select, textarea {
   .arch-e2e-steps li { grid-template-columns: 36px minmax(0, 1fr); column-gap: 12px; padding-right: 0; }
   .arch-e2e-no { grid-row: span 3; margin: 0; }
 }
+
+/* ---------- landing: who it protects ---------- */
+.who-list { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 0; margin-top: 28px; border-top: 1px solid var(--line); }
+.who-list article { display: grid; align-content: start; gap: 10px; padding: 24px 28px 8px; border-left: 1px solid var(--line); }
+.who-list article:first-child { padding-left: 0; border-left: 0; }
+.who-icon { display: grid; place-items: center; width: 40px; height: 40px; border-radius: 12px; background: var(--accent-soft); color: var(--accent); }
+.who-list h3 { margin: 4px 0 0; font-size: 1.2rem; }
+.who-list p { display: grid; gap: 4px; margin: 0; font-size: 0.95rem; line-height: 1.5; }
+.who-list p span { font-size: 0.72rem; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase; }
+.who-today { color: var(--muted); }
+.who-today span { color: var(--hold); }
+.who-changes { color: var(--ink); }
+.who-changes span { color: var(--allow); }
+
+/* ---------- phone fixes: nothing wider than the screen, a compact top bar ---------- */
+.fields-4 > *, .toggle-row > *, .note-row > *, .engine-cards > *, .decision-split > *, .flow-body > * { min-width: 0; }
+.evidence-review { grid-template-columns: minmax(0, 1fr); }
+.evidence-review > * { min-width: 0; }
+.table-wrap, .case-table-wrap { position: relative; max-width: 100%; }
+@media (max-width: 1100px) { .fields-4 { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+@media (max-width: 900px) {
+  .who-list { grid-template-columns: minmax(0, 1fr); }
+  .who-list article { padding: 22px 0 8px; border-left: 0; border-top: 1px solid var(--line); }
+  .who-list article:first-child { border-top: 0; }
+  .evidence-heading, .paired-heading { flex-direction: column; align-items: flex-start; }
+  .evidence-method-grid, .evidence-metrics { grid-template-columns: minmax(0, 1fr); }
+}
+@media (max-width: 640px) {
+  .fields-4, .toggle-row, .note-row { grid-template-columns: minmax(0, 1fr); }
+  .proto-strip { justify-content: flex-start; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; font-size: 0.7rem; padding: 5px 16px; }
+  .topbar-inner { gap: 8px; padding: 8px 12px; }
+  .topbar .brand-mark strong { font-size: 0.98rem; }
+  .top-right { gap: 4px; }
+  .top-right .icon-btn { width: 34px; height: 34px; }
+  .top-right .icon-btn[aria-label="Play the guided demo"] { display: none; }
+  .topnav-more > summary { min-height: 34px; padding: 0 10px; }
+  .scenario-bar { padding: 12px 14px; }
+}
+.money-input input { min-width: 0; flex: 1; }
+.tech-grid > * { min-width: 0; }
+.audit-json { white-space: pre-wrap; word-break: break-word; }
+@media (max-width: 1100px) { .tech-grid, .engine-cards, .decision-split { grid-template-columns: minmax(0, 1fr); } }
+@media (max-width: 640px) {
+  /* Row 1: logo and icons. Row 2: the menu, with More beside it. */
+  .topbar .topnav { order: 3; flex: 1 1 0; min-width: 0; flex-basis: 0; }
+  .topbar .topnav-more { order: 4; }
+  .topbar-inner { row-gap: 6px; }
+  .topbar .top-right { order: 2; }
+}
+@media (max-width: 640px) {
+  /* The menu always takes its own row, with More at its end. */
+  .topbar .topnav { flex: 1 1 calc(100% - 80px); }
+  .land-nav .brand-mark small { display: none; }
+  .land-nav .actions .btn { white-space: nowrap; }
+}
+
+/* ---------- the scam playbook ---------- */
+.playbook-match { margin-top: 14px; border-color: var(--hold); }
+.playbook-match-head { display: flex; align-items: flex-start; gap: 14px; }
+.playbook-match-head > div { flex: 1; min-width: 0; }
+.playbook-match-head h3 { margin: 2px 0 4px; font-size: 1.08rem; }
+.playbook-match-head p { margin: 0; }
+.playbook-icon { display: grid; place-items: center; width: 38px; height: 38px; flex: none; border-radius: 10px; background: var(--hold-bg); color: var(--hold); }
+.playbook-match-body { display: grid; grid-template-columns: minmax(0, 1.2fr) minmax(0, 1fr); gap: 22px; margin-top: 8px; }
+.playbook-flags { list-style: none; margin: 0; padding: 0; display: grid; gap: 8px; }
+.playbook-flags li { display: flex; align-items: flex-start; gap: 8px; color: var(--muted); font-size: 0.9rem; line-height: 1.4; }
+.playbook-flags li svg { flex: none; margin-top: 3px; }
+.playbook-flags li span { display: grid; gap: 2px; }
+.playbook-flags li small { color: var(--hold); font-weight: 600; }
+.playbook-flags li.seen { color: var(--ink); }
+.playbook-flags li.seen svg { color: var(--hold); }
+.playbook-tactic { padding: 4px 10px; border: 1px solid var(--line); border-radius: 999px; color: var(--muted); font-size: 0.78rem; }
+.playbook-tactic.seen { border-color: var(--hold); background: var(--hold-bg); color: var(--hold); font-weight: 700; }
+.playbook-source { display: inline-flex; align-items: center; gap: 6px; color: var(--accent); font-size: 0.85rem; font-weight: 600; text-decoration: none; }
+.playbook-source:hover { text-decoration: underline; }
+.playbook-list { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; margin-top: 16px; }
+.playbook-list article { border: 1px solid var(--line); border-radius: 12px; background: var(--surface-2); }
+.playbook-list article.open { border-color: var(--accent); }
+.playbook-list button { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 2px 12px; width: 100%; padding: 12px 14px; border: 0; background: none; color: var(--ink); text-align: left; cursor: pointer; }
+.playbook-list button strong { font-size: 0.95rem; }
+.playbook-list button span { grid-column: 1; }
+.playbook-list button svg { grid-column: 2; grid-row: 1 / span 2; align-self: center; color: var(--accent); transform: rotate(90deg); transition: transform 0.15s; }
+.playbook-list article.open button svg { transform: rotate(-90deg); }
+.playbook-detail { padding: 0 14px 14px; }
+.playbook-detail > p:first-child { margin-top: 0; color: var(--muted); font-size: 0.9rem; }
+@media (max-width: 900px) { .playbook-match-body, .playbook-list { grid-template-columns: minmax(0, 1fr); } .playbook-match-head { flex-wrap: wrap; } }
+.playbook-list { align-items: start; }
+
+/* ---------- Customer app: a simulated phone beside what the bank sees ---------- */
+.phone-sim { display: grid; grid-template-columns: 380px minmax(0, 1fr); gap: 28px; align-items: start; }
+.phone-frame {
+  position: sticky; top: 90px; width: 360px; height: 720px; padding: 14px; border-radius: 46px;
+  background: #0b0b0d; box-shadow: 0 0 0 2px #2c2c31, 0 30px 60px rgba(0, 0, 0, 0.45); display: flex; flex-direction: column; overflow: hidden;
+}
+.phone-notch { position: absolute; top: 14px; left: 50%; transform: translateX(-50%); width: 120px; height: 26px; border-radius: 0 0 16px 16px; background: #0b0b0d; z-index: 2; }
+.phone-status { display: flex; justify-content: space-between; padding: 8px 22px 6px; border-radius: 34px 34px 0 0; background: #f4f5f7; color: #222; font-size: 0.72rem; font-weight: 700; }
+.phone-app-bar { display: flex; align-items: center; gap: 8px; padding: 12px 18px; background: #0f3d91; color: #fff; font-weight: 700; font-size: 0.95rem; }
+.phone-body { flex: 1; overflow-y: auto; border-radius: 0 0 34px 34px; background: #f4f5f7; color: #1d1f23; }
+.phone-screen { display: grid; gap: 10px; padding: 20px 18px 24px; }
+.phone-screen.center { justify-items: center; text-align: center; padding-top: 70px; }
+.phone-screen h3 { margin: 4px 0 0; font-size: 1.15rem; color: #111; }
+.phone-screen p { margin: 0; font-size: 0.9rem; line-height: 1.45; color: #3b3f46; }
+.phone-label { font-size: 0.72rem; font-weight: 700; color: #6a6f78; text-transform: uppercase; letter-spacing: 0.05em; margin-top: 4px; }
+.phone-field { padding: 11px 12px; border-radius: 10px; background: #fff; border: 1px solid #dfe2e7; font-weight: 600; color: #111; }
+.phone-amount { font-size: 1.4rem; }
+.phone-input { width: 100%; padding: 10px 12px; border-radius: 10px; border: 1px solid #cfd3da; background: #fff; color: #111; font: inherit; font-size: 0.9rem; resize: none; }
+.phone-btn { width: 100%; padding: 12px; border-radius: 12px; border: 1px solid #cfd3da; background: #fff; color: #0f3d91; font: inherit; font-weight: 700; cursor: pointer; display: inline-flex; align-items: center; justify-content: center; gap: 8px; }
+.phone-btn.primary { background: #0f3d91; border-color: #0f3d91; color: #fff; }
+.phone-btn:disabled { opacity: 0.5; cursor: default; }
+.phone-badge { display: grid; place-items: center; width: 56px; height: 56px; border-radius: 50%; }
+.phone-badge.allow { background: #e3f5e8; color: #1b7f3b; }
+.phone-badge.warn { background: #fff3d6; color: #a86500; }
+.phone-badge.hold { background: #fde4e2; color: #c0302a; }
+.phone-badge.ask { background: #e5ecfb; color: #0f3d91; }
+.phone-notice { display: flex; align-items: center; gap: 6px; color: #6a6f78; font-size: 0.75rem; }
+.phone-small { font-size: 0.8rem !important; color: #6a6f78 !important; }
+.phone-error { color: #c0302a !important; font-size: 0.82rem !important; }
+.phone-question { padding: 12px; border-radius: 12px; background: #e5ecfb; color: #0f2a63 !important; font-weight: 600; }
+.phone-question.small { padding: 8px 10px; font-size: 0.84rem !important; }
+.phone-call { background: linear-gradient(180deg, #0f3d91 0, #0f3d91 150px, #f4f5f7 150px); }
+.phone-caller { display: grid; justify-items: center; gap: 4px; color: #fff; padding-bottom: 18px; }
+.phone-caller small { opacity: 0.8; }
+.phone-avatar { display: grid; place-items: center; width: 60px; height: 60px; border-radius: 50%; background: rgba(255, 255, 255, 0.18); }
+.phone-listening { font-size: 0.85rem !important; }
+.phone-listening.listening { color: #1b7f3b !important; font-weight: 600; }
+.phone-listening .dot { display: inline-block; width: 8px; height: 8px; border-radius: 50%; background: #1b7f3b; margin-right: 6px; animation: pulse 1.2s infinite; }
+.spin.big { width: 34px; height: 34px; border-width: 3px; }
+.phone-bank { min-width: 0; }
+.phone-steps { list-style: none; margin: 8px 0 0; padding: 0; display: grid; gap: 10px; }
+.phone-steps > li { display: grid; gap: 6px; padding: 14px 16px; border: 1px solid var(--line); border-left: 3px solid var(--line-strong); border-radius: 12px; background: var(--surface); }
+.phone-steps > li.done { border-left-color: var(--allow); }
+.phone-steps > li.active { border-left-color: var(--accent); }
+.phone-steps > li.waiting { opacity: 0.6; }
+.phone-steps strong { font-size: 0.95rem; }
+.phone-steps > li > span { font-size: 0.86rem; color: var(--muted); }
+.phone-steps .act { justify-self: start; }
+.phone-checks { display: grid; gap: 6px; }
+.phone-check { display: grid; grid-template-columns: 18px minmax(0, 1fr) auto; align-items: center; gap: 8px; font-size: 0.86rem; }
+.phone-check small { color: var(--muted); }
+.phone-check em { font-style: normal; font-size: 0.75rem; font-weight: 700; color: var(--muted); }
+.phone-check.complete em { color: var(--allow); }
+.phone-check.running em { color: var(--accent); }
+.phone-reasons, .phone-transcript { list-style: none; margin: 0; padding: 0; display: grid; gap: 4px; font-size: 0.85rem; }
+.phone-reasons li { display: flex; justify-content: space-between; gap: 10px; }
+.phone-reasons em { font-style: normal; font-family: var(--mono); color: var(--hold); font-weight: 700; }
+.phone-transcript li { display: grid; gap: 2px; padding: 6px 0; border-bottom: 1px solid var(--line); }
+.phone-transcript li span:first-child { color: var(--muted); }
+.phone-outcome { margin: 4px 0 0; font-size: 0.88rem; }
+.phone-steps .btn { justify-self: start; }
+@media (max-width: 1000px) {
+  .phone-sim { grid-template-columns: minmax(0, 1fr); justify-items: center; }
+  .phone-frame { position: static; }
+  .phone-bank { width: 100%; }
+}
+@media (max-width: 420px) { .phone-frame { width: 100%; height: 680px; border-radius: 36px; } }
+
+/* ---------- the customer app on its own page (#/customer) ---------- */
+.customer-page { min-height: 100vh; display: flex; align-items: center; justify-content: center; gap: 56px; padding: 32px; background: radial-gradient(circle at 30% 20%, #1a2340, #0b0d12 70%); }
+.customer-aside { max-width: 340px; color: #e8eaf0; }
+.customer-aside h1 { margin: 6px 0 12px; font-size: 2rem; }
+.customer-aside .muted { color: #9aa1ae; }
+.customer-phone { position: relative; top: 0; }
+.phone-demo { display: flex; align-items: center; justify-content: space-between; gap: 8px; padding: 8px 10px; border: 1px dashed #b9c2d4; border-radius: 10px; color: #6a6f78; font-size: 0.75rem; font-weight: 700; }
+.phone-demo select { border: 0; background: none; color: #0f3d91; font: inherit; font-weight: 700; cursor: pointer; max-width: 70%; }
+@media (max-width: 760px) {
+  .customer-aside { display: none; }
+  .customer-page { padding: 0; display: block; background: #f4f5f7; }
+  .customer-phone { width: 100%; height: 100vh; height: 100dvh; padding: 0; border-radius: 0; box-shadow: none; }
+  .customer-phone .phone-notch { display: none; }
+  .customer-phone .phone-status { border-radius: 0; }
+  .customer-phone .phone-body { border-radius: 0; }
+}
+
+/* Transactions: following a payment from the customer app */
+.live-banner { display: flex; align-items: center; gap: 10px; margin: 16px 0 0; padding: 12px 16px; border: 1px solid var(--accent); border-radius: 12px; background: var(--accent-soft); font-size: 0.92rem; }
+.live-banner .dot { width: 9px; height: 9px; border-radius: 50%; background: var(--allow); animation: pulse 1.2s infinite; flex: none; }
+
+/* ---------- customer app: a UPI-style banking app ---------- */
+.phone-status { align-items: center; }
+.phone-status span { display: inline-flex; align-items: center; gap: 4px; }
+.phone-demo-btn { padding: 1px 8px; border: 1px solid #c4c9d2; border-radius: 999px; background: #fff; color: #0f3d91; font-size: 0.66rem; font-weight: 800; cursor: pointer; }
+.phone-title { display: flex; align-items: center; gap: 8px; }
+.phone-title h3 { margin: 0; }
+.phone-back { display: grid; place-items: center; width: 32px; height: 32px; border: 0; border-radius: 50%; background: #e7eaf0; color: #0f3d91; cursor: pointer; flex: none; }
+.phone-balance { display: grid; gap: 4px; padding: 16px; border-radius: 16px; background: linear-gradient(135deg, #0f3d91, #2a63c9); color: #fff; }
+.phone-balance small { opacity: 0.85; font-size: 0.75rem; }
+.phone-balance strong { font-size: 1.55rem; }
+.phone-actions { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 6px; }
+.phone-actions button { display: grid; justify-items: center; gap: 6px; padding: 8px 2px; border: 0; background: none; color: #1d1f23; font: inherit; font-size: 0.7rem; font-weight: 600; cursor: pointer; line-height: 1.2; }
+.phone-actions button span { display: grid; place-items: center; width: 46px; height: 46px; border-radius: 14px; background: #e5ecfb; color: #0f3d91; }
+.phone-contacts { display: flex; gap: 14px; }
+.phone-contacts button { display: grid; justify-items: center; gap: 6px; border: 0; background: none; color: #1d1f23; font: inherit; font-size: 0.72rem; cursor: pointer; max-width: 70px; }
+.phone-avatar-sm { display: grid; place-items: center; width: 42px; height: 42px; border-radius: 50%; background: #dfe7f7; color: #0f3d91; font-weight: 800; font-size: 0.85rem; flex: none; }
+.phone-row { display: flex; align-items: center; gap: 12px; padding: 10px; border: 0; border-radius: 12px; background: #fff; color: #1d1f23; font: inherit; text-align: left; cursor: pointer; }
+.phone-row span:last-child { display: grid; gap: 2px; }
+.phone-row small { color: #6a6f78; font-size: 0.75rem; }
+.phone-amount-big { text-align: center; font-size: 2.3rem; font-weight: 800; color: #111; padding: 4px 0; }
+.phone-keypad { display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; }
+.phone-keypad button { height: 46px; border: 0; border-radius: 12px; background: #fff; color: #111; font: inherit; font-size: 1.25rem; font-weight: 600; cursor: pointer; display: grid; place-items: center; }
+.phone-keypad button:active { background: #e5ecfb; }
+.phone-review { display: grid; gap: 0; border-radius: 12px; background: #fff; border: 1px solid #dfe2e7; }
+.phone-review div { display: flex; justify-content: space-between; gap: 12px; padding: 10px 12px; border-bottom: 1px solid #eef0f3; font-size: 0.86rem; }
+.phone-review div:last-child { border-bottom: 0; }
+.phone-review span { color: #6a6f78; }
+.phone-review strong { text-align: right; color: #111; word-break: break-word; }
+.phone-pin { display: flex; justify-content: center; gap: 18px; padding: 18px 0; }
+.phone-pin span { width: 16px; height: 16px; border-radius: 50%; border: 2px solid #0f3d91; }
+.phone-pin span.on { background: #0f3d91; }
+.phone-scanning { padding-top: 40px; }
+.phone-viewfinder { display: grid; place-items: center; width: 200px; height: 200px; border: 3px dashed #0f3d91; border-radius: 20px; color: #0f3d91; animation: pulse 1.2s infinite; }
+.center { text-align: center; }
+
+/* presenter controls: beside the phone on a computer, a sheet on a phone */
+.customer-aside { max-width: 380px; }
+.presenter { display: grid; gap: 8px; margin-top: 18px; padding: 16px; border: 1px solid #2c3446; border-radius: 14px; background: rgba(255, 255, 255, 0.04); color: #e8eaf0; }
+.presenter-head { display: flex; justify-content: space-between; align-items: center; }
+.presenter-close { display: none; border: 0; background: none; color: #e8eaf0; cursor: pointer; }
+.presenter .muted { color: #9aa1ae; margin: 0; }
+.presenter-row { display: flex; justify-content: space-between; align-items: center; gap: 10px; font-size: 0.86rem; }
+.presenter-row select, .presenter-row input[type="time"], .presenter-row input[type="number"] { padding: 4px 8px; border: 1px solid #3a4459; border-radius: 8px; background: #141925; color: #e8eaf0; font: inherit; font-size: 0.82rem; max-width: 200px; }
+.presenter-row input[type="number"] { width: 64px; }
+.presenter-row input[type="checkbox"] { width: 18px; height: 18px; accent-color: #f59e0b; }
+.presenter-sub { margin: 8px 0 0; color: #f59e0b; font-size: 0.72rem; font-weight: 800; letter-spacing: 0.06em; text-transform: uppercase; }
+.presenter-facts { margin: 0; color: #cfd5e1; }
+.presenter-stories { display: flex; flex-wrap: wrap; gap: 6px; }
+.presenter .btn { justify-self: start; }
+.presenter-sheet { display: none; }
+@media (max-width: 760px) {
+  .presenter-sheet { display: block; position: fixed; inset: auto 0 0 0; z-index: 50; max-height: 80vh; overflow-y: auto; padding: 10px; background: #0b0d12; border-top: 1px solid #2c3446; }
+  .presenter-sheet .presenter { margin: 0; }
+  .presenter-sheet .presenter-close { display: block; }
+}
+@media (min-width: 761px) { .phone-demo-btn { display: none; } }
+.call-why { display: flex; align-items: flex-start; gap: 8px; margin: 10px 0 0; padding: 10px 12px; border-radius: 10px; background: var(--hold-bg); color: var(--ink); font-size: 0.9rem; line-height: 1.45; }
+.call-why svg { flex: none; margin-top: 3px; color: var(--hold); }
+.call-why-inline { display: block; margin-top: 6px; }

@@ -11,6 +11,7 @@ import { Icon, type IconName } from "../components/Icon";
 import { currentAction, findByReference, needsReview, referenceOf, reviewCount, sourceLabel, type CaseItem, type CaseStatus } from "../lib/cases";
 import { contributions, type Contribution } from "../lib/contrib";
 import { ACTION_LABEL, SEGMENT_LABEL } from "../lib/labels";
+import { heldBy, whyStillHeld } from "../lib/callWhy";
 
 type Filter = "review" | "hold" | "warn" | "allow" | "all";
 
@@ -312,6 +313,7 @@ export function Analyst({ cases, decide, scenarios, onTestCase, initialCaseId, f
                         {selected.verification.outcome.voice && <>Voice AI: {selected.verification.outcome.voice.risk_level} risk{selected.verification.outcome.voice.tactics.length && selected.verification.outcome.voice.tactics[0] !== "none" ? ` (${selected.verification.outcome.voice.tactics.join(", ")})` : ""}. </>}
                         Risk {selected.verification.outcome.before_score} → {selected.verification.outcome.score}.
                         {selected.verification.outcome.kept_hold && <> Held regardless: {selected.verification.outcome.kept_hold}</>}
+                        {whyStillHeld(selected.verification.outcome, heldBy(partsAsBars(selected))) && <span className="call-why-inline"> {whyStillHeld(selected.verification.outcome, heldBy(partsAsBars(selected)))}</span>}
                       </p>
                     )}
                   </>

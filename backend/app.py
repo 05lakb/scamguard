@@ -41,6 +41,7 @@ from backend.risk import clarify, conversation
 from backend.risk.callback import callback_brief
 from backend.risk.decision import decide
 from backend.risk.evidence import load_scam_types, read_message
+from backend.risk.playbook import playbook
 from backend.risk.translate import translate_warning
 from backend import verification as verify
 from backend.service import assess, assess_steps
@@ -281,6 +282,11 @@ def create_app(reader=read_message, asker=clarify.ask_questions, arena_writer=No
     @app.get("/api/health")
     def health():
         return {"ok": True, "ai_configured": gemini_client.is_configured(), "storage": store.kind}
+
+    @app.get("/api/playbook")
+    def scam_playbook():
+        """The scam types the message reader is given, with red flags and the public advice they come from."""
+        return {"types": playbook(scam_types)}
 
     @app.post("/api/conversation")
     def analyse_conversation(body: ConversationIn, request: Request):

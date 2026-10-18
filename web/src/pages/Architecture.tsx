@@ -2,6 +2,7 @@ import { useState } from "react";
 import type { Health } from "../api";
 import { Icon } from "../components/Icon";
 import { HOST_LABEL, hostKind } from "../lib/hosting";
+import { PlaybookList } from "../components/ScamPlaybook";
 
 type Mode = "live" | "delivery";
 
@@ -123,7 +124,12 @@ export function Architecture({ health }: { health?: Health | null }) {
         </ol>
       </section>
 
-      <section className="arch-workspaces"><div className="arch-section-head"><div><p className="kicker">03 · Product surface</p><h2>The tabs are views into the same service</h2></div><span>Evidence and How it's built are documentation pages.</span></div><div className="arch-workspace-grid">{WORKSPACES.map((page, index) => <article key={page.name}><span>{String(index + 1).padStart(2, "0")}</span><strong>{page.name}</strong><small>{page.detail}</small></article>)}</div></section>
+      <section className="arch-e2e arch-playbook" aria-labelledby="arch-playbook-heading">
+        <div className="arch-section-head"><div><p className="kicker">03 · What the agent knows</p><h2 id="arch-playbook-heading">The scam playbook Gemini reads against</h2></div><span>The same file the message reader is given (<code>data/typologies.json</code>), with the public advice each type comes from.</span></div>
+        <PlaybookList />
+      </section>
+
+      <section className="arch-workspaces"><div className="arch-section-head"><div><p className="kicker">04 · Product surface</p><h2>The tabs are views into the same service</h2></div><span>Evidence and How it's built are documentation pages.</span></div><div className="arch-workspace-grid">{WORKSPACES.map((page, index) => <article key={page.name}><span>{String(index + 1).padStart(2, "0")}</span><strong>{page.name}</strong><small>{page.detail}</small></article>)}</div></section>
 
       <section className="arch-trust-grid"><article><Icon name="lock" size={20} /><div><strong>Session-scoped cases</strong><p>Random browser key; its hash binds saved cases and decisions to that browser. Records expire after 24 hours.</p></div></article><article><Icon name="brain" size={20} /><div><strong>AI does not decide</strong><p>Gemini extracts structured signals. Testable code combines evidence and sets allow, warn and hold recommendations.</p></div></article><article><Icon name="warn" size={20} /><div><strong>Fallbacks stay visible</strong><p>If the model is unavailable or limited, payment rules still run and the result identifies the fallback mode.</p></div></article></section>
     </> : <>

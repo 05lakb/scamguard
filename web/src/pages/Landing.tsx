@@ -41,6 +41,19 @@ const ANSWERS: { scam: string; answer: string }[] = [
   { scam: "Fraud tools block on a score nobody can explain.", answer: "Gemini reads, rules decide with written reasons, a person confirms every hold." },
 ];
 
+// Who Last Mile Guard protects, the problem each one has today, and what changes.
+const WHO: { icon: "user" | "shield" | "flag"; who: string; today: string; changes: string }[] = [
+  { icon: "user", who: "Customers",
+    today: "Anyone making an instant transfer, and most of all the people scammers target: older customers, first-time digital users, small businesses. Once they press send, the money is gone in seconds.",
+    changes: "Their savings stay put. A risky payment gets a question or an in-app call with the bank first, never a silent block." },
+  { icon: "shield", who: "Banks",
+    today: "Authorised scams pass every security check, so fraud systems built for stolen logins miss them. The bank pays in reimbursements, complaints and lost trust.",
+    changes: "An explained decision for every hold, mule accounts spotted at the receiving end, and a record a regulator can read." },
+  { icon: "flag", who: "Fraud analysts",
+    today: "Too many alerts with too little context, and the customer has to be called back to find out what happened.",
+    changes: "One case with the reasons, the customer's call and the AI's recommendation. They decide in a click; the AI never does." },
+];
+
 const FLOW: { title: string; text: string }[] = [
   { title: "Payment", text: "A transfer and the customer's note" },
   { title: "Three checks", text: "Payment, words (Gemini), receiving account" },
@@ -65,6 +78,7 @@ export function Landing({ signedIn, enter, theme, setTheme }: Props) {
         </button>
         <div className="links">
           <a href="#research">Our research</a>
+          <a href="#who">Who it protects</a>
           <a href="#different">What's different</a>
           <a href="#how">How it works</a>
           <a href="#evidence">Evidence</a>
@@ -86,7 +100,7 @@ export function Landing({ signedIn, enter, theme, setTheme }: Props) {
             the receiving account. Every hold is explained, and a person makes the final call.
           </p>
           <div className="hero-cta">
-            <button className="btn primary" onClick={() => enter()}>Check a payment <Icon name="arrow" size={16} /></button>
+            <button className="btn primary" onClick={() => enter("analyzer")}>Check a payment <Icon name="arrow" size={16} /></button>
             <a className="btn" href="#research">See our research</a>
           </div>
         </div>
@@ -132,7 +146,7 @@ export function Landing({ signedIn, enter, theme, setTheme }: Props) {
               </div>
             </li>
           </ol>
-          <button className="btn block" onClick={() => enter()}><Icon name="shield" size={16} /> Try it on a payment</button>
+          <button className="btn block" onClick={() => enter("analyzer")}><Icon name="shield" size={16} /> Try it on a payment</button>
         </aside>
       </section>
 
@@ -141,6 +155,21 @@ export function Landing({ signedIn, enter, theme, setTheme }: Props) {
         <h2>Instant payments became <span className="grad">the scammer's favourite route.</span></h2>
         <StatBand label="Around the world" rows={GLOBAL_NUMBERS} />
         <StatBand label="Case study: India" rows={INDIA_NUMBERS} />
+      </section>
+
+      <section className="land-section" id="who">
+        <p className="kicker">Who it protects</p>
+        <h2>Built for the people <span className="grad">the scammer is counting on.</span></h2>
+        <div className="who-list">
+          {WHO.map((row) => (
+            <article key={row.who}>
+              <span className="who-icon"><Icon name={row.icon} size={20} /></span>
+              <h3>{row.who}</h3>
+              <p className="who-today"><span>Today</span>{row.today}</p>
+              <p className="who-changes"><span>With Last Mile Guard</span>{row.changes}</p>
+            </article>
+          ))}
+        </div>
       </section>
 
       <section className="land-section" id="different">
@@ -192,7 +221,7 @@ export function Landing({ signedIn, enter, theme, setTheme }: Props) {
           </div>
           <div className="hero-cta" style={{ margin: 0 }}>
             <button className="btn" onClick={() => enter("evidence")}>Open the evidence</button>
-            <button className="btn primary" onClick={() => enter()}>Open command centre <Icon name="arrow" size={16} /></button>
+            <button className="btn primary" onClick={() => enter("analyzer")}>Check a payment <Icon name="arrow" size={16} /></button>
           </div>
         </div>
       </section>

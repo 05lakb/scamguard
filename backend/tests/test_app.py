@@ -50,6 +50,16 @@ def test_health_check_answers():
     assert isinstance(body["ai_configured"], bool)
 
 
+
+def test_the_playbook_shows_exactly_what_the_reader_is_given():
+    from backend.risk.evidence import load_scam_types
+    types = make_client().get("/api/playbook").json()["types"]
+    guide = load_scam_types()
+    assert [t["id"] for t in types] == [g["id"] for g in guide]
+    for shown, given in zip(types, guide):
+        assert shown["red_flags"] == given["red_flags"]
+        assert shown["source"]["url"].startswith("https://www.scamwatch.gov.au/types-of-scams")
+
 def test_a_thin_note_on_an_unusual_payment_gets_questions():
     result = make_client().post("/api/assess", json=BODY).json()
     assert result["action"] == "ask"

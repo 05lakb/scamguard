@@ -3,9 +3,12 @@ import { streamAssessment, type AssessmentEvent, type AssessmentStage, type Asse
 import { CallResult } from "../components/CallResult";
 import { HoldNotification } from "../components/HoldNotification";
 import { JourneySteps } from "../components/JourneySteps";
+import type { LiveRun } from "../lib/live";
+import { heldBy, whyStillHeld } from "../lib/callWhy";
 import type { ActiveCall } from "../components/VerificationPanel";
 import { Icon, type IconName } from "../components/Icon";
 import { NetworkGraph } from "../components/NetworkGraph";
+import { PlaybookMatch } from "../components/ScamPlaybook";
 import { PageHead, ScoreRing, Toggle, toneForAction } from "../components/ui";
 import type { AccountNetwork, Payment } from "../core/types";
 import { caseReference, type CaseItem, type CaseStatus } from "../lib/cases";
@@ -28,14 +31,16 @@ interface Props {
   openCase?: (caseId: string) => void;
   // The customer pressed "Call fraud team": the call continues on the Voice AI page.
   onStartCall?: (call: ActiveCall) => void;
+  // A payment made in the customer app, in another window: shown here as it happens.
+  live?: LiveRun | null;
 }
 
-type NetworkPattern = "none" | "ring" | "clean";
+export type NetworkPattern = "none" | "ring" | "clean";
 
 const slug = (text: string) => text.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "").slice(0, 40) || "beneficiary";
 
 // Synthetic receiving-account graphs the analyst can attach so MuleNet scores the beneficiary in the same run.
-function networkFor(pattern: NetworkPattern, payee: string): AccountNetwork | undefined {
+export function networkFor(pattern: NetworkPattern, payee: string): AccountNetwork | undefined {
   const id = slug(payee);
   if (pattern === "ring") {
     return {
@@ -69,9 +74,9 @@ const NETWORK_LABEL: Record<NetworkPattern, string> = {
   clean: "Established merchant (synthetic)",
 };
 
-type Segment = "retiree" | "young_professional" | "small_business_owner" | "student" | "family";
+export type Segment = "retiree" | "young_professional" | "small_business_owner" | "student" | "family";
 
-interface Form {
+export interface Form {
   amount: string;
   currency: string;
   segment: Segment;
@@ -93,15 +98,15 @@ interface Form {
   network: NetworkPattern;
 }
 
-const now = () => new Date().toTimeString().slice(0, 5);
+export const now = () => new Date().toTimeString().slice(0, 5);
 
-const BASE: Form = {
+export const BASE: Form = {
   amount: "1500", currency: "INR", segment: "young_professional", typical: "2000", payee: "Ravi Kirana Store",
   payeeType: "business", accountAge: "900", device: "dev-4821 · Pixel 8", location: "Mumbai", channel: "mobile",
   time: now(), recent: "0", newPayee: false, newDevice: false, locationChanged: false, onCall: false, remote: false, note: "", network: "none",
 };
 
-const PRESETS: { label: string; icon: IconName; form: Partial<Form> }[] = [
+export const PRESETS: { label: string; icon: IconName; form: Partial<Form> }[] = [
   { label: "Everyday payment", icon: "allow", form: {} },
   {
     label: "Bank-impersonation call", icon: "mic",
@@ -120,7 +125,7 @@ const PRESETS: { label: string; icon: IconName; form: Partial<Form> }[] = [
   },
 ];
 
-function toRequest(form: Form, questions?: string[], answer?: string): AssessRequest {
+export function toRequest(form: Form, questions?: string[], answer?: string): AssessRequest {
   const today = new Date().toISOString().slice(0, 10);
   const payment: Payment = {
     amount: Number(form.amount),
@@ -147,7 +152,7 @@ function toRequest(form: Form, questions?: string[], answer?: string): AssessReq
   };
 }
 
-function scenarioOf(form: Form, request: AssessRequest): Scenario {
+export function scenarioOf(form: Form, request: AssessRequest): Scenario {
   return {
     id: "txn", title: `Payment to ${request.payment.payee_name}`, group: "genuine", kind: "Live", difficulty: "",
     blurb: "", customer: request.customer, payment: request.payment, message: form.note, sample_reply: "",
@@ -180,7 +185,7 @@ interface Remembered {
 type Stages = Partial<Record<AssessmentStage, AssessmentEvent>>;
 let remembered: Remembered | null = null;
 
-export function Analyzer({ scenarios, cases, onCase, openCase, onStartCall }: Props) {
+export function Analyzer({ scenarios, cases, onCase, openCase, onStartCall, live }: Props) {
   const [form, setForm] = useState<Form>(remembered?.form ?? BASE);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
@@ -226,7 +231,37 @@ export function Analyzer({ scenarios, cases, onCase, openCase, onStartCall }: Pr
   const set = <K extends keyof Form>(key: K, value: Form[K]) => setForm((old) => ({ ...old, [key]: value }));
   const amountOk = Number(form.amount) > 0 && Number(form.amount) <= 10_000_000;
 
+  // Following a payment from the customer app. Running a payment here stops following it.
+  const [liveRun, setLiveRun] = useState<string | null>(null);
+  const leftRun = useRef<string | null>(null);
+  const shownRun = useRef<{ run: string; result: boolean; call: boolean } | null>(null);
+  useEffect(() => {
+    if (!live || live.run === leftRun.current) return;
+    const seen = shownRun.current?.run === live.run ? shownRun.current : null;
+    setLiveRun(live.run);
+    setForm(live.form);
+    setSubmitted(live.form);
+    setStages(live.stages);
+    setAsked(live.result ? null : live.asked);
+    setResult(live.result);
+    setCaseId(live.caseId);
+    setBusy(!live.result && (!live.asked || live.answer !== null));
+    setError("");
+    const target = !seen ? "flow-2" : live.result && !seen.result ? "flow-3" : live.call && !seen.call ? "flow-4" : null;
+    if (target) window.setTimeout(() => document.getElementById(target)?.scrollIntoView({ behavior: "smooth", block: "start" }), 80);
+    shownRun.current = { run: live.run, result: Boolean(live.result), call: Boolean(live.call) };
+  }, [live]);
+  const following = liveRun !== null && live?.run === liveRun;
+  function stopFollowing() {
+    if (liveRun) leftRun.current = liveRun;
+    setLiveRun(null);
+  }
+  function openCustomerApp() {
+    window.open(`${window.location.pathname}#/customer`, "lmg-customer", "width=430,height=900");
+  }
+
   function clear() {
+    stopFollowing();
     setForm({ ...BASE, time: now() });
     setResult(null);
     setAsked(null);
@@ -250,6 +285,7 @@ export function Analyzer({ scenarios, cases, onCase, openCase, onStartCall }: Pr
 
   async function analyse() {
     if (!amountOk) return;
+    stopFollowing();
     const used = { ...form };
     setBusy(true);
     setError("");
@@ -327,8 +363,15 @@ export function Analyzer({ scenarios, cases, onCase, openCase, onStartCall }: Pr
     <div>
       <JourneySteps current={stage} />
       <PageHead kicker="Real-time fraud engine" title="Transaction Risk" accent="Analyzer" text="Follow one payment from top to bottom: the details, how each check reads it, the decision, the customer's call and the analyst.">
+        <button className="btn small" onClick={openCustomerApp}><Icon name="device" size={14} /> Open the customer app</button>
         <span className="status-pill"><span className="dot" /> Engine online</span>
       </PageHead>
+
+      {following && (
+        <div className="live-banner" role="status">
+          <span className="dot" /> <strong>Live from the customer app:</strong> {money(Number(used.amount), used.currency)} to {used.payee}. This page follows the payment as the customer makes it.
+        </div>
+      )}
 
       <ol className="flow" aria-label="The steps for one payment">
         {/* ---------- 1. the payment ---------- */}
@@ -464,6 +507,10 @@ export function Analyzer({ scenarios, cases, onCase, openCase, onStartCall }: Pr
               empty={shown && !shown.audit.message_reading ? (used.note.trim() ? "The reader was unavailable, so the payment checks decided." : "No note was written, so there was nothing to read.") : null} />
           </div>
 
+          {shown?.audit.message_reading && (
+            <PlaybookMatch reading={shown.audit.message_reading} facts={{ onCall: used.onCall, newPayee: used.newPayee, remote: used.remote }} />
+          )}
+
           {network && shown && (
             <section className="panel net-panel">
               <div className="net-panel-head">
@@ -514,7 +561,14 @@ export function Analyzer({ scenarios, cases, onCase, openCase, onStartCall }: Pr
 
               <section className="panel side-panel">
                 <span className="kicker">{asked ? "Asked before deciding" : "Sent to the customer"}</span>
-                {asked && (
+                {asked && following && (
+                  <div className="ask-box">
+                    <p><strong>The customer was asked on their phone:</strong></p>
+                    <p>{asked.questions?.join(" ")}</p>
+                    <p className="muted small">{live?.answer !== null && live?.answer !== undefined ? `They answered: "${live.answer || "(skipped)"}". Checking again.` : "Waiting for their answer."}</p>
+                  </div>
+                )}
+                {asked && !following && (
                   <div className="ask-box">
                     <p><strong>Before deciding, the engine asks the customer:</strong></p>
                     <p>{asked.questions?.join(" ")}</p>
@@ -528,8 +582,12 @@ export function Analyzer({ scenarios, cases, onCase, openCase, onStartCall }: Pr
                 )}
                 {result?.action === "hold" && (
                   <>
-                    <HoldNotification amount={amount} currency={used.currency} reference={caseReference(result.execution?.request_id)}
-                      onCall={canCall && !callDone ? startCall : undefined} />
+                    {following ? (
+                      <p className="ai-note"><Icon name="device" size={16} /> <span><strong>Shown on the customer's phone:</strong> "We've paused your payment to protect you", with reference {caseReference(result.execution?.request_id)} and a Call fraud team button.</span></p>
+                    ) : (
+                      <HoldNotification amount={amount} currency={used.currency} reference={caseReference(result.execution?.request_id)}
+                        onCall={canCall && !callDone ? startCall : undefined} />
+                    )}
                     {result.customer_warning && <p className="ai-note"><Icon name="shield" size={16} /> {result.customer_warning}</p>}
                   </>
                 )}
@@ -550,9 +608,20 @@ export function Analyzer({ scenarios, cases, onCase, openCase, onStartCall }: Pr
           waiting={result?.action === "allow" ? "Not needed: the payment was allowed." : "Starts when the customer taps Call fraud team."}>
           {result && result.action !== "allow" && (
             callDone || result.action === "warn" ? (
-              <CallResult verification={currentCase?.verification} onCall={startCall} onOpenCase={() => openCase?.(caseId!)} />
+              <CallResult verification={currentCase?.verification} onCall={startCall} onOpenCase={() => openCase?.(caseId!)} why={whyStillHeld(currentCase?.verification?.outcome, heldBy(items))} />
             ) : (
-              <div className="flow-wait live"><span className="spin" /> Waiting for the customer to call. They use the Call fraud team button on the notice above.</div>
+              following && live?.call ? (
+                <section className="panel">
+                  <p className="kicker" style={{ marginTop: 0 }}><span className="spin" /> The call is happening on the customer's phone</p>
+                  <ol className="call-log">
+                    {live.call.questions.map((question, index) => (
+                      <li key={question}><span className="muted small">AI agent: {question}</span><strong>{live.call!.answers[index] ? `Customer: ${live.call!.answers[index]}` : "Listening…"}</strong></li>
+                    ))}
+                  </ol>
+                </section>
+              ) : (
+                <div className="flow-wait live"><span className="spin" /> {following ? "Waiting for the customer to tap Call fraud team on their phone." : "Waiting for the customer to call. They use the Call fraud team button on the notice above."}</div>
+              )
             )
           )}
         </FlowStep>
@@ -569,7 +638,7 @@ export function Analyzer({ scenarios, cases, onCase, openCase, onStartCall }: Pr
                   </span>
                   <p className="muted small" style={{ margin: "8px 0 0" }}>Case {caseId}{serverId ? ` · reference ${caseReference(serverId)}` : ""}</p>
                 </div>
-                {openCase && <button className="btn primary small" onClick={() => openCase(caseId)}><Icon name="flag" size={14} /> Open the case (analyst)</button>}
+                {openCase && !callDone && <button className="btn primary small" onClick={() => openCase(caseId)}><Icon name="flag" size={14} /> Open the case (analyst)</button>}
               </div>
               <p className="sub-kicker">Audit trail</p>
               <ol className="stream-log">

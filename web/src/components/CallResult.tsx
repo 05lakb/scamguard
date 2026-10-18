@@ -5,10 +5,11 @@ const SUGGESTION = { allow: "release the payment", warn: "release it with a warn
 
 // Back on Transactions after the customer's call: what was said, what the AI found, what it suggests,
 // and that the case has gone to the analyst. Before the call, it invites the customer to call.
-export function CallResult({ verification, onCall, onOpenCase }: {
+export function CallResult({ verification, onCall, onOpenCase, why }: {
   verification: Verification | null | undefined;
   onCall: () => void;
   onOpenCase: () => void;
+  why?: string | null; // why a hold stays after the call
 }) {
   const outcome = verification?.outcome;
   if (!verification || !outcome) {
@@ -46,6 +47,7 @@ export function CallResult({ verification, onCall, onOpenCase }: {
         {outcome.voice && <li><strong>Voice AI:</strong> {outcome.voice.risk_level} risk{outcome.voice.tactics.length && outcome.voice.tactics[0] !== "none" ? ` (${outcome.voice.tactics.join(", ")})` : ""}.</li>}
         <li><strong>Risk:</strong> {outcome.before_score} → {outcome.score}{outcome.kept_hold ? `. Held regardless: ${outcome.kept_hold}` : "."}</li>
       </ul>
+      {why && <p className="call-why"><Icon name="hold" size={15} /> <span>{why}</span></p>}
       <div className="call-result-foot">
         <p><strong>Agent's recommendation: {SUGGESTION[outcome.action]}.</strong> The agent's work is done. The case is with the analyst, who makes the decision.</p>
         <button className="btn small primary" onClick={onOpenCase}>Open the case (analyst) <Icon name="arrow" size={14} /></button>

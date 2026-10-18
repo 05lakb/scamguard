@@ -178,7 +178,8 @@ async function decide(page) {
 
 // The phone is 720 tall and the recording is 620, so shrink the page a little while the phone is on screen.
 async function fitPhone(page) {
-  await page.locator(".phone-demo-btn").waitFor({ timeout: 15000 });
+  // On a wide page the presenter controls sit beside the phone; the Demo button only shows on a narrow one.
+  await page.locator(".phone-frame").first().waitFor({ state: "visible", timeout: 15000 });
   await page.evaluate(() => { document.body.style.zoom = "0.7"; });
   await sleep(500);
 }
@@ -186,7 +187,7 @@ async function fitPhone(page) {
 async function phonePays(page) {
   // The ready-made stories are listed twice on a wide page (beside the phone and in the Demo sheet): use the visible ones.
   const chips = page.locator(".presenter-stories .chip-btn:visible");
-  if (!(await chips.count())) await click(page, page.locator(".phone-demo-btn"));
+  if (!(await chips.count()) && (await page.locator(".phone-demo-btn").isVisible().catch(() => false))) await click(page, page.locator(".phone-demo-btn"));
   await chips.first().waitFor({ timeout: 8000 });
   const labels = await chips.allTextContents();
   const pick = Math.max(0, labels.findIndex((l) => /impersonat|bank/i.test(l)));

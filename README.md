@@ -6,10 +6,11 @@ Built for the **Google Cloud AI Builder Cup JAPAC 2026**, BFSI track (Intelligen
 
 | | |
 | --- | --- |
-| **Live app** | **https://lastmileguard.web.app** (Firebase Hosting → Cloud Run) |
+| **Live app (bank's command centre)** | **https://lastmileguard.web.app** (Firebase Hosting → Cloud Run) |
+| **Customer app (simulation)** | **https://lastmileguard.web.app/#/customer**, a UPI-style banking app that sends its payments through the same live checks |
 | Same service on Cloud Run | https://last-mile-guard-lcjgzaksea-uc.a.run.app |
 | Source code | https://github.com/05lakb/scamguard |
-| Stage | Working prototype with synthetic data. No bank, payment rail or real money is connected. |
+| Stage | Working prototype. The checks, Gemini, storage and hosting are real; customers, accounts, payments and phone signals are synthetic or simulated. No bank, payment rail or real money is connected. See [How the prototype is built](#how-the-prototype-is-built-data-sources-and-simulation) and [Limitations](#limitations). |
 
 ---
 
@@ -18,15 +19,16 @@ Built for the **Google Cloud AI Builder Cup JAPAC 2026**, BFSI track (Intelligen
 1. [The problem](#the-problem)
 2. [What Last Mile Guard does](#what-last-mile-guard-does)
 3. [Try it on the live site (2 minutes)](#try-it-on-the-live-site-2-minutes)
-4. [Architecture and Google Cloud](#architecture-and-google-cloud)
-5. [Tech stack](#tech-stack)
-6. [Run it locally, step by step](#run-it-locally-step-by-step)
-7. [Deploy to Google Cloud](#deploy-to-google-cloud)
-8. [API](#api)
-9. [Evaluation](#evaluation)
-10. [Grounding and guardrails](#grounding-and-guardrails)
-11. [Safety and limits](#safety-and-limits)
-12. [Repository layout](#repository-layout)
+4. [How the prototype is built: data, sources and simulation](#how-the-prototype-is-built-data-sources-and-simulation)
+5. [Architecture and Google Cloud](#architecture-and-google-cloud)
+6. [Tech stack](#tech-stack)
+7. [Run it locally, step by step](#run-it-locally-step-by-step)
+8. [Deploy to Google Cloud](#deploy-to-google-cloud)
+9. [API](#api)
+10. [Evaluation](#evaluation)
+11. [Grounding and guardrails](#grounding-and-guardrails)
+12. [Limitations](#limitations)
+13. [Repository layout](#repository-layout)
 
 ---
 
@@ -38,6 +40,7 @@ In an authorised push-payment scam the victim sends the money from their own pho
 | --- | --- | --- |
 | **$442 bn** | lost to scams in a year across 42 countries | GASA & Feedzai, 2025 |
 | **$16 bn** | US fraud losses reported in 2025, a record | US FTC, 2026 |
+| **A$2.18 bn** | lost to scams in Australia in 2025 | ACCC Scamwatch, 2026 |
 | **₹22,845 crore** | lost by Indian citizens to cyber criminals in 2024 | Ministry of Home Affairs, reply to the Lok Sabha, 2025 |
 
 ## What Last Mile Guard does
@@ -54,13 +57,65 @@ Some holds cannot be talked away: a remote-control app, a receiving account link
 
 ## Try it on the live site (2 minutes)
 
+### As the bank (one window)
+
 1. Open **https://lastmileguard.web.app**, press **Get started** and type any name (there are no accounts or passwords).
 2. **Transactions:** pick **Bank-impersonation call** and press **Analyse transaction**. The payment is held at risk 100, with the three engine scores and ranked reasons.
 3. In the notice that appears, press **Call fraud team**. Allow the microphone and answer the AI agent's two questions, or type the answers.
 4. You are brought back to the payment with the agent's recommendation. Press **Open the case (analyst)**.
 5. **Cases:** read why the payment was stopped and what the customer said, then **Approve**, **Keep on hold** or **Escalate**. The case shows what that decision means.
 
-Also worth a look: **Voice AI** (score a call transcript), **Red Team** (Gemini plays new scams and genuine customers against the guard, live), **Evidence** (measured results, misses included) and **How it's built**.
+### As the customer and the bank (two windows, same browser)
+
+1. Open the command centre as above and go to **Transactions**.
+2. Press **Open the customer app**. It opens **https://lastmileguard.web.app/#/customer** in a new window. Keep both windows in the **same browser**: the dashboard follows the customer app through the browser, not over the network.
+3. In the customer app, pay someone as you would in a UPI app: pick a contact or enter a UPI ID or account and IFSC, type the amount and the note, then enter the PIN. **Presenter controls** let you pick the customer, a ready-made scam story and the phone's signals (on a call, remote-access app, new device).
+4. Watch **Transactions** in the other window fill in live: the three checks, the decision and, on a hold, the customer's call with the AI agent.
+5. Open **Cases** to make the analyst's decision.
+
+Also worth a look: **Voice AI** (score a call transcript), **Red Team** (Gemini plays new scams and genuine customers against the guard, live), **Evidence** (measured results, misses included) and **How it's built** (with the scam playbook Gemini reads against).
+
+## How the prototype is built: data, sources and simulation
+
+Last Mile Guard is a working prototype, not a bank integration. The parts a bank would supply (customers, accounts, payment events, the receiving-account network, the phone's own signals) are replaced with synthetic data or a simulation. Everything that decides is real and runs live: the rules, the Gemini readings, the AI agent call, the case store and the hosting.
+
+### What is real and what is simulated
+
+| Part | Real or simulated | Where it comes from |
+| --- | --- | --- |
+| Risk rules, Gemini readings, decisions, AI agent call, cases | **Real**, running live on Cloud Run with Gemini on Vertex AI and Firestore | `backend/` |
+| Customers (60) | **Synthetic.** Random first-name and last-name mixes, made-up businesses, usual amounts and payees. A fixed seed gives the same data every time. | `data/generate_data.py` → `data/customers.json` |
+| Payment scenarios (200) | **Synthetic**, written from templates, plus a harder copy that Gemini rewrote in a customer's own short, messy voice. Facts and labels unchanged. | `data/scenarios.json`, `data/scenarios_hard.json` (`data/harden_messages.py`) |
+| Evaluation set (50: 25 scams, 25 genuine) | **Synthetic development data.** Despite the file name, it was not written independently. | `data/blind_test_v1.json`, method in [docs/PAIRED_EVALUATION.md](docs/PAIRED_EVALUATION.md) |
+| The eight scam types Gemini reads against | Written by us from **public advice pages** (below); the same file is shown to people as the scam playbook | `data/typologies.json`, `backend/risk/playbook.py`, `GET /api/playbook` |
+| Red-team scenarios | **Made up by Gemini**, shaped by fraud patterns on public advice pages. Names, companies and amounts are invented. Only the "dev" half is in the repository; the "test" half is kept out for the final score. | `redteam/`, `data/intel_scenarios_dev.json` |
+| Receiving-account network (MuleNet) | **Synthetic patterns** ("mule ring", "established merchant") sent with the demo request. A bank would supply this from its own records. | `web/src/pages/Analyzer.tsx` |
+| Phone signals in the customer app (device, live call, remote-access app, time, payee history) | **Simulated** for each payment, consistently; the presenter controls show and change them | `web/src/lib/phoneSim.ts` |
+| Loss figures in [The problem](#the-problem) | **Public statistics**, cited with each figure | GASA & Feedzai, US FTC, ACCC, Ministry of Home Affairs (India) |
+
+### Public sources the scam patterns come from
+
+| Source | Used for |
+| --- | --- |
+| [Australian Scamwatch (ACCC), types of scams](https://www.scamwatch.gov.au/types-of-scams): [investment](https://www.scamwatch.gov.au/types-of-scams/investment-scams), [romance](https://www.scamwatch.gov.au/types-of-scams/romance-scams), [remote access](https://www.scamwatch.gov.au/types-of-scams/remote-access-scams), [false billing](https://www.scamwatch.gov.au/types-of-scams/false-billing), [buying and selling](https://www.scamwatch.gov.au/types-of-scams/buying-and-selling-scams) | Scam types and red flags; red-team scenarios. Used under Scamwatch's Creative Commons Attribution licence. |
+| [US Federal Trade Commission, consumer alerts](https://consumer.ftc.gov/consumer-alerts) | Red-team scenarios (each one links to the alert it is based on) |
+| [UK Action Fraud, A–Z of fraud](https://www.actionfraud.police.uk/a-z-of-fraud) and the [CFPB Consumer Complaint Database](https://www.consumerfinance.gov/data-research/consumer-complaints/) | Readers are built for these (`redteam/intel/`), but the scenarios kept in this repository cite Scamwatch and the FTC only |
+
+How the public material is handled (`redteam/intel/`):
+
+- Only a short list of named websites is contacted, over https. Redirects to other sites are refused, `robots.txt` is respected, and requests are spaced out and capped.
+- Text is scrubbed of email addresses, phone numbers, links and long numbers (`redteam/intel/scrub.py`). The original page or complaint text is never saved.
+- Gemini turns each pattern into a new, made-up scenario: what the victim believed at the moment of paying. Each scenario keeps a reference to the page it came from.
+
+### The customer app: a simulation to show the whole journey
+
+A bank's own app would make the payment, read the phone's signals and send them to Last Mile Guard. To show that without a bank, the prototype includes a **customer app at [`/#/customer`](https://lastmileguard.web.app/#/customer)** (`web/src/pages/CustomerApp.tsx`):
+
+- It works like a UPI app: contacts, UPI ID, bank account and IFSC, scan and pay, an amount keypad and a PIN.
+- Every payment goes through the **real** live checks (`POST /api/assess/stream`) and Gemini, exactly like the command centre.
+- The phone's signals and the payee's history are made up for each payment. **Presenter controls** pick the customer (for example a young professional in Mumbai or a retiree in Pune), a ready-made scam story and the signals, so any case can be shown on demand.
+- On a hold, the customer sees the notice with a reference and taps **Call fraud team**: the AI agent asks its two questions inside the app.
+- The bank's dashboard follows the same payment live in another window of the **same browser** (`web/src/lib/live.ts`, browser `BroadcastChannel`).
 
 ## Architecture and Google Cloud
 
@@ -69,7 +124,8 @@ Also worth a look: **Voice AI** (score a call transcript), **Red Team** (Gemini 
 ```mermaid
 flowchart LR
   subgraph USERS["Browser: customer, fraud analyst, judge"]
-    UI["React + TypeScript web app"]
+    UI["React + TypeScript web app<br/>command centre"]
+    CUST["Customer app<br/>simulated UPI app"]
     SPEECH["Web Speech API<br/>speaks the questions, hears the answers"]
   end
 
@@ -95,6 +151,8 @@ flowchart LR
   end
 
   UI -- HTTPS --> HOST -- rewrite --> API
+  CUST -- HTTPS --> HOST
+  CUST -. "same-browser live sync" .-> UI
   SPEECH --- UI
   API --> FS & MN & SS
   FS & MN & SS --> DEC
@@ -179,7 +237,8 @@ Only the rules choose allow, warn or hold, and only the analyst can release a he
 | Web app | React 19, TypeScript, Vite | `web/` |
 | Voice | Web Speech API in the browser (speech to text and text to speech) | `web/src/lib/speech.ts` |
 | Hosting | Firebase Hosting → Cloud Run, Docker multi-stage build | `firebase.json`, `Dockerfile`, `infra/deploy.sh` |
-| Tests | pytest (286 backend tests), Vitest (303 web tests) | `backend/tests/`, `web/src/**/*.test.ts` |
+| Customer app (simulation) | UPI-style banking app on its own page, simulated phone signals, live sync to the dashboard in the same browser | `web/src/pages/CustomerApp.tsx`, `web/src/lib/phoneSim.ts`, `web/src/lib/live.ts` |
+| Tests | pytest (285+ backend tests), Vitest (315+ web tests) | `backend/tests/`, `web/src/**/*.test.ts` |
 | Evaluation | Synthetic scenarios, blind test, paired rules-vs-Gemini run, red-team generator | `data/`, `eval/`, `redteam/` |
 
 ## Run it locally, step by step
@@ -274,9 +333,9 @@ Open **http://localhost:8080**.
 
 | Check | Command | Expected |
 | --- | --- | --- |
-| Backend | `python -m pytest backend/tests -q` | 286 passed |
+| Backend | `python -m pytest backend/tests -q` | all pass (285+) |
 | Web type check and build | `cd web` then `npm run build` | build completes with no errors |
-| Web unit tests | `cd web` then `npm test` | 303 passed |
+| Web unit tests | `cd web` then `npm test` | all pass (315+) |
 
 No test calls the internet or Gemini; the backend tests use fake readers.
 
@@ -311,6 +370,7 @@ The script needs the Vertex AI, Cloud Run, Cloud Build and Firestore APIs enable
 | Method and path | What it does |
 | --- | --- |
 | `GET /api/health` | Service status, whether Gemini is configured, and which case store is active |
+| `GET /api/playbook` | The eight scam types Gemini reads against, with red flags, safe advice and the public page each is described on |
 | `POST /api/assess` | Assess one payment: action, score, ranked reasons and audit breakdown |
 | `POST /api/assess/stream` | The same assessment, streamed stage by stage |
 | `POST /api/conversation` | Score a call transcript (Voice AI) |
@@ -361,22 +421,43 @@ How a wrong or manipulated reading is contained:
 - **If Gemini is unavailable,** the payment and account rules still decide, the screen says so, and a hold is never released.
 - These cases, including hidden orders in a note, are covered by the backend tests in `backend/tests/`.
 
-## Safety and limits
+Customer text is treated as untrusted throughout: links are read as text and never opened, and cases are private to the browser that created them and deleted after 24 hours.
 
-- **Gemini reads, rules decide, a person releases.** Model output is constrained to a schema; thresholds and actions live in tested code.
-- Customer text is treated as untrusted. Emails and card numbers are blocked before anything is sent to the model. Links are read as text and never opened.
-- Cases are private to the browser that created them and deleted after 24 hours.
-- No real bank data, payment rail or money. The receiving-account network comes with the demo request; a bank would supply it from its own records.
-- A phone-call path through Twilio is built and signature-checked but switched off; the in-app call is used instead.
-- A calm, well-coached victim paying something ordinary can still get through.
+## Limitations
+
+This is a prototype built to show the approach working end to end. What it does not do yet:
+
+**Scope of the prototype**
+
+1. **No bank connection.** There is no link to a core banking system, a payment rail (UPI, IMPS, FAST, NPP) or real money. "Approve" releases a simulated payment.
+2. **All data is synthetic.** Customers, accounts, payments and notes are invented ([details](#what-is-real-and-what-is-simulated)). No real customer data was used.
+3. **The receiving-account network is supplied with the demo request.** MuleNet scores synthetic patterns. A bank would supply this from its own records or a shared mule database.
+4. **Phone signals are simulated.** Device, live call, remote-access app and payee history are made up in the customer app. A real banking app would read them from the phone and the bank's records.
+5. **The customer app and the dashboard sync only inside one browser.** They talk through the browser, not over the network: there are no push notifications and no second device.
+6. **The call happens in the browser, not on a phone line.** The AI agent speaks and listens through the Web Speech API (best in Chrome or Edge; typing also works). A Twilio phone-call path is built and signature-checked but switched off.
+7. **No staff sign-in.** Anyone can act as the analyst. Cases are separated by a random per-browser key and deleted after 24 hours, which is not bank-grade identity or audit.
+
+**Evidence**
+
+8. **Small, synthetic samples.** 50 cases in the paired run and 200 development scenarios show direction, not a bank-grade rate.
+9. **The paired run stops at the first round.** The outcome after the customer answers the question is not measured yet; 16 of 25 genuine customers were asked one question.
+10. **The evaluation set was not written independently**, and earlier higher catch rates are not quoted because their run reports were not kept.
+11. **Coached victims are the hardest case.** A calm, well-coached victim paying something ordinary can still get through.
+
+**AI and operations**
+
+12. **Gemini adds seconds.** A fresh reading took a median of 7.1 s (95th percentile 16.8 s) in the paced evaluation run. The payment and account rules answer in milliseconds; a bank would need a time budget for the reading on instant payments.
+13. **Gemini use is capped** (300 readings an hour across the site, plus per-visitor limits). Above the cap, message reading pauses and the payment and account rules decide alone.
+14. **A strong Gemini reading can reach the hold threshold on its own** (a likelihood of 100 adds 70 points). It can never release a payment: only an analyst can.
+15. **Regional coverage is narrow.** The eight scam types come from Australian and US advice pages, the customer app uses Indian payment details, and warnings are translated into English, Hindi, Spanish, French, Portuguese and Arabic only. Other JAPAC markets' scam patterns and languages still need adding.
 
 ## Repository layout
 
 | Path | Contents |
 | --- | --- |
 | `backend/` | FastAPI app, Gemini client, risk engine (`risk/`), verification agent, case store, tests |
-| `web/` | React + TypeScript web app and its tests |
-| `data/` | Synthetic scenarios, scam-pattern guide and blind-test cases |
+| `web/` | React + TypeScript web app (command centre and the simulated customer app) and its tests |
+| `data/` | Synthetic customers and scenarios, the scam-pattern guide, the 50-case evaluation set and the red-team dev scenarios |
 | `eval/` | Evaluation runners and evidence exporters |
 | `redteam/` | Red-team generator, simulated customer and public-advice pattern tools |
 | `infra/` | Cloud Run deploy script and helper scripts |

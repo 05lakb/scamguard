@@ -33,7 +33,7 @@
     {
       "id": "scene5",
       "kind": "animated",
-      "text": "We measured it, including the bad news. On a blind test of fifty cases written by someone else, the full system flagged eighty-four percent of scams, and stopped twelve percent of genuine customers. In the latest fresh run, thirty-eight of forty cases behaved as expected. The hardest case is the coached victim: we caught three of five. Samples are small and synthetic."
+      "text": "We measured it, including the bad news. On the same fifty synthetic payments, before any customer answer, payment rules alone warned or held eleven of twenty-five scams. With Gemini, thirteen. But Gemini asks instead of guessing: twenty-eight payments stopped at a question, and sixteen of twenty-five genuine customers were asked or warned. The next test is the outcome after the customer answers."
     },
     {
       "id": "scene6",

@@ -2,7 +2,7 @@ import { createContext, useContext, type ReactNode } from "react";
 import { AbsoluteFill, Audio, Sequence, interpolate, spring, staticFile, useCurrentFrame, useVideoConfig } from "remotion";
 import durations from "../public/audio/durations.json";
 import narration from "../narration.json";
-import { BLIND_TEST, LATEST_RUN, LOSS_FIGURES, type BarData } from "./data";
+import { LOSS_FIGURES, PAIRED_RUN, type BarData } from "./data";
 import { LEAD_IN_SECONDS, TAIL_SECONDS, colors, font } from "./theme";
 
 export type SceneId = keyof typeof durations;
@@ -203,7 +203,7 @@ function Bar({ bar, at }: { bar: BarData; at: number }) {
   const durationInFrames = useContext(SceneLength);
   const start = at * durationInFrames;
   const width = interpolate(frame, [start, start + 36], [0, bar.value], { extrapolateLeft: "clamp", extrapolateRight: "clamp" });
-  const good = bar.value >= 80;
+  const good = bar.higherIsBetter === false ? bar.value <= 20 : bar.value >= 80;
   return (
     <Reveal at={at}>
       <div style={{ display: "flex", justifyContent: "space-between", fontSize: 21, marginBottom: 6 }}>
@@ -226,24 +226,26 @@ export function Evidence() {
       <div style={{ position: "absolute", left: 80, top: 44 }}>
         <Reveal at={0.0}><Title>We measured it, including the bad news</Title></Reveal>
       </div>
-      <div style={{ position: "absolute", left: 80, top: 140, width: 520 }}>
-        <Reveal at={0.06}><div style={{ fontSize: 24, color: colors.muted, marginBottom: 14 }}>Blind test: 50 cases written by someone else</div></Reveal>
-        <Bar bar={BLIND_TEST[0]} at={0.12} />
-        <Bar bar={BLIND_TEST[1]} at={0.24} />
+      <div style={{ position: "absolute", left: 80, top: 128, width: 600 }}>
+        <Reveal at={0.06}><div style={{ fontSize: 24, color: colors.muted, marginBottom: 12 }}>Same 50 payments, first round, before any answer</div></Reveal>
+        <Reveal at={0.1}><div style={{ fontSize: 24, fontWeight: 700, marginBottom: 8 }}>{PAIRED_RUN[0].label}</div></Reveal>
+        <Bar bar={PAIRED_RUN[0].rules} at={0.14} />
+        <Bar bar={PAIRED_RUN[0].gemini} at={0.24} />
       </div>
-      <div style={{ position: "absolute", right: 80, top: 140, width: 520 }}>
-        <Reveal at={0.45}><div style={{ fontSize: 24, color: colors.muted, marginBottom: 14 }}>Latest fresh run: 40 cases, Gemini plays the customer</div></Reveal>
-        <Bar bar={LATEST_RUN[0]} at={0.5} />
-        <Bar bar={LATEST_RUN[1]} at={0.6} />
+      <div style={{ position: "absolute", right: 80, top: 128, width: 600 }}>
+        <Reveal at={0.4}><div style={{ fontSize: 24, color: colors.muted, marginBottom: 12 }}>The price of asking instead of guessing</div></Reveal>
+        <Reveal at={0.44}><div style={{ fontSize: 24, fontWeight: 700, marginBottom: 8 }}>{PAIRED_RUN[1].label}</div></Reveal>
+        <Bar bar={PAIRED_RUN[1].rules} at={0.48} />
+        <Bar bar={PAIRED_RUN[1].gemini} at={0.58} />
       </div>
-      <div style={{ position: "absolute", left: 80, right: 80, top: 430, display: "flex", flexDirection: "column", alignItems: "center", gap: 14 }}>
-        <Reveal at={0.74}>
+      <div style={{ position: "absolute", left: 80, right: 80, top: 450, display: "flex", flexDirection: "column", alignItems: "center", gap: 14 }}>
+        <Reveal at={0.7}>
           <div style={{ background: colors.amberDark, color: colors.amber, borderRadius: 12, padding: "12px 24px", fontSize: 26, textAlign: "center" }}>
-            Hardest case: the coached victim. 3 of 5 caught.
+            28 of 50 payments stopped at a question. The next test: the outcome after the customer answers.
           </div>
         </Reveal>
-        <Reveal at={0.86}>
-          <div style={{ fontSize: 24, color: colors.muted, textAlign: "center" }}>Small, synthetic samples show direction, not a bank-grade rate.</div>
+        <Reveal at={0.84}>
+          <div style={{ fontSize: 24, color: colors.muted, textAlign: "center" }}>Median 7.1 s for a fresh Gemini reading, 0 errors. Small, synthetic samples show direction, not a bank-grade rate.</div>
         </Reveal>
       </div>
     </SceneFrame>

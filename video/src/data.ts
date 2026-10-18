@@ -11,16 +11,20 @@ export interface BarData {
   value: number; // percent
   n: number | null; // how many cases, when the source gives it
   note: string | null;
+  higherIsBetter?: boolean; // false for a cost, such as genuine customers interrupted
 }
 
-// A blind test of 50 cases written by someone else (README, Evaluation).
-export const BLIND_TEST: BarData[] = [
-  { label: "Scams flagged", value: 84, n: null, note: null },
-  { label: "Genuine customers left alone", value: 88, n: null, note: "12% of genuine customers were stopped" },
-];
-
-// The latest fresh run of 40 cases with a Gemini-played customer (README, Evaluation).
-export const LATEST_RUN: BarData[] = [
-  { label: "Behaved as expected", value: 95, n: 40, note: null },
-  { label: "Coached victims caught", value: 60, n: 5, note: "The hardest case: 3 of 5" },
+// The paired run: the same 50 synthetic payments (25 scams, 25 genuine), first round, before any customer answer
+// (README, Evaluation; raw report on the Evidence page).
+export const PAIRED_RUN: { label: string; rules: BarData; gemini: BarData }[] = [
+  {
+    label: "Scams warned or held",
+    rules: { label: "Payment rules alone", value: 44, n: 11, note: null, higherIsBetter: true },
+    gemini: { label: "Rules + Gemini", value: 52, n: 13, note: null, higherIsBetter: true },
+  },
+  {
+    label: "Genuine customers asked, warned or held",
+    rules: { label: "Payment rules alone", value: 4, n: 1, note: null, higherIsBetter: false },
+    gemini: { label: "Rules + Gemini", value: 64, n: 16, note: "mostly asked a question, not blocked", higherIsBetter: false },
+  },
 ];

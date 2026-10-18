@@ -46,8 +46,9 @@ export function CustomerApp() {
 
   useEffect(() => {
     document.documentElement.setAttribute("data-theme", "charcoal");
+    const previousTitle = document.title;
     document.title = "Your Bank · Last Mile Guard demo";
-    return () => { cancelled.current = true; recogniser.current?.stop(); stopSpeaking(); };
+    return () => { cancelled.current = true; recogniser.current?.stop(); stopSpeaking(); document.title = previousTitle; };
   }, []);
 
   const pay = money(Number(amount) || 0, "INR");

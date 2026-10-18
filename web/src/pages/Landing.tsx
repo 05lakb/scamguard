@@ -68,6 +68,11 @@ export function Landing({ signedIn, enter, theme, setTheme }: Props) {
   const rules = paired.rules;
   const combined = paired.combined;
   const pending = paired.pending_by_label;
+  // Scams that got no warning, hold or question, and genuine customers who were warned or held (not just asked).
+  const scams = combined.scams_flagged.denominator;
+  const silentRules = scams - rules.scams_flagged.numerator;
+  const silentCombined = scams - combined.scams_flagged.numerator - pending.scam;
+  const genuineBlocked = combined.genuine_friction.numerator - pending.legit;
   return (
     <>
     <nav className="land-nav" aria-label="Main">
@@ -205,11 +210,11 @@ export function Landing({ signedIn, enter, theme, setTheme }: Props) {
 
       <section className="land-section" id="evidence">
         <p className="kicker">Evidence, including the weak results</p>
-        <h2>We measured the trade-off <span className="grad">instead of hiding it.</span></h2>
+        <h2>With Gemini, no scam went through <span className="grad">without a check.</span></h2>
         <StatBand rows={[
-          { value: `${fraction(rules.scams_flagged)} → ${fraction(combined.scams_flagged)}`, text: "scams warned or held in the first round: rules alone, then with Gemini" },
-          { value: `${pending.scam + pending.legit} of ${paired.included_cases}`, text: "stopped at a question for the customer, so not yet counted as caught or cleared" },
-          { value: fraction(combined.genuine_friction), text: "genuine customers asked, warned or held: mostly a question, the friction we are reducing" },
+          { value: `${silentRules} → ${silentCombined}`, text: `scams of ${scams} that went through with no warning, hold or question: rules alone, then with Gemini` },
+          { value: `${combined.scams_flagged.numerator} + ${pending.scam}`, text: "scams held, plus scams stopped at one question for the customer (not yet counted as caught)" },
+          { value: `${genuineBlocked} of ${combined.genuine_friction.denominator}`, text: `genuine customers held or warned. ${fraction(combined.genuine_friction)} were asked one question: the friction we are reducing` },
         ]} />
         <p className="muted small" style={{ margin: "12px 0 0" }}>
           First round only: {paired.included_cases} made-up payments, before any customer answers. Run {paired.run_id.replace("paired-", "")} with {paired.model}. Small synthetic samples, not real bank data.

@@ -39,8 +39,12 @@ const ENGINES: { id: string; icon: IconName; tone: Tone; name: string; role: str
 ];
 
 export function Dashboard({ user, cases, voice, health, refresh, goTo, open }: Props) {
-  const [scope, setScope] = useState<"session" | "all">("session");
-  const rows = scope === "session" ? cases.filter((item) => item.source !== "recorded") : cases;
+  // Until the visitor picks, show their own payments, or the recorded examples when they have none yet,
+  // so a first visit opens on a working overview instead of a page of zeros.
+  const [picked, setScope] = useState<"session" | "all" | null>(null);
+  const own = cases.filter((item) => item.source !== "recorded");
+  const scope = picked ?? (own.length ? "session" : "all");
+  const rows = scope === "session" ? own : cases;
   const stats = insights(rows);
   const online = health?.ok === true;
   const voiceHigh = voice.filter((v) => v.risk_level === "high").length;
@@ -51,20 +55,20 @@ export function Dashboard({ user, cases, voice, health, refresh, goTo, open }: P
     <div>
       <header className="page-head">
         <div>
-          <p className="kicker live"><span className="dot" /> Last Mile Guard security operations centre</p>
-          <h1>Welcome, <span className="grad">{user}</span><br />Fraud Intelligence <span className="grad">Command Centre</span></h1>
-          <p className="page-sub">Real-time transaction monitoring, AI-powered risk analysis and coordinated fraud intelligence.</p>
+          <p className="kicker live"><span className="dot" /> Last Mile Guard · the bank's view</p>
+          <h1>Welcome, <span className="grad">{user}</span><br />Scams stopped <span className="grad">before the money moves</span></h1>
+          <p className="page-sub">Every payment is checked by plain rules, its note is read by Gemini, and anything that looks like a scam waits for a person.</p>
         </div>
         <div className="page-head-side">
-          <span className={`status-pill ${online ? "" : "off"}`}><span className="dot" /> {health === undefined ? "Checking systems" : online ? "All systems operational" : "API offline"}</span>
-          <button className="btn small" onClick={refresh}><Icon name="refresh" size={14} /> Sync intelligence</button>
+          <span className={`status-pill ${online ? "" : "off"}`}><span className="dot" /> {health === undefined ? "Checking the checks" : online ? "Checks online" : "API offline"}</span>
+          <button className="btn small" onClick={refresh}><Icon name="refresh" size={14} /> Refresh</button>
         </div>
       </header>
 
       <div className="toolbar" style={{ justifyContent: "space-between" }}>
         <div>
-          <p className="kicker">Live telemetry</p>
-          <h2 style={{ margin: 0, fontSize: "1.15rem" }}>Security overview</h2>
+          <p className="kicker">{scope === "session" ? "Your payments" : "Your payments and recorded examples"}</p>
+          <h2 style={{ margin: 0, fontSize: "1.15rem" }}>What the guard did</h2>
         </div>
         <div className="chip-row" role="group" aria-label="Data shown">
           <button className={`chip-btn ${scope === "session" ? "on" : ""}`} aria-pressed={scope === "session"} onClick={() => setScope("session")}>This session</button>

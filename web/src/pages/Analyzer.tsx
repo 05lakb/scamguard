@@ -491,6 +491,27 @@ export function Analyzer({ scenarios, cases, onCase, openCase, onStartCall, live
         <FlowStep n={2} state={step(2)} title="How Last Mile Guard checks it" sub="Three checks run on the server, in this order. Each one adds points with a written reason." id="flow-2"
           waiting="Runs when you press Analyse transaction.">
           {error && <p className="problem-box" role="alert">{error}</p>}
+          {/* The answer first: the outcome and its main reasons, before the detail of each check. */}
+          {shown && status && (
+            <div className={`verdict-strip ${status}`} role="status">
+              <div className="verdict-strip-score"><strong>{shown.score}</strong><span>/100</span></div>
+              <div className="verdict-strip-body">
+                <span className="verdict-strip-action"><Icon name={status as IconName} size={18} /> {ACTION_LABEL[status]}</span>
+                <span className="verdict-strip-note">{ACTION_NOTE[status]}</span>
+                {shown.reasons.length > 0 && (
+                  <ul className="verdict-strip-reasons">
+                    {shown.reasons.slice(0, 3).map((reason) => <li key={reason}>{reason}</li>)}
+                  </ul>
+                )}
+              </div>
+              <div className="verdict-strip-actions">
+                {canCall && !callDone && !following && result?.action === "hold" && (
+                  <button className="btn primary small" onClick={startCall}><Icon name="mic" size={14} /> Call fraud team</button>
+                )}
+                <button className="btn small" onClick={() => document.getElementById("flow-3")?.scrollIntoView({ behavior: "smooth", block: "start" })}>See the decision</button>
+              </div>
+            </div>
+          )}
           <div className="engine-cards">
             <EngineCard name="FraudShield" what="Payment behaviour" icon="activity" event={stages.behaviour}
               score={shown ? shown.audit.behaviour_score : null}
@@ -510,11 +531,17 @@ export function Analyzer({ scenarios, cases, onCase, openCase, onStartCall, live
 
           <AgentInvestigation investigation={result?.investigation} running={stages.investigate} />
 
+          {/* Supporting detail stays one click away, so the page reads top to bottom without a long scroll. */}
           {shown?.audit.message_reading && (
-            <PlaybookMatch reading={shown.audit.message_reading} facts={{ onCall: used.onCall, newPayee: used.newPayee, remote: used.remote }} />
+            <details className="more-detail">
+              <summary>Scam playbook match: the red flags this payment shows</summary>
+              <PlaybookMatch reading={shown.audit.message_reading} facts={{ onCall: used.onCall, newPayee: used.newPayee, remote: used.remote }} />
+            </details>
           )}
 
           {network && shown && (
+            <details className="more-detail">
+            <summary>Receiving account: where the money would go (network score {shown.audit.network_score ?? 0}/100)</summary>
             <section className="panel net-panel">
               <div className="net-panel-head">
                 <div>
@@ -537,6 +564,7 @@ export function Analyzer({ scenarios, cases, onCase, openCase, onStartCall, live
                 </div>
               </div>
             </section>
+            </details>
           )}
         </FlowStep>
 

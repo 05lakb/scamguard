@@ -1,0 +1,10 @@
+{
+  "name": "last-mile-guard-recorder",
+  "private": true,
+  "version": "0.0.1",
+  "description": "Records the live site for the demo video and takes screenshots for the deck. Runs in Cloud Shell only.",
+  "type": "module",
+  "dependencies": {
+    "playwright": "1.49.1"
+  }
+}

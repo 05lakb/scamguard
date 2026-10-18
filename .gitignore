@@ -48,6 +48,8 @@ pptx-output/
 # Video project: installed packages and rendered clips
 video/node_modules/
 video/out/
+video/record/node_modules/
+video/public/footage/*.webm
 
 # Firebase CLI cache
 .firebase/

@@ -53,6 +53,11 @@ for file in "${files[@]}"; do
   if echo "$file" | grep -Eiq "$BAD_NAMES"; then echo "Refusing: the name of $file sounds like a secret." >&2; exit 1; fi
   size=$(wc -c < "$file")
   if [ "$size" -gt "$MAX_BYTES" ]; then echo "Refusing: $file is larger than $((MAX_BYTES / 1024 / 1024)) MB." >&2; exit 1; fi
+  # Pictures and videos are compressed, so a text search cannot read them, and a byte pattern that looks like an email
+  # address turns up in them by chance. They keep the name and size checks above; look at pictures by eye before sharing.
+  case "$file" in
+    *.png|*.jpg|*.jpeg|*.webp|*.mp4|*.webm) continue ;;
+  esac
   # grep answers 0 when it finds a match, 1 when it finds none, and 2 or more when it fails.
   # A failure must count as "refuse", never as "nothing found".
   found=0

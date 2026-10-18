@@ -1,5 +1,5 @@
 import { Composition, Series } from "remotion";
-import { LiveDemo, RedTeam } from "./demo-scenes";
+import { LiveSiteOne, LiveSiteRedTeam, LiveSiteTwo, LiveSiteVoice } from "./recorded";
 import { Architecture, Close, Evidence, HowItWorks, Problem, framesFor, type SceneId } from "./scenes";
 import { FPS, HEIGHT, WIDTH } from "./theme";
 
@@ -7,8 +7,10 @@ import { FPS, HEIGHT, WIDTH } from "./theme";
 const ORDER: { id: SceneId; component: () => JSX.Element }[] = [
   { id: "scene1", component: Problem },
   { id: "scene2", component: HowItWorks },
-  { id: "scene3", component: LiveDemo },
-  { id: "scene4", component: RedTeam },
+  { id: "scene3", component: LiveSiteOne },
+  { id: "scene4", component: LiveSiteTwo },
+  { id: "scene4v", component: LiveSiteVoice },
+  { id: "scene4r", component: LiveSiteRedTeam },
   { id: "scene5", component: Evidence },
   { id: "scene6", component: Architecture },
   { id: "scene7", component: Close },

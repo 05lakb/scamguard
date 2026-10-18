@@ -1,24 +1,26 @@
 // The facts shown in the animated scenes. Keep these in step with the website's Evidence page
-// (web/src/data/evidence.json). Check the loss figures against their sources before publishing.
+// (web/src/data/evidence.json) and the README. Check the loss figures against their sources before publishing.
 
 export const LOSS_FIGURES = [
-  { big: "A$2.18 billion", small: "reported lost to scams in Australia in 2025 (ACCC Scamwatch)" },
-  { big: "£576 million", small: "authorised push payment fraud in the UK (UK Finance)" },
+  { big: "₹22,845 crore", small: "lost by Indian citizens to cyber crime in 2024 (Ministry of Home Affairs)" },
+  { big: "$442 billion", small: "lost to scams worldwide in a year (GASA and Feedzai, 2025)" },
 ];
 
 export interface BarData {
   label: string;
   value: number; // percent
-  n: number; // how many cases
+  n: number | null; // how many cases, when the source gives it
   note: string | null;
 }
 
-export const BEFORE_FIX: BarData[] = [
-  { label: "Scams flagged", value: 100, n: 10, note: null },
-  { label: "Genuine left alone", value: 73, n: 11, note: "2 genuine customers wrongly held" },
+// A blind test of 50 cases written by someone else (README, Evaluation).
+export const BLIND_TEST: BarData[] = [
+  { label: "Scams flagged", value: 84, n: null, note: null },
+  { label: "Genuine customers left alone", value: 88, n: null, note: "12% of genuine customers were stopped" },
 ];
 
-export const AFTER_FIX: BarData[] = [
-  { label: "Scams flagged", value: 100, n: 19, note: null },
-  { label: "Genuine left alone", value: 91, n: 11, note: "1 genuine customer got a warning" },
+// The latest fresh run of 40 cases with a Gemini-played customer (README, Evaluation).
+export const LATEST_RUN: BarData[] = [
+  { label: "Behaved as expected", value: 95, n: 40, note: null },
+  { label: "Coached victims caught", value: 60, n: 5, note: "The hardest case: 3 of 5" },
 ];

@@ -13,32 +13,27 @@
     {
       "id": "scene3",
       "kind": "screen",
-      "text": "Here is the live site, running on Google Cloud. A customer is about to send ninety-eight thousand five hundred rupees, while a caller who says he is from the bank is on the line. I choose the bank-impersonation case and analyse the payment. Within seconds it is held, with a score from each of the three checks and a written reason for every point."
-    },
-    {
-      "id": "scene4",
-      "kind": "screen",
-      "text": "The customer sees a hold notice with a reference, and taps Call fraud team inside the app, so it cannot be a scammer's call. An AI agent asks two questions about this payment. Here the answers are typed. Gemini and Voice AI read them for coaching, secrecy and someone on the line, and recommend keeping the payment on hold. The case moves to the analyst, who keeps it on hold. Only a person can release a held payment."
+      "text": "Here is one case, start to finish, on the live site. A customer is paying ninety-eight thousand five hundred rupees, while a caller who says he is from the bank is on the line. The customer app sends the payment to Last Mile Guard, and within seconds it is paused, with a notice and a reference. The customer taps Call fraud team inside the app, so it cannot be a scammer's call, and an AI agent asks two questions about this payment. On the bank's side, three checks score the payment, each with a written reason. Then Gemini acts as an investigator: it chooses its own read-only lookups, the payee, the phone's signals and the scam playbook, and cites what it used. It cannot change the score or release the payment. The analyst keeps it on hold. Only a person can release it."
     },
     {
       "id": "scene4v",
       "kind": "screen",
-      "text": "The same engine reads a pasted call. This digital-arrest script, a fake police officer demanding money, is flagged high risk. It lists every tactic it found, and the points each one adds."
+      "text": "The same engine reads a pasted call. This digital-arrest script, a fake police officer demanding money, is flagged high risk, with every tactic it found and the points each one adds."
     },
     {
       "id": "scene4r",
       "kind": "screen",
-      "text": "To test it, Gemini plays both the scammer and the customer, with new cases it invents. Four run live, and the answer key is revealed only after the guard decides. A summary counts what was caught, what was missed, and any false alarm. Misses are shown, not hidden."
+      "text": "To test it, Gemini plays both the scammer and the customer, with new cases it invents. The answer key stays hidden until the guard decides, and misses are shown, not hidden."
     },
     {
       "id": "scene5",
       "kind": "animated",
-      "text": "We measured it, including the bad news. On the same fifty synthetic payments, before any customer answer, payment rules alone warned or held eleven of twenty-five scams. With Gemini, thirteen. But Gemini asks instead of guessing: twenty-eight payments stopped at a question, and sixteen of twenty-five genuine customers were asked or warned. The next test is the outcome after the customer answers."
+      "text": "We measured it, including the bad news. On the same fifty synthetic payments, before any customer answer, payment rules alone warned or held eleven of twenty-five scams. With Gemini, thirteen. But Gemini asks instead of guessing: twenty-eight payments stopped at a question, and sixteen of twenty-five genuine customers were asked or warned. The next test is the outcome after the answer."
     },
     {
       "id": "scene6",
       "kind": "animated",
-      "text": "It runs on Google Cloud. Firebase Hosting sits in front of Cloud Run. Gemini on Vertex AI reads the words, with no keys in the code. Cases expire after twenty-four hours."
+      "text": "It runs on Google Cloud. Firebase Hosting sits in front of Cloud Run. Gemini on Vertex AI reads the words and chooses its lookups, with no keys in the code. Cases expire after twenty-four hours."
     },
     {
       "id": "scene7",

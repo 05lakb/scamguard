@@ -119,11 +119,11 @@ async function runStories(browser) {
 
   await cust.goto(`${SITE}/#/customer`, { waitUntil: "domcontentloaded" });
   await sleep(2000);
-  check("customer app: opens without a sign-in", await cust.getByText("Your Bank").first().isVisible().catch(() => false));
+  check("customer app: opens without a sign-in", await cust.locator(".phone-demo-btn").isVisible().catch(() => false));
   await shot(cust, "00-customer-home");
 
   await cust.locator(".phone-demo-btn").click();
-  const labels = await cust.locator(".presenter-stories .chip-btn").allTextContents();
+  const labels = await cust.locator(".presenter-stories .chip-btn:visible").allTextContents();
   check("customer app: ready-made scam stories are listed", labels.length >= 6, `${labels.length}: ${labels.join(" | ")}`);
   await shot(cust, "01-presenter-controls");
 
@@ -133,8 +133,8 @@ async function runStories(browser) {
     const row = { label, outcome: null, seconds: null, investigator: null, error: null, asked: false };
     say(`story ${i + 1} of ${labels.length}: ${label}`);
     try {
-      if (!(await cust.locator(".presenter-stories").isVisible().catch(() => false))) await cust.locator(".phone-demo-btn").click();
-      await cust.locator(".presenter-stories .chip-btn").nth(i).click();
+      if (!(await cust.locator(".presenter-stories .chip-btn:visible").count())) await cust.locator(".phone-demo-btn").click();
+      await cust.locator(".presenter-stories .chip-btn:visible").nth(i).click();
       await sleep(500);
       await cust.locator(".phone-btn.primary", { hasText: /^Pay / }).click();
       await pressPin(cust);
@@ -170,7 +170,6 @@ async function runStories(browser) {
   }
   report.pageErrors = logs.slice(0, 10);
   check("no page errors in the browser console", logs.length === 0, logs.slice(0, 3).join(" ; "));
-  await reviewCase(dash);
   await ctx.close();
 }
 
@@ -194,26 +193,31 @@ async function runCall(cust, dash) {
   await shot(cust, "call-phone");
   await shot(dash, "call-dashboard");
   check("in-app call: questions shown, answers sent, result returned", call.started && call.finished, JSON.stringify(call));
+  await reviewCase(dash);
 }
 
 // ---------- 4. the analyst's side ----------
 async function reviewCase(dash) {
-  const review = { cases: 0, investigatorInCase: false, decided: false, error: null };
+  const review = { opened: false, investigatorInCase: false, decided: false, error: null };
   try {
-    await dash.evaluate(() => { window.location.hash = "#/cases"; });
+    const open = dash.getByRole("button", { name: /Open the case/i }).first();
+    await open.waitFor({ timeout: 20000 });
+    await shot(dash, "analyst-before-open");
+    await open.click();
+    review.opened = true;
     await sleep(2000);
-    review.cases = await dash.locator("tr, .case-row, [data-case], .case-card").count();
-    await shot(dash, "cases-list");
-    const open = dash.getByRole("button", { name: /Open the case|Open case|Review/i }).first();
-    if (await open.isVisible().catch(() => false)) { await open.click(); await sleep(1500); }
     review.investigatorInCase = (await dash.locator('section[aria-label="AI investigator"]').count()) > 0;
+    await shot(dash, "analyst-case");
     const keep = dash.getByRole("button", { name: /Keep on hold/ }).first();
-    if (await keep.isVisible().catch(() => false)) { await keep.click(); await sleep(1200); review.decided = true; }
-    await shot(dash, "cases-review");
+    await keep.waitFor({ timeout: 10000 });
+    await keep.click();
+    await sleep(1200);
+    review.decided = true;
+    await shot(dash, "analyst-decided");
   } catch (e) { review.error = (e.message || "").split("\n")[0]; }
   report.caseReview = review;
-  check("analyst: cases are listed after the payments", review.cases > 0, `${review.cases} rows`);
-  check("analyst: the case shows the AI investigator's findings", review.investigatorInCase, "");
+  check("analyst: the case opens from the live payment page", review.opened, review.error || "");
+  check("analyst: the AI investigator's findings are on the case page", review.investigatorInCase, "");
   check("analyst: a decision can be made on a held case", review.decided, review.error || "");
 }
 

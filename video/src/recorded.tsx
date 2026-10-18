@@ -4,13 +4,13 @@ import durations from "../public/audio/durations.json";
 import { SceneFrame } from "./scenes";
 import { LEAD_IN_SECONDS, TAIL_SECONDS, colors } from "./theme";
 
-// The two scenes that show the real site. The footage is one long recording of the live site; marks.json says
+// The scenes that show the real site. The footage is one long recording of the live site; marks.json says
 // when each of these two scenes starts inside it, and the recorder paced its clicks to the narration.
 // The recording is 1280 by 620, which sits between a title strip at the top and the captions at the bottom.
 
-type RecordedId = "scene3" | "scene4" | "scene4v" | "scene4r";
+type RecordedId = "scene3" | "scene4v" | "scene4r";
 // How much faster than real time the footage may play. The red-team run is long, so it is a time-lapse.
-const MAX_RATE: Record<RecordedId, number> = { scene3: 1.7, scene4: 1.7, scene4v: 1.7, scene4r: 10 };
+const MAX_RATE: Record<RecordedId, number> = { scene3: 2.2, scene4v: 1.7, scene4r: 10 };
 
 function RecordedScene({ id }: { id: RecordedId }) {
   const { fps } = useVideoConfig();
@@ -50,6 +50,5 @@ function RecordedScene({ id }: { id: RecordedId }) {
 }
 
 export const LiveSiteOne = () => <RecordedScene id="scene3" />;
-export const LiveSiteTwo = () => <RecordedScene id="scene4" />;
 export const LiveSiteVoice = () => <RecordedScene id="scene4v" />;
 export const LiveSiteRedTeam = () => <RecordedScene id="scene4r" />;

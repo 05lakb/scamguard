@@ -102,7 +102,7 @@ async function goTo(page, hash) {
 }
 
 async function signIn(page, name = "Demo") {
-  await click(page, page.getByRole("button", { name: /^Get started$|Open command centre/ }).first());
+  await click(page, page.getByRole("button", { name: /^Get started$|Open command centre|Check a payment|Sign in/i }).first());
   // The name box is the one field in the sign-in window (it has the id analyst-name and no type attribute).
   const box = page.locator("#analyst-name, [role=dialog] input").first();
   await box.waitFor({ timeout: 10000 });
@@ -174,6 +174,68 @@ async function decide(page) {
   await sleep(600);
 }
 
+// ---------- one case: the customer app, then the dashboard ----------
+
+// The phone is 720 tall and the recording is 620, so shrink the page a little while the phone is on screen.
+async function fitPhone(page) {
+  await page.locator(".phone-demo-btn").waitFor({ timeout: 15000 });
+  await page.evaluate(() => { document.body.style.zoom = "0.7"; });
+  await sleep(500);
+}
+
+async function phonePays(page) {
+  // The ready-made stories are listed twice on a wide page (beside the phone and in the Demo sheet): use the visible ones.
+  const chips = page.locator(".presenter-stories .chip-btn:visible");
+  if (!(await chips.count())) await click(page, page.locator(".phone-demo-btn"));
+  await chips.first().waitFor({ timeout: 8000 });
+  const labels = await chips.allTextContents();
+  const pick = Math.max(0, labels.findIndex((l) => /impersonat|bank/i.test(l)));
+  log("scam story chosen:", labels[pick]);
+  await click(page, chips.nth(pick));
+  await sleep(1200);
+  await click(page, page.locator(".phone-btn.primary", { hasText: /^Pay / }));
+  await sleep(500);
+  for (const digit of ["2", "4", "6", "8"]) await click(page, page.locator(`.phone-screen button[aria-label="${digit}"]`).first());
+  await page.getByRole("heading", { name: /paused your payment/i }).first().waitFor({ timeout: 120000 });
+  await sleep(2500); // the hold notice stays on screen
+}
+
+async function phoneCall(page) {
+  await click(page, page.getByRole("button", { name: /Call fraud team/ }).first());
+  const boxes = page.locator(".phone-call textarea");
+  await boxes.first().waitFor({ timeout: 30000 });
+  const count = await boxes.count();
+  for (let i = 0; i < Math.min(count, ANSWERS.length); i += 1) {
+    await glide(page, boxes.nth(i));
+    await boxes.nth(i).click();
+    await boxes.nth(i).pressSequentially(ANSWERS[i], { delay: 18 });
+  }
+  await click(page, page.getByRole("button", { name: /^Send answers$/ }));
+  await page.getByRole("heading", { name: /Thank you/ }).first().waitFor({ timeout: 90000 });
+  await sleep(1500);
+}
+
+async function dashboardStory(page, time, s3, L3) {
+  await page.getByText(/HELD FOR REVIEW/i).first().waitFor({ timeout: 30000 }).catch(() => log("no HELD FOR REVIEW text on the dashboard"));
+  await sleep(1800);
+  const panel = page.locator('section[aria-label="AI investigator"]').first();
+  const seen = await panel.waitFor({ timeout: 20000 }).then(() => true).catch(() => false);
+  log("AI investigator panel on the dashboard:", seen);
+  await time.until(s3 + 0.62 * L3);
+  if (seen) { await panel.scrollIntoViewIfNeeded(); await sleep(400); }
+  await time.until(s3 + 0.80 * L3);
+  await scrollBy(page, 380);
+}
+
+async function caseDecision(page) {
+  // The live Transactions page offers "Open the case (analyst)" once the call is done.
+  const open = page.getByRole("button", { name: /Open the case/i }).first();
+  await open.waitFor({ timeout: 15000 }).catch(() => log("no 'Open the case' button"));
+  if (await open.isVisible().catch(() => false)) await click(page, open);
+  await sleep(1500);
+  await decide(page).catch((error) => log("decision step skipped:", error.message.split("\n")[0]));
+}
+
 async function startRedTeam(page) {
   // The site allows only a few live runs an hour per visitor. If it asks to wait, wait and try again.
   for (let attempt = 1; attempt <= 4; attempt += 1) {
@@ -197,11 +259,11 @@ async function recordVideo(browser) {
   const tmp = fs.mkdtempSync(path.join(OUT, "video-"));
   const context = await browser.newContext({ viewport: VIDEO_SIZE, deviceScaleFactor: HD, recordVideo: { dir: tmp, size: VIDEO_FILE_SIZE }, bypassCSP: true });
   await context.addInitScript(pointerScript);
+  await context.addInitScript(() => { delete window.webkitSpeechRecognition; delete window.SpeechRecognition; });
   const page = await context.newPage();
   const time = clock();
   const L3 = lengthOf("scene3");
-  const L4 = lengthOf("scene4");
-  const marks = { fps: FPS, lag: 0, scene3: { start: 0, end: 0 }, scene4: { start: 0, end: 0 }, scene4v: { start: 0, end: 0 }, scene4r: { start: 0, end: 0 } };
+  const marks = { fps: FPS, lag: 0, scene3: { start: 0, end: 0 }, scene4v: { start: 0, end: 0 }, scene4r: { start: 0, end: 0 } };
 
   // A short lead-in so the landing page is already on screen when the first scene starts.
   await page.goto(SITE + "/", { waitUntil: "networkidle" }).catch(() => {});
@@ -217,47 +279,37 @@ async function recordVideo(browser) {
   await page.evaluate(() => document.getElementById("sync-cue")?.remove());
   await time.until(time.now() + 1.0);
 
-  // Scene 3: the live site, sign in, choose the case, analyse, and read the result.
+  // Scene 3: one case, start to finish. The customer pays on the phone app, gets the hold notice and takes the
+  // in-app call; then the bank's dashboard shows the score, the AI investigator's lookups and the analyst's decision.
+  // It is all one page: the customer app and the dashboard talk through the browser, so no second window is needed.
   const s3 = time.now();
   marks.scene3.start = s3;
-  log("scene3 starts at", s3.toFixed(2), "s, planned length", L3.toFixed(1), "s");
-  await time.until(s3 + 0.04 * L3);
+  log("scene3 (one case) starts at", s3.toFixed(2), "s, planned length", L3.toFixed(1), "s");
+  const note = (what) => log("scene3:", what, "at", (time.now() - s3).toFixed(1), "s into the scene");
+  await time.until(s3 + 0.02 * L3);
   await signIn(page);
-  await time.until(s3 + 0.22 * L3);
+  note("signed in");
+  await goTo(page, "#/customer");
+  await fitPhone(page);
+  await time.until(s3 + 0.10 * L3);
+  await phonePays(page);
+  note("payment held on the phone");
+  await time.until(s3 + 0.34 * L3);
+  await phoneCall(page);
+  note("call finished on the phone");
+  // the bank's side
+  await page.evaluate(() => { document.body.style.zoom = ""; });
   await goTo(page, "#/analyzer");
-  await time.until(s3 + 0.36 * L3);
-  await pickScenario(page);
-  await time.until(s3 + 0.48 * L3);
-  await analyse(page);
-  await time.until(s3 + 0.76 * L3);
-  await scrollBy(page, 420);
-  await time.until(s3 + 0.88 * L3);
-  await scrollBy(page, 520);
+  await time.until(s3 + 0.52 * L3);
+  await dashboardStory(page, time, s3, L3).catch((error) => log("dashboard step problem:", error.message.split("\n")[0]));
+  note("dashboard shown");
+  await caseDecision(page).catch((error) => log("case step problem:", error.message.split("\n")[0]));
+  note("analyst decided");
+  await sleep(1500);
   await time.until(s3 + L3);
   marks.scene3.end = time.now();
   log("scene3 ended at", time.now().toFixed(2), "s (late by", Math.max(0, time.now() - (s3 + L3)).toFixed(1), "s)");
 
-  // Scene 4: the in-app call, the typed answers, and the analyst's decision.
-  const s4 = time.now();
-  marks.scene4.start = s4;
-  log("scene4 starts at", s4.toFixed(2), "s, planned length", L4.toFixed(1), "s");
-  const note = (what) => log("scene4:", what, "at", (time.now() - s4).toFixed(1), "s into the scene");
-  await time.until(s4 + 0.10 * L4);
-  await callFraudTeam(page);
-  note("call panel and typing boxes ready");
-  await typeAnswers(page);
-  note("answers typed");
-  await sendAnswers(page);
-  note("answers checked");
-  await openCase(page);
-  note("case opened");
-  await time.until(s4 + 0.78 * L4);
-  await decide(page).catch((error) => log("decision step skipped:", error.message.split("\n")[0]));
-  note("decision made");
-  await sleep(1800); // a short tail so the decision stays on screen
-  await time.until(s4 + L4);
-  marks.scene4.end = time.now();
-  log("scene4 ended at", time.now().toFixed(2), "s (late by", Math.max(0, time.now() - (s4 + L4)).toFixed(1), "s)");
   // Scene: the Voice AI page reads a pasted digital-arrest call.
   const LV = lengthOf("scene4v");
   const sv = time.now();

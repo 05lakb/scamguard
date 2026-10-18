@@ -226,13 +226,13 @@ export function Evidence() {
       <div style={{ position: "absolute", left: 80, top: 44 }}>
         <Reveal at={0.0}><Title>We measured it, including the bad news</Title></Reveal>
       </div>
-      <div style={{ position: "absolute", left: 80, top: 128, width: 600 }}>
+      <div style={{ position: "absolute", left: 80, top: 128, width: 540 }}>
         <Reveal at={0.06}><div style={{ fontSize: 24, color: colors.muted, marginBottom: 12 }}>Same 50 payments, first round, before any answer</div></Reveal>
         <Reveal at={0.1}><div style={{ fontSize: 24, fontWeight: 700, marginBottom: 8 }}>{PAIRED_RUN[0].label}</div></Reveal>
         <Bar bar={PAIRED_RUN[0].rules} at={0.14} />
         <Bar bar={PAIRED_RUN[0].gemini} at={0.24} />
       </div>
-      <div style={{ position: "absolute", right: 80, top: 128, width: 600 }}>
+      <div style={{ position: "absolute", right: 80, top: 128, width: 540 }}>
         <Reveal at={0.4}><div style={{ fontSize: 24, color: colors.muted, marginBottom: 12 }}>The price of asking instead of guessing</div></Reveal>
         <Reveal at={0.44}><div style={{ fontSize: 24, fontWeight: 700, marginBottom: 8 }}>{PAIRED_RUN[1].label}</div></Reveal>
         <Bar bar={PAIRED_RUN[1].rules} at={0.48} />

@@ -32,6 +32,9 @@ const lengthOf = (id) => Math.ceil((durations[id].seconds + LEAD + TAIL) * FPS) 
 
 // The recorded part of the video is 1280 wide and 620 tall; a title strip and the captions fill the rest of the frame.
 const VIDEO_SIZE = { width: 1280, height: 620 };
+// Full HD: the page is laid out at 1280 by 620 but drawn at 1.5 times the pixels, and the recording is 1920 by 930.
+const HD = Number(process.env.HD_SCALE || 1.5);
+const VIDEO_FILE_SIZE = { width: Math.round(VIDEO_SIZE.width * HD), height: Math.round(VIDEO_SIZE.height * HD) };
 const SHOT_SIZE = { width: 1440, height: 810 };
 
 const ANSWERS = [
@@ -192,7 +195,7 @@ async function scrollBy(page, pixels) {
 async function recordVideo(browser) {
   fs.mkdirSync(FOOTAGE, { recursive: true });
   const tmp = fs.mkdtempSync(path.join(OUT, "video-"));
-  const context = await browser.newContext({ viewport: VIDEO_SIZE, recordVideo: { dir: tmp, size: VIDEO_SIZE }, bypassCSP: true });
+  const context = await browser.newContext({ viewport: VIDEO_SIZE, deviceScaleFactor: HD, recordVideo: { dir: tmp, size: VIDEO_FILE_SIZE }, bypassCSP: true });
   await context.addInitScript(pointerScript);
   const page = await context.newPage();
   const time = clock();

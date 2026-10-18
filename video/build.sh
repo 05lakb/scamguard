@@ -32,7 +32,8 @@ npx remotion browser ensure
 echo "5/6 Rendering: ${SCENES}  (this takes a few minutes)..."
 mkdir -p out
 for id in ${SCENES}; do
-  npx remotion render src/index.ts "$id" "out/$id.mp4" --crf=26
+  # Full HD (1920 by 1080): the 1280 by 720 layout drawn at 1.5 times the pixels, with a high-quality encode
+  npx remotion render src/index.ts "$id" "out/$id.mp4" --scale="${RENDER_SCALE:-1.5}" --crf="${CRF:-18}"
 done
 
 echo "6/6 Saving to the results repo..."
